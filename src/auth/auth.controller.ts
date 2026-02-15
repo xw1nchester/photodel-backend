@@ -1,0 +1,83 @@
+import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { Cookie, Public, UserAgent } from './decorators';
+import { RegisterRequestDto } from './dto/register-request.dto';
+import { Token } from '@tokens/tokens.entity';
+import { FastifyReply } from 'fastify';
+import { ConfigService } from '@nestjs/config';
+import { LoginRequestDto } from './dto/login-request.dto';
+import { ApiCreatedResponse } from '@nestjs/swagger';
+import { AuthResponseDto } from './dto/auth-response.dto';
+
+const REFRESH_TOKEN = 'refresh-token';
+
+@Controller('auth')
+export class AuthController {
+    constructor(
+        private readonly configService: ConfigService,
+        private readonly authService: AuthService
+    ) {}
+
+    private setRefreshTokenToCookie(
+        @Res() reply: FastifyReply,
+        refreshToken: Token
+    ) {
+        reply.setCookie(REFRESH_TOKEN, refreshToken.token, {
+            httpOnly: true,
+            sameSite: 'lax',
+            expires: refreshToken.expiryDate,
+            secure:
+                this.configService.get('NODE_ENV', 'development') ===
+                'production',
+            path: '/'
+        });
+    }
+
+    @Public()
+    @Post('register')
+    @ApiCreatedResponse({ type: AuthResponseDto })
+    async register(
+        @Body() dto: RegisterRequestDto,
+        @UserAgent() userAgent: string,
+        @Res() reply: FastifyReply
+    ) {
+        const { user, tokens } = await this.authService.register(
+            dto,
+            userAgent
+        );
+
+        const { accessToken, refreshToken } = tokens;
+
+        this.setRefreshTokenToCookie(reply, refreshToken);
+
+        reply.send({ user, accessToken });
+    }
+
+    @Public()
+    @Post('login')
+    @ApiCreatedResponse({ type: AuthResponseDto })
+    async login(
+        @Body() dto: LoginRequestDto,
+        @UserAgent() userAgent: string,
+        @Res() reply: FastifyReply
+    ) {
+        const { user, tokens } = await this.authService.login(dto, userAgent);
+
+        const { accessToken, refreshToken } = tokens;
+
+        this.setRefreshTokenToCookie(reply, refreshToken);
+
+        reply.send({ user, accessToken });
+    }
+
+    @Public()
+    @Get('logout')
+    async logout(
+        @Cookie(REFRESH_TOKEN) refreshToken: string,
+        @Res() reply: FastifyReply
+    ) {
+        await this.authService.logout(refreshToken);
+
+        reply.clearCookie(REFRESH_TOKEN).status(200).send();
+    }
+}
