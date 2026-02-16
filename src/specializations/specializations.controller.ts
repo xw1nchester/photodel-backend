@@ -1,4 +1,5 @@
 import { Controller } from '@nestjs/common';
+
 import { SpecializationsService } from './specializations.service';
 
 @Controller('specializations')

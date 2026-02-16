@@ -1,15 +1,15 @@
-// TODO: нужна либа для сортировки импортов
+import cors from '@fastify/cors';
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import {
     FastifyAdapter,
     NestFastifyApplication
 } from '@nestjs/platform-fastify';
-import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
-import fastifyCookie from 'fastify-cookie';
-import cors from '@fastify/cors';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import fastifyCookie from 'fastify-cookie';
+
+import { AppModule } from './app.module';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(

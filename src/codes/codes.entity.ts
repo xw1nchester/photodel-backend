@@ -1,4 +1,3 @@
-import { User } from '@users/users.entity';
 import {
     Column,
     Entity,
@@ -6,6 +5,9 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn
 } from 'typeorm';
+
+import { User } from '@users/users.entity';
+
 import { CodeType } from './enums';
 
 @Entity('codes')

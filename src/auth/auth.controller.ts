@@ -1,15 +1,17 @@
 import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ApiCreatedResponse } from '@nestjs/swagger';
+import { FastifyReply } from 'fastify';
+
+import { Token } from '@tokens/tokens.entity';
+
 import { AuthService } from './auth.service';
 import { Cookie, CurrentUser, Public, UserAgent } from './decorators';
-import { RegisterRequestDto } from './dto/register-request.dto';
-import { Token } from '@tokens/tokens.entity';
-import { FastifyReply } from 'fastify';
-import { ConfigService } from '@nestjs/config';
-import { LoginRequestDto } from './dto/login-request.dto';
-import { ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { JwtPayload } from './interfaces';
 import { CodeRequestDto } from './dto/code-request.dto';
+import { LoginRequestDto } from './dto/login-request.dto';
+import { RegisterRequestDto } from './dto/register-request.dto';
+import { JwtPayload } from './interfaces';
 
 const REFRESH_TOKEN = 'refresh-token';
 

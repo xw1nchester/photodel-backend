@@ -1,5 +1,3 @@
-import { Token } from '@tokens/tokens.entity';
-import { Specialization } from '@specializations/specializations.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -9,7 +7,10 @@ import {
     OneToMany,
     JoinColumn
 } from 'typeorm';
+
 import { Code } from '@codes/codes.entity';
+import { Specialization } from '@specializations/specializations.entity';
+import { Token } from '@tokens/tokens.entity';
 
 @Entity('users')
 export class User {

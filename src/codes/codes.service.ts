@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Code } from './codes.entity';
 import { EntityManager, MoreThan, Repository } from 'typeorm';
+
+import { Code } from './codes.entity';
 import { CodeType } from './enums';
 
 @Injectable()

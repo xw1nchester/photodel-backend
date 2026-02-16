@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { STRATEGIES } from './strategies';
-import { GUARDS } from './guards';
-import { UsersModule } from '@users/users.module';
-import { TokensModule } from '@tokens/tokens.module';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+
 import { CodesModule } from '@codes/codes.module';
 import { MailModule } from '@mail/mail.module';
+import { TokensModule } from '@tokens/tokens.module';
+import { UsersModule } from '@users/users.module';
+
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { GUARDS } from './guards';
+import { STRATEGIES } from './strategies';
+
 
 @Module({
     imports: [

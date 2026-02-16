@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { ApiOkResponse } from '@nestjs/swagger';
+
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
-import { ApiOkResponse } from '@nestjs/swagger';
+
 import { UserWrapperResponseDto } from './dto/user-wrapper-response.dto';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {

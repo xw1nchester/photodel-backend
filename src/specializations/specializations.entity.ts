@@ -1,5 +1,6 @@
-import { User } from '@users/users.entity';
 import { Column, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn, Tree, TreeChildren, TreeParent } from 'typeorm';
+
+import { User } from '@users/users.entity';
 
 @Entity('specializations')
 @Tree("closure-table")

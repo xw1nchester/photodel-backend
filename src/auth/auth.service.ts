@@ -1,14 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { RegisterRequestDto } from './dto/register-request.dto';
-import { UsersService } from '@users/users.service';
-import { compareSync, genSaltSync, hashSync } from 'bcrypt';
-import { TokensService } from '@tokens/tokens.service';
-import { JwtPayload } from './interfaces';
 import { JwtService } from '@nestjs/jwt';
-import { LoginRequestDto } from './dto/login-request.dto';
+import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { DataSource, EntityManager } from 'typeorm';
+
 import { CodesService } from '@codes/codes.service';
 import { MailService } from '@mail/mail.service';
+import { TokensService } from '@tokens/tokens.service';
+
+import { LoginRequestDto } from './dto/login-request.dto';
+import { RegisterRequestDto } from './dto/register-request.dto';
+import { UsersService } from '@users/users.service';
+import { JwtPayload } from './interfaces';
 
 @Injectable()
 export class AuthService {
