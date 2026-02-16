@@ -9,6 +9,7 @@ import {
     OneToMany,
     JoinColumn
 } from 'typeorm';
+import { Code } from '@codes/codes.entity';
 
 @Entity('users')
 export class User {
@@ -53,4 +54,7 @@ export class User {
 
     @OneToMany(() => Token, token => token.user)
     tokens: Token[]
+
+    @OneToMany(() => Code, code => code.user)
+    codes: Code[]
 }

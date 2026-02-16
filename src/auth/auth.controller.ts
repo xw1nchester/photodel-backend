@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Cookie, Public, UserAgent } from './decorators';
+import { Cookie, CurrentUser, Public, UserAgent } from './decorators';
 import { RegisterRequestDto } from './dto/register-request.dto';
 import { Token } from '@tokens/tokens.entity';
 import { FastifyReply } from 'fastify';
@@ -8,6 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { JwtPayload } from './interfaces';
+import { CodeRequestDto } from './dto/code-request.dto';
 
 const REFRESH_TOKEN = 'refresh-token';
 
@@ -77,7 +79,21 @@ export class AuthController {
         @Res() reply: FastifyReply
     ) {
         await this.authService.logout(refreshToken);
-
         reply.clearCookie(REFRESH_TOKEN).status(200).send();
+    }
+
+    @Get('resend-verification')
+    async resendVerificationCode(@CurrentUser() user: JwtPayload) {
+        await this.authService.resendVerificationCode(user.id);
+        return HttpStatus.OK;
+    }
+
+    @Post('verify-email')
+    async verifyEmail(
+        @Body() { code }: CodeRequestDto,
+        @CurrentUser() user: JwtPayload
+    ) {
+        await this.authService.verifyEmail(code, user.id);
+        return HttpStatus.OK;
     }
 }

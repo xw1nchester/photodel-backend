@@ -6,52 +6,74 @@ import { TokensService } from '@tokens/tokens.service';
 import { JwtPayload } from './interfaces';
 import { JwtService } from '@nestjs/jwt';
 import { LoginRequestDto } from './dto/login-request.dto';
+import { DataSource, EntityManager } from 'typeorm';
+import { CodesService } from '@codes/codes.service';
+import { MailService } from '@mail/mail.service';
 
 @Injectable()
 export class AuthService {
     constructor(
+        private readonly dataSource: DataSource,
         private readonly jwtService: JwtService,
         private readonly usersService: UsersService,
-        private readonly tokensService: TokensService
+        private readonly tokensService: TokensService,
+        private readonly codesService: CodesService,
+        private readonly mailService: MailService
     ) {}
 
-    private async generateTokens(payload: JwtPayload, userAgent: string) {
+    private async generateTokens(
+        payload: JwtPayload,
+        userAgent: string,
+        manager?: EntityManager
+    ) {
         const accessToken = this.jwtService.sign(payload);
 
         const refreshToken = await this.tokensService.getRefreshToken(
             payload.id,
-            userAgent
+            userAgent,
+            manager
         );
 
         return { accessToken, refreshToken };
     }
 
-    // TODO: транзакция
     async register(dto: RegisterRequestDto, userAgent: string) {
-        const existingUser = await this.usersService.findByEmail(dto.email);
-
-        if (existingUser) {
-            throw new BadRequestException(
-                'Пользователь с таким email уже зарегистрирован'
+        return await this.dataSource.transaction(async manager => {
+            const existingUser = await this.usersService.findByEmail(
+                dto.email,
+                manager
             );
-        }
 
-        dto.password = hashSync(dto.password, genSaltSync(10));
+            if (existingUser) {
+                throw new BadRequestException(
+                    'Пользователь с таким email уже зарегистрирован'
+                );
+            }
 
-        const createdUser = await this.usersService.createUser(dto);
+            dto.password = hashSync(dto.password, genSaltSync(10));
 
-        const tokens = await this.generateTokens(
-            { id: createdUser.id },
-            userAgent
-        );
+            const createdUser = await this.usersService.create(
+                dto,
+                manager
+            );
 
-        // TODO: generate code
-        // TODO: send email
+            const tokens = await this.generateTokens(
+                { id: createdUser.id },
+                userAgent,
+                manager
+            );
 
-        return { user: this.usersService.createDto(createdUser), tokens };
+            const code = await this.codesService.createVerificationCode(
+                createdUser.id,
+                manager
+            );
+
+            this.mailService.sendVerificationCode(createdUser.email, code);
+
+            return { user: this.usersService.createDto(createdUser), tokens };
+        });
     }
 
-    // TODO: транзакция
     async login(dto: LoginRequestDto, userAgent: string) {
         const existingUser = await this.usersService.findByEmail(dto.email);
 
@@ -76,5 +98,31 @@ export class AuthService {
         if (token) {
             await this.tokensService.deleteRefreshToken(token);
         }
+    }
+
+    async resendVerificationCode(userId: number) {
+        const { isVerified, email } = await this.usersService.findById(userId);
+
+        if (isVerified) {
+            throw new BadRequestException('Ваш аккаунт уже верифицирован');
+        }
+
+        const code = await this.codesService.createVerificationCode(userId);
+
+        this.mailService.sendVerificationCode(email, code);
+    }
+
+    async verifyEmail(code: string, userId: number) {
+        return await this.dataSource.transaction(async manager => {
+            const { isVerified } = await this.usersService.findById(userId);
+
+            if (isVerified) {
+                throw new BadRequestException('Ваш аккаунт уже верифицирован');
+            }
+
+            await this.codesService.validateVerificationCode(code, userId, manager);
+
+            await this.usersService.verifyById(userId, manager);
+        });
     }
 }

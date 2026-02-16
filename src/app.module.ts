@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { TokensModule } from './tokens/tokens.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
     imports: [
@@ -20,7 +21,9 @@ import { TokensModule } from './tokens/tokens.module';
         SpecializationsModule,
         CodesModule,
         AuthModule,
-        TokensModule
+        // TODO: нужны ли они тут если импортируются в auth?
+        TokensModule,
+        MailModule
     ],
     controllers: [AppController],
     providers: [

@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './users.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { RegisterRequestDto } from '@auth/dto/register-request.dto';
 import { UserDto } from './dto/user.dto';
 
@@ -12,8 +12,22 @@ export class UsersService {
         private usersRepository: Repository<User>
     ) {}
 
-    async findByEmail(email: string) {
-        return await this.usersRepository.findOneBy({ email });
+    async findById(id: number) {
+        const user = await this.usersRepository.findOneBy({ id });
+
+        if (!user) {
+            throw new NotFoundException('Пользователь не найден');
+        }
+
+        return user;
+    }
+
+    async findByEmail(email: string, manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(User)
+            : this.usersRepository;
+
+        return await repo.findOneBy({ email });
     }
 
     createDto(user: User) {
@@ -21,12 +35,29 @@ export class UsersService {
     }
 
     // TODO: хорошая ли идея использовать dto из другого модуля?
-    async createUser(dto: RegisterRequestDto) {
-        const user = this.usersRepository.create({
+    async create(dto: RegisterRequestDto, manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(User)
+            : this.usersRepository;
+
+        const user = repo.create({
             ...dto,
             passwordHash: dto.password
         });
 
-        return await this.usersRepository.save(user);
+        return await repo.save(user);
+    }
+
+    async getDtoById(id: number) {
+        const user = await this.findById(id);
+        return { user: this.createDto(user) };
+    }
+
+    async verifyById(id: number, manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(User)
+            : this.usersRepository;
+
+        return await repo.update({ id }, { isVerified: true });
     }
 }

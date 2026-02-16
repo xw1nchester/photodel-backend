@@ -8,6 +8,8 @@ import { STRATEGIES } from './strategies';
 import { GUARDS } from './guards';
 import { UsersModule } from '@users/users.module';
 import { TokensModule } from '@tokens/tokens.module';
+import { CodesModule } from '@codes/codes.module';
+import { MailModule } from '@mail/mail.module';
 
 @Module({
     imports: [
@@ -22,7 +24,9 @@ import { TokensModule } from '@tokens/tokens.module';
             })
         }),
         UsersModule,
-        TokensModule
+        TokensModule,
+        CodesModule,
+        MailModule
     ],
     controllers: [AuthController],
     providers: [AuthService, ...STRATEGIES, ...GUARDS]

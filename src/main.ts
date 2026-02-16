@@ -1,3 +1,4 @@
+// TODO: нужна либа для сортировки импортов
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import {
@@ -28,11 +29,10 @@ async function bootstrap() {
 
     app.setGlobalPrefix('api');
 
-    await app.register(fastifyCookie, {
-    });
+    await app.register(fastifyCookie, {});
 
     await app.register(cors, {
-        origin: configService.get('ALLOWED_ORIGINS')?.split(',') || '*',
+        origin: configService.get('ALLOWED_ORIGINS')?.split(',') || '*'
     });
 
     const swaggerConfig = new DocumentBuilder()

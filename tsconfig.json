@@ -27,7 +27,11 @@
             "@tokens": ["src/tokens"],
             "@tokens/*": ["src/tokens/*"],
             "@specializations": ["src/specializations"],
-            "@specializations/*": ["src/specializations/*"]
+            "@specializations/*": ["src/specializations/*"],
+            "@codes": ["src/codes"],
+            "@codes/*": ["src/codes/*"],
+            "@mail": ["src/mail"],
+            "@mail/*": ["src/mail/*"]
         }
     }
 }
