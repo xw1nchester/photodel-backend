@@ -12,7 +12,7 @@ export class TokensService {
         private tokensRepository: Repository<Token>
     ) {}
 
-    async getRefreshToken(
+    async updateOrCreateToken(
         userId: number,
         userAgent: string,
         manager?: EntityManager
@@ -23,28 +23,44 @@ export class TokensService {
 
         const existingToken = await repo.findOne({
             where: { user: { id: userId }, userAgent },
-            relations: ['user']
+            relations: {
+                user: true
+            }
         });
 
+        const token = v4();
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 14);
 
         if (existingToken) {
-            existingToken.expiryDate = expiryDate;
-            return repo.save(existingToken);
+            await repo.update(
+                { token: existingToken.token },
+                {
+                    token,
+                    expiryDate
+                }
+            );
+            return await repo.findOneBy({ token });
         }
 
-        const newToken = repo.create({
-            token: v4(),
+        return await repo.save({
+            token,
             expiryDate,
             user: { id: userId },
             userAgent
         });
-
-        return repo.save(newToken);
     }
 
-    async deleteRefreshToken(token: string) {
+    async findToken(token: string) {
+        return await this.tokensRepository.findOne({
+            where: { token },
+            relations: {
+                user: true
+            }
+        });
+    }
+
+    async deleteToken(token: string) {
         return await this.tokensRepository.delete({ token });
     }
 }

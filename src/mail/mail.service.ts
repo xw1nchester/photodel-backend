@@ -18,9 +18,9 @@ export class MailService {
                 }
             });
 
-            this.logger.debug(`Письмо успешно отправлено на ${email}`);
+            this.logger.debug(`Email was successfully sent to ${email}`);
         } catch (error) {
-            this.logger.error(`Ошибка отправки письма на ${email}`, error);
+            this.logger.error(`Error sending email to ${email}`, error);
         }
     }
 }

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiCreatedResponse } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
 
 import { Token } from '@tokens/tokens.entity';
@@ -11,6 +11,7 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { CodeRequestDto } from './dto/code-request.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
+import { TokenResponseDto } from './dto/token-response.dto';
 import { JwtPayload } from './interfaces';
 
 const REFRESH_TOKEN = 'refresh-token';
@@ -24,12 +25,12 @@ export class AuthController {
 
     private setRefreshTokenToCookie(
         @Res() reply: FastifyReply,
-        refreshToken: Token
+        token: Token
     ) {
-        reply.setCookie(REFRESH_TOKEN, refreshToken.token, {
+        reply.setCookie(REFRESH_TOKEN, token.token, {
             httpOnly: true,
             sameSite: 'lax',
-            expires: refreshToken.expiryDate,
+            expires: token.expiryDate,
             secure:
                 this.configService.get('NODE_ENV', 'development') ===
                 'production',
@@ -75,12 +76,30 @@ export class AuthController {
     }
 
     @Public()
-    @Get('logout')
-    async logout(
-        @Cookie(REFRESH_TOKEN) refreshToken: string,
+    @Get('refresh')
+    @ApiOkResponse({ type: TokenResponseDto })
+    async refresh(
+        @Cookie(REFRESH_TOKEN) token: string,
+        @UserAgent() userAgent: string,
         @Res() reply: FastifyReply
     ) {
-        await this.authService.logout(refreshToken);
+        const { refreshToken, accessToken } = await this.authService.refresh(
+            token,
+            userAgent
+        );
+
+        this.setRefreshTokenToCookie(reply, refreshToken);
+
+        reply.send({ accessToken });
+    }
+
+    @Public()
+    @Get('logout')
+    async logout(
+        @Cookie(REFRESH_TOKEN) token: string,
+        @Res() reply: FastifyReply
+    ) {
+        await this.authService.logout(token);
         reply.clearCookie(REFRESH_TOKEN).status(200).send();
     }
 

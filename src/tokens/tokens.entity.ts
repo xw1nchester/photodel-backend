@@ -1,10 +1,19 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn
+} from 'typeorm';
 
 import { User } from '@users/users.entity';
 
 @Entity('refresh_tokens')
 export class Token {
-    @PrimaryColumn({ unique: true })
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column({ unique: true })
     token: string;
 
     @Column({ name: 'expiry_date' })

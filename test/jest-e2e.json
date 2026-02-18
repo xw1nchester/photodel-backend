@@ -5,5 +5,21 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "moduleNameMapper": {
+        "^@utils/(.*)$": "<rootDir>/../src/utils/$1",
+        "^@utils$": "<rootDir>/../src/utils",
+        "^@users/(.*)$": "<rootDir>/../src/users/$1",
+        "^@users$": "<rootDir>/../src/users",
+        "^@auth/(.*)$": "<rootDir>/../src/auth/$1",
+        "^@auth$": "<rootDir>/../src/auth",
+        "^@tokens/(.*)$": "<rootDir>/../src/tokens/$1",
+        "^@tokens$": "<rootDir>/../src/tokens",
+        "^@specializations/(.*)$": "<rootDir>/../src/specializations/$1",
+        "^@specializations$": "<rootDir>/../src/specializations",
+        "^@codes/(.*)$": "<rootDir>/../src/codes/$1",
+        "^@codes$": "<rootDir>/../src/codes",
+        "^@mail/(.*)$": "<rootDir>/../src/mail/$1",
+        "^@mail$": "<rootDir>/../src/mail"
+    }
 }

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    UnauthorizedException
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { DataSource, EntityManager } from 'typeorm';
@@ -6,10 +10,10 @@ import { DataSource, EntityManager } from 'typeorm';
 import { CodesService } from '@codes/codes.service';
 import { MailService } from '@mail/mail.service';
 import { TokensService } from '@tokens/tokens.service';
+import { UsersService } from '@users/users.service';
 
 import { LoginRequestDto } from './dto/login-request.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
-import { UsersService } from '@users/users.service';
 import { JwtPayload } from './interfaces';
 
 @Injectable()
@@ -30,7 +34,7 @@ export class AuthService {
     ) {
         const accessToken = this.jwtService.sign(payload);
 
-        const refreshToken = await this.tokensService.getRefreshToken(
+        const refreshToken = await this.tokensService.updateOrCreateToken(
             payload.id,
             userAgent,
             manager
@@ -54,10 +58,7 @@ export class AuthService {
 
             dto.password = hashSync(dto.password, genSaltSync(10));
 
-            const createdUser = await this.usersService.create(
-                dto,
-                manager
-            );
+            const createdUser = await this.usersService.create(dto, manager);
 
             const tokens = await this.generateTokens(
                 { id: createdUser.id },
@@ -96,9 +97,25 @@ export class AuthService {
         return { user: this.usersService.createDto(existingUser), tokens };
     }
 
+    async refresh(token: string, userAgent: string) {
+        if (!token) {
+            throw new UnauthorizedException();
+        }
+
+        const tokenData = await this.tokensService.findToken(token);
+
+        if (!tokenData || new Date(tokenData.expiryDate) < new Date()) {
+            throw new UnauthorizedException();
+        }
+
+        // const user = await this.usersService.findById(tokenData.user.id);
+
+        return this.generateTokens({ id: tokenData.user.id }, userAgent);
+    }
+
     async logout(token: string) {
         if (token) {
-            await this.tokensService.deleteRefreshToken(token);
+            await this.tokensService.deleteToken(token);
         }
     }
 
@@ -122,7 +139,11 @@ export class AuthService {
                 throw new BadRequestException('Ваш аккаунт уже верифицирован');
             }
 
-            await this.codesService.validateVerificationCode(code, userId, manager);
+            await this.codesService.validateVerificationCode(
+                code,
+                userId,
+                manager
+            );
 
             await this.usersService.verifyById(userId, manager);
         });
