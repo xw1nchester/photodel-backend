@@ -32,12 +32,14 @@ async function bootstrap() {
     await app.register(fastifyCookie, {});
 
     await app.register(cors, {
-        origin: configService.get('ALLOWED_ORIGINS')?.split(',') || '*'
+        origin: configService.get('ALLOWED_ORIGINS')?.split(',') || '*',
+        credentials: true
     });
 
     const swaggerConfig = new DocumentBuilder()
         .setTitle('Photodel API documentation')
         .setVersion('1.0')
+        .addBearerAuth()
         .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);

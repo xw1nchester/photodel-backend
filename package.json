@@ -22,7 +22,8 @@
         "migration:generate": "npm run typeorm -- migration:generate -d src/typeorm.config.ts src/database/migrations/$npm_config_name",
         "migration:create": "npm run typeorm -- migration:create -d src/typeorm.config.ts src/database/migrations/$npm_config_name",
         "migration:run": "npm run typeorm -- migration:run -d src/typeorm.config.ts",
-        "migration:revert": "npm run typeorm -- migration:revert -d src/typeorm.config.ts"
+        "migration:revert": "npm run typeorm -- migration:revert -d src/typeorm.config.ts",
+        "seed": "npx typeorm-extension seed:run -d src/typeorm.config.ts"
     },
     "dependencies": {
         "@fastify/static": "^9.0.0",
@@ -48,6 +49,7 @@
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.8.1",
         "typeorm": "^0.3.28",
+        "typeorm-extension": "^3.8.0",
         "uuid": "^11.1.0"
     },
     "devDependencies": {

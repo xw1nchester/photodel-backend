@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
 
 import { Token } from '@tokens/tokens.entity';
@@ -103,12 +103,14 @@ export class AuthController {
         reply.clearCookie(REFRESH_TOKEN).status(200).send();
     }
 
+    @ApiBearerAuth()
     @Get('resend-verification')
     async resendVerificationCode(@CurrentUser() user: JwtPayload) {
         await this.authService.resendVerificationCode(user.id);
         return HttpStatus.OK;
     }
 
+    @ApiBearerAuth()
     @Post('verify-email')
     async verifyEmail(
         @Body() { code }: CodeRequestDto,

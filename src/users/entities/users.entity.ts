@@ -3,14 +3,14 @@ import {
     PrimaryGeneratedColumn,
     Column,
     CreateDateColumn,
-    ManyToOne,
     OneToMany,
-    JoinColumn
+    OneToOne
 } from 'typeorm';
 
 import { Code } from '@codes/codes.entity';
-import { Specialization } from '@specializations/specializations.entity';
 import { Token } from '@tokens/tokens.entity';
+
+import { Profile } from './profiles.entity';
 
 @Entity('users')
 export class User {
@@ -26,6 +26,7 @@ export class User {
     @Column({ name: 'last_name' })
     lastName: string;
 
+    // TODO: удалить т.к. есть в профиле
     @Column({ nullable: true })
     phone: string;
 
@@ -47,15 +48,12 @@ export class User {
     // @UpdateDateColumn({ name: 'updated_at' })
     // updatedAt: Date;
 
-    @ManyToOne(() => Specialization, specialization => specialization.users, {
-        nullable: true,
-    })
-    @JoinColumn({ name: 'specialization_id' })
-    specialization: Specialization;
+    @OneToOne(() => Profile, profile => profile.user, { cascade: true })
+    profile: Profile;
 
     @OneToMany(() => Token, token => token.user)
-    tokens: Token[]
+    tokens: Token[];
 
     @OneToMany(() => Code, code => code.user)
-    codes: Code[]
+    codes: Code[];
 }

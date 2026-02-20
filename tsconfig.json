@@ -31,7 +31,11 @@
             "@codes": ["src/codes"],
             "@codes/*": ["src/codes/*"],
             "@mail": ["src/mail"],
-            "@mail/*": ["src/mail/*"]
+            "@mail/*": ["src/mail/*"],
+            "@pro-categories": ["src/pro-categories"],
+            "@pro-categories/*": ["src/pro-categories/*"],
+            "@socials": ["src/socials"],
+            "@socials/*": ["src/socials/*"],
         }
     }
 }

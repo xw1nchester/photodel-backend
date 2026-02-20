@@ -33,14 +33,9 @@ export class TokensService {
         expiryDate.setDate(expiryDate.getDate() + 14);
 
         if (existingToken) {
-            await repo.update(
-                { token: existingToken.token },
-                {
-                    token,
-                    expiryDate
-                }
-            );
-            return await repo.findOneBy({ token });
+            existingToken.token = token;
+            existingToken.expiryDate = expiryDate;
+            return await repo.save(existingToken);
         }
 
         return await repo.save({

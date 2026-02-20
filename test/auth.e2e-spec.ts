@@ -14,7 +14,7 @@ import { AppModule } from '../src/app.module';
 
 import { clearDatabase } from './utils/clear-db';
 
-const extractRefreshCookie = (res: request.Response) => {
+const extractAndValidateRefreshCookie = (res: request.Response) => {
     const raw = res.headers['set-cookie'];
     const cookies = Array.isArray(raw) ? raw : [raw];
 
@@ -90,8 +90,7 @@ describe('Auth & Users (e2e)', () => {
 
         expect(res.body).toHaveProperty('accessToken');
         expect(res.body.user.email).toBe(testUser.email);
-
-        extractRefreshCookie(res);
+        extractAndValidateRefreshCookie(res);
     });
 
     it('Login with registered user', async () => {
@@ -108,12 +107,12 @@ describe('Auth & Users (e2e)', () => {
         expect(res.body.user.email).toBe(testUser.email);
 
         accessToken = res.body.accessToken;
-        refreshTokenCookie = extractRefreshCookie(res);
+        refreshTokenCookie = extractAndValidateRefreshCookie(res);
     });
 
     it('Get current user info', async () => {
         const res = await request(app.getHttpServer())
-            .get('/users')
+            .get('/users/me')
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(200);
 
@@ -128,9 +127,13 @@ describe('Auth & Users (e2e)', () => {
             .expect(200);
 
         expect(res.body).toHaveProperty('accessToken');
+        extractAndValidateRefreshCookie(res);
     });
 
     it('Logout user', async () => {
-        await request(app.getHttpServer()).get('/auth/logout').expect(200);
+        await request(app.getHttpServer())
+            .get('/auth/logout')
+            .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+            .expect(200);
     });
 });
