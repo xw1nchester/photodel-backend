@@ -4,13 +4,16 @@ import {
     Column,
     CreateDateColumn,
     OneToMany,
-    OneToOne
+    OneToOne,
+    ManyToMany,
+    JoinTable
 } from 'typeorm';
 
 import { Code } from '@codes/codes.entity';
 import { Token } from '@tokens/tokens.entity';
 
 import { Profile } from './profiles.entity';
+import { Role } from '@roles/roles.entity';
 
 @Entity('users')
 export class User {
@@ -26,10 +29,6 @@ export class User {
     @Column({ name: 'last_name' })
     lastName: string;
 
-    // TODO: удалить т.к. есть в профиле
-    @Column({ nullable: true })
-    phone: string;
-
     @Column({ name: 'password_hash' })
     passwordHash: string;
 
@@ -41,6 +40,9 @@ export class User {
 
     @Column({ name: 'is_verified', default: false })
     isVerified: boolean;
+
+    @Column({ nullable: true })
+    avatar: string;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
@@ -56,4 +58,18 @@ export class User {
 
     @OneToMany(() => Code, code => code.user)
     codes: Code[];
+
+    @ManyToMany(() => Role, role => role.users)
+    @JoinTable({
+        name: 'users_roles',
+        joinColumn: {
+            name: 'user_id',
+            referencedColumnName: 'id'
+        },
+        inverseJoinColumn: {
+            name: 'role_id',
+            referencedColumnName: 'id'
+        }
+    })
+    roles: Role[];
 }

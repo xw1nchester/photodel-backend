@@ -7,6 +7,8 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
+        "^@database/(.*)$": "<rootDir>/../src/database/$1",
+        "^@database$": "<rootDir>/../src/database",
         "^@utils/(.*)$": "<rootDir>/../src/utils/$1",
         "^@utils$": "<rootDir>/../src/utils",
         "^@users/(.*)$": "<rootDir>/../src/users/$1",
@@ -20,6 +22,10 @@
         "^@codes/(.*)$": "<rootDir>/../src/codes/$1",
         "^@codes$": "<rootDir>/../src/codes",
         "^@mail/(.*)$": "<rootDir>/../src/mail/$1",
-        "^@mail$": "<rootDir>/../src/mail"
+        "^@mail$": "<rootDir>/../src/mail",
+        "^@pro-categories/(.*)$": "<rootDir>/../src/pro-categories/$1",
+        "^@pro-categories$": "<rootDir>/../src/pro-categories",
+        "^@socials/(.*)$": "<rootDir>/../src/socials/$1",
+        "^@socials$": "<rootDir>/../src/socials"
     }
 }

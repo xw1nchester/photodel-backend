@@ -64,7 +64,6 @@ export class CodesService {
         });
 
         if (existingCode) {
-            // TODO: подумать над обработкой выше
             throw new BadRequestException('Код уже отправлен');
         }
 
@@ -88,7 +87,6 @@ export class CodesService {
         });
 
         if (!existingCode) {
-            // TODO: подумать над обработкой выше
             throw new BadRequestException('Код недействителен или истек');
         }
 

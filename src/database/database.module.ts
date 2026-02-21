@@ -7,7 +7,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         TypeOrmModule.forRootAsync({
             useFactory: (configService: ConfigService) => ({
                 type: 'postgres',
-                // TODO: рассмотреть еще способы использования отдельной бд для тестов
                 host: configService.get('DB_HOST'),
                 port: configService.get('DB_PORT'),
                 username: configService.get('DB_USER'),

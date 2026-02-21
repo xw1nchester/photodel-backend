@@ -38,6 +38,8 @@
             "@pro-categories/*": ["src/pro-categories/*"],
             "@socials": ["src/socials"],
             "@socials/*": ["src/socials/*"],
+            "@roles": ["src/roles"],
+            "@roles/*": ["src/roles/*"]
         }
     }
 }

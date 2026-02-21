@@ -2,17 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { RegisterRequestDto } from '@auth/dto/register-request.dto';
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { SocialsService } from '@socials/socials.service';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { ProfileRequestDto } from './dto/profile-request.dto';
-import { UserDto } from './dto/user.dto';
 import { ProfileSocial } from './entities/profiles-socials.entity';
 import { Profile } from './entities/profiles.entity';
 import { User } from './entities/users.entity';
-
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -31,7 +29,8 @@ export class UsersService {
 
     async findById(id: number) {
         const user = await this.usersRepository.findOne({
-            where: { id }
+            where: { id },
+            relations: { roles: true }
         });
 
         if (!user) {
@@ -46,22 +45,36 @@ export class UsersService {
             ? manager.getRepository(User)
             : this.usersRepository;
 
-        return await repo.findOneBy({ email });
+        return await repo.findOne({
+            where: { email },
+            relations: { roles: true }
+        });
     }
 
     createDto(user: User) {
-        return new UserDto(user);
+        return {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            // TODO: tmp
+            avatar: "https://avatars.githubusercontent.com/u/63304397",
+            isAdult: user.isAdult,
+            isProfessional: user.isProfessional,
+            isVerified: user.isVerified,
+            createdAt: user.createdAt,
+            roles: user.roles.map(r => r.name)
+        };
     }
 
-    // TODO: хорошая ли идея использовать dto из другого модуля?
-    async create(dto: RegisterRequestDto, manager?: EntityManager) {
+    async create(dto: CreateUserDto, manager?: EntityManager) {
         const repo = manager
             ? manager.getRepository(User)
             : this.usersRepository;
 
         const user = repo.create({
             ...dto,
-            passwordHash: dto.password,
+            roles: [],
             profile: {}
         });
 

@@ -13,8 +13,8 @@ export class UserResponseDto {
     @ApiProperty({ example: 'Петров' })
     lastName: string;
 
-    @ApiProperty({ example: '+7 (912) 345-67-89', nullable: true })
-    phone: string | null;
+    @ApiProperty({ example: 'https://avatars.githubusercontent.com/u/63304397' })
+    avatar: string;
 
     @ApiProperty({ example: true })
     isAdult: boolean;
@@ -27,4 +27,7 @@ export class UserResponseDto {
 
     @ApiProperty({ example: '2026-02-15T15:31:31.992Z' })
     createdAt: string;
+
+    @ApiProperty({ example: ['MODERATOR'] })
+    roles: string[];
 }

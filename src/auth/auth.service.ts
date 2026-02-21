@@ -56,12 +56,23 @@ export class AuthService {
                 );
             }
 
-            dto.password = hashSync(dto.password, genSaltSync(10));
-
-            const createdUser = await this.usersService.create(dto, manager);
+            const createdUser = await this.usersService.create(
+                {
+                    email: dto.email,
+                    firstName: dto.firstName,
+                    lastName: dto.lastName,
+                    isAdult: dto.isAdult,
+                    isProfessional: dto.isProfessional,
+                    passwordHash: hashSync(dto.password, genSaltSync(10))
+                },
+                manager
+            );
 
             const tokens = await this.generateTokens(
-                { id: createdUser.id },
+                {
+                    id: createdUser.id,
+                    roles: existingUser.roles.map(r => r.name)
+                },
                 userAgent,
                 manager
             );
@@ -90,7 +101,7 @@ export class AuthService {
         }
 
         const tokens = await this.generateTokens(
-            { id: existingUser.id },
+            { id: existingUser.id, roles: existingUser.roles.map(r => r.name) },
             userAgent
         );
 
@@ -108,9 +119,14 @@ export class AuthService {
             throw new UnauthorizedException();
         }
 
-        // const user = await this.usersService.findById(tokenData.user.id);
+        const { id, roles } = await this.usersService.findById(
+            tokenData.user.id
+        );
 
-        return this.generateTokens({ id: tokenData.user.id }, userAgent);
+        return this.generateTokens(
+            { id, roles: roles.map(r => r.name) },
+            userAgent
+        );
     }
 
     async logout(token: string) {

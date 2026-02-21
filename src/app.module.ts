@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { DatabaseModule } from '@database/database.module';
 
 import { AppController } from './app.controller';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
     imports: [
@@ -14,7 +15,8 @@ import { AppController } from './app.controller';
             isGlobal: true
         }),
         DatabaseModule,
-        AuthModule
+        AuthModule,
+        RolesModule
     ],
     controllers: [AppController],
     providers: [
