@@ -1,9 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
-import { ProCategoriesService } from './pro-categories.service';
 import { Public } from '@auth/decorators';
+
 import { ProCategoriesResponseDto } from './dto/pro-categories-response.dto';
+import { ProCategoriesService } from './pro-categories.service';
 
 @ApiTags('Pro Categories')
 @Controller('pro-categories')

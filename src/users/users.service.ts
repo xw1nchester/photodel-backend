@@ -1,39 +1,37 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { RegisterRequestDto } from '@auth/dto/register-request.dto';
-import { ProCategory } from '@pro-categories/pro-categories.entity';
-import { Social } from '@socials/socials.entity';
-import { Specialization } from '@specializations/specializations.entity';
+import { ProCategoriesService } from '@pro-categories/pro-categories.service';
+import { SocialsService } from '@socials/socials.service';
+import { SpecializationsService } from '@specializations/specializations.service';
 
 import { ProfileRequestDto } from './dto/profile-request.dto';
 import { UserDto } from './dto/user.dto';
-import { Profile } from './entities/profiles.entity';
 import { ProfileSocial } from './entities/profiles-socials.entity';
+import { Profile } from './entities/profiles.entity';
 import { User } from './entities/users.entity';
+
 
 @Injectable()
 export class UsersService {
     constructor(
+        private readonly dataSource: DataSource,
         @InjectRepository(User)
-        private usersRepository: Repository<User>,
+        private readonly usersRepository: Repository<User>,
         @InjectRepository(Profile)
-        private profileRepository: Repository<Profile>,
+        private readonly profilesRepository: Repository<Profile>,
         @InjectRepository(ProfileSocial)
-        private profileSocialRepository: Repository<ProfileSocial>,
-        @InjectRepository(ProCategory)
-        private proCategoryRepository: Repository<ProCategory>,
-        @InjectRepository(Specialization)
-        private specializationRepository: Repository<Specialization>,
-        @InjectRepository(Social)
-        private socialRepository: Repository<Social>
+        private profilesSocialsRepository: Repository<ProfileSocial>,
+        private readonly proCategoriesService: ProCategoriesService,
+        private readonly specializationsService: SpecializationsService,
+        private readonly socialsService: SocialsService
     ) {}
 
     async findById(id: number) {
         const user = await this.usersRepository.findOne({
-            where: { id },
-            relations: { profile: true }
+            where: { id }
         });
 
         if (!user) {
@@ -70,7 +68,7 @@ export class UsersService {
         return await repo.save(user);
     }
 
-    async getDtoById(id: number) {
+    async getUserDtoById(id: number) {
         const user = await this.findById(id);
         return { user: this.createDto(user) };
     }
@@ -83,65 +81,89 @@ export class UsersService {
         return await repo.update({ id }, { isVerified: true });
     }
 
-    // TODO: рефакторить
-    async update(userId: number, dto: ProfileRequestDto) {
-        const user = await this.findById(userId);
+    async findProfileByUserId(id: number, manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(Profile)
+            : this.profilesRepository;
 
-        const profile = user.profile;
+        const profile = await repo.findOne({
+            where: { user: { id } },
+            relations: {
+                proCategories: true,
+                specializations: true,
+                socials: {
+                    social: true
+                }
+            }
+        });
 
-        if (dto.price !== undefined) profile.price = dto.price;
-        if (dto.conditions !== undefined) profile.conditions = dto.conditions;
-        if (dto.equipment !== undefined) profile.equipment = dto.equipment;
-        if (dto.geography !== undefined) profile.geography = dto.geography;
-        if (dto.languages !== undefined) profile.languages = dto.languages;
-        if (dto.about !== undefined) profile.about = dto.about;
-
-        if (dto.proCategoryIds) {
-            profile.proCategories = await this.proCategoryRepository.findByIds(
-                dto.proCategoryIds
-            );
+        if (!profile) {
+            throw new NotFoundException('Профиль не найден');
         }
 
-        // Update specializations
-        if (dto.specializationIds) {
-            profile.specializations =
-                await this.specializationRepository.findByIds(
-                    dto.specializationIds
+        return profile;
+    }
+
+    createProfileDto(profile: Profile) {
+        const socials = profile.socials.map(s => ({
+            ...s.social,
+            value: s.value
+        }));
+        return { ...profile, socials };
+    }
+
+    async getProfileDtoByUserId(userId: number, manager?: EntityManager) {
+        const profile = await this.findProfileByUserId(userId, manager);
+        return { profile: this.createProfileDto(profile) };
+    }
+
+    async updateProfile(userId: number, dto: ProfileRequestDto) {
+        return await this.dataSource.transaction(async manager => {
+            const profilesRepo = manager.getRepository(Profile);
+            const profileSocialsRepo = manager.getRepository(ProfileSocial);
+
+            const profile = await this.findProfileByUserId(userId, manager);
+
+            profile.price = dto.price;
+            profile.conditions = dto.conditions;
+            profile.equipment = dto.equipment;
+            profile.geography = dto.geography;
+            profile.languages = dto.languages;
+            profile.about = dto.about;
+
+            profile.proCategories =
+                await this.proCategoriesService.findAndValidateByIds(
+                    dto.proCategoryIds,
+                    manager
                 );
-        }
 
-        // Save profile first
-        await this.profileRepository.save(profile);
+            profile.specializations =
+                await this.specializationsService.findAndValidateByIds(
+                    dto.specializationIds,
+                    manager
+                );
 
-        // Update socials
-        if (dto.socials) {
-            // Remove existing socials
-            await this.profileSocialRepository.delete({
+            await profileSocialsRepo.delete({
                 profileId: profile.id
             });
 
-            // Add new socials
-            const socials = dto.socials.map(socialDto => {
-                const profileSocial = this.profileSocialRepository.create({
+            await this.socialsService.validateByIds(
+                dto.socials.map(s => s.id),
+                manager
+            );
+
+            profile.socials = dto.socials.map(dto => {
+                const profileSocial = profileSocialsRepo.create({
                     profileId: profile.id,
-                    socialId: socialDto.id,
-                    value: socialDto.value
+                    socialId: dto.id,
+                    value: dto.value
                 });
                 return profileSocial;
             });
 
-            await this.profileSocialRepository.save(socials);
-        }
+            await profilesRepo.save(profile);
 
-        // Reload profile with relations
-        return await this.profileRepository.findOne({
-            where: { id: profile.id },
-            relations: [
-                'proCategories',
-                'specializations',
-                'socials',
-                'socials.social'
-            ]
+            return await this.getProfileDtoByUserId(userId, manager);
         });
     }
 }

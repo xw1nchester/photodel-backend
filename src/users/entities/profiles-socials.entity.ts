@@ -12,11 +12,13 @@ export class ProfileSocial {
     @PrimaryColumn({ name: 'social_id' })
     socialId: number;
 
-    @ManyToOne(() => Profile, profile => profile.socials)
+    @ManyToOne(() => Profile, profile => profile.socials, {
+        onDelete: 'CASCADE'
+    })
     @JoinColumn({ name: 'profile_id' })
     profile: Profile;
 
-    @ManyToOne(() => Social, social => social.profiles)
+    @ManyToOne(() => Social, social => social.profiles, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'social_id' })
     social: Social;
 

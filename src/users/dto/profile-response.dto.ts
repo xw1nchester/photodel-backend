@@ -1,54 +1,47 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString } from 'class-validator';
 
-export class ProfileSocialDto {
+import { ProCategoryDto } from '@pro-categories/dto/pro-category.dto';
+import { SpecializationDto } from '@specializations/dto/specialization.dto';
+
+export class SocialResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
+
+    @ApiProperty({ example: 'Instagram' })
+    name: string;
 
     @ApiProperty({ example: 'https://instagram.com/user' })
     value: string;
 }
 
-export class ProfileRequestDto {
+export class ProfileResponseDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
     @ApiProperty({ example: '5000', nullable: true })
-    @IsString()
-    @IsOptional()
-    price: string;
+    price: string | null;
 
     @ApiProperty({ example: 'Только на условиях предоплаты', nullable: true })
-    @IsString()
-    @IsOptional()
-    conditions: string;
+    conditions: string | null;
 
     @ApiProperty({ example: 'Canon EOS R5, объективы 24-70, 70-200', nullable: true })
-    @IsString()
-    @IsOptional()
-    equipment: string;
+    equipment: string | null;
 
     @ApiProperty({ example: ['Москва', 'Санкт-Петербург', 'Екатеринбург'] })
-    @IsArray()
-    @IsString({ each: true })
     geography: string[];
 
     @ApiProperty({ example: ['Русский', 'Английский'] })
-    @IsArray()
-    @IsString({ each: true })
     languages: string[];
 
     @ApiProperty({ example: 'Профессиональный фотограф с 10-летним опытом', nullable: true })
-    @IsString()
-    @IsOptional()
-    about: string;
+    about: string | null;
 
-    @ApiProperty({ example: [1, 2] })
-    @IsArray()
-    proCategoryIds: number[];
+    @ApiProperty({ type: [ProCategoryDto] })
+    proCategories: ProCategoryDto[];
 
-    @ApiProperty({ example: [1, 2, 3] })
-    @IsArray()
-    specializationIds: number[];
+    @ApiProperty({ type: [SpecializationDto] })
+    specializations: SpecializationDto[];
 
-    @ApiProperty({ type: [ProfileSocialDto] })
-    @IsArray()
-    socials: ProfileSocialDto[];
+    @ApiProperty({ type: [SocialResponseDto] })
+    socials: SocialResponseDto[];
 }

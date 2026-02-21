@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository, EntityManager } from 'typeorm';
+
 import { Specialization } from './specializations.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
 export class SpecializationsService {
@@ -22,5 +23,23 @@ export class SpecializationsService {
         }
         const specializations = await this.specializarionaRepository.find();
         return { specializations };
+    }
+
+    async findAndValidateByIds(ids: number[], manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(Specialization)
+            : this.specializarionaRepository;
+            
+        ids = [...new Set(ids)];
+
+        const specializations = await repo.find({
+            where: { id: In(ids) }
+        });
+
+        if (ids.length != specializations.length) {
+            throw new NotFoundException('Специализация не найдена');
+        }
+
+        return specializations;
     }
 }

@@ -1,7 +1,8 @@
-import { ProCategory } from '@pro-categories/pro-categories.entity';
-import { Specialization } from '@specializations/specializations.entity';
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
+
+import { ProCategory } from '@pro-categories/pro-categories.entity';
+import { Specialization } from '@specializations/specializations.entity';
 
 export default class ProCategorySeeder implements Seeder {
     public async run(dataSource: DataSource): Promise<void> {

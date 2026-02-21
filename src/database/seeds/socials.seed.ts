@@ -9,12 +9,12 @@ export default class SocialSeeder implements Seeder {
 
         await repo.upsert(
             [
-                { name: 'phone' },
-                { name: 'site' },
-                { name: 'email' },
-                { name: 'facebook' },
-                { name: 'instagram' },
-                { name: 'vk' }
+                { name: 'Телефон' },
+                { name: 'Сайт' },
+                { name: 'Email' },
+                { name: 'Facebook' },
+                { name: 'Instagram' },
+                { name: 'Vk' }
             ],
             ['name']
         );

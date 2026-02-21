@@ -8,6 +8,7 @@ import { SocialsService } from './socials.service';
 @Module({
     imports: [TypeOrmModule.forFeature([Social])],
     controllers: [SocialsController],
-    providers: [SocialsService]
+    providers: [SocialsService],
+    exports: [SocialsService],
 })
 export class SocialsModule {}

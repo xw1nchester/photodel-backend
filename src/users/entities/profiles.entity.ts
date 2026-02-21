@@ -50,6 +50,8 @@ export class Profile {
     @ManyToMany(() => Specialization, specialization => specialization.profiles)
     specializations: Specialization[];
 
-    @OneToMany(() => ProfileSocial, profileSocial => profileSocial.profile)
+    @OneToMany(() => ProfileSocial, profileSocial => profileSocial.profile, {
+        cascade: true
+    })
     socials: ProfileSocial[];
 }

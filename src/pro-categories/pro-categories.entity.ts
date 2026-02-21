@@ -17,6 +17,7 @@ export class ProCategory {
     @Column({ unique: true })
     name: string;
 
+    // TODO: возможно таблица должна называться profiles_pro_categories (проверить другие кейсы)
     @ManyToMany(() => Profile, profile => profile.proCategories)
     @JoinTable({
         name: 'pro_categories_profiles',
