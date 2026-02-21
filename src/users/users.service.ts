@@ -6,11 +6,11 @@ import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { SocialsService } from '@socials/socials.service';
 import { SpecializationsService } from '@specializations/specializations.service';
 
+import { CreateUserDto } from './dto/create-user.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
 import { ProfileSocial } from './entities/profiles-socials.entity';
 import { Profile } from './entities/profiles.entity';
 import { User } from './entities/users.entity';
-import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {

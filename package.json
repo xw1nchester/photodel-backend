@@ -26,6 +26,8 @@
         "seed": "npx typeorm-extension seed:run -d src/typeorm.config.ts"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.995.0",
+        "@fastify/multipart": "^9.4.0",
         "@fastify/static": "^9.0.0",
         "@nestjs-modules/mailer": "^2.0.2",
         "@nestjs/common": "^11.1.13",
@@ -59,6 +61,7 @@
         "@types/bcrypt": "^6.0.0",
         "@types/express": "^4.17.17",
         "@types/jest": "^29.5.2",
+        "@types/multer": "^2.0.0",
         "@types/node": "^20.3.1",
         "@types/nodemailer": "^7.0.10",
         "@types/supertest": "^6.0.0",

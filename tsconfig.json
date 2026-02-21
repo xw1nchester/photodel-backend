@@ -39,7 +39,11 @@
             "@socials": ["src/socials"],
             "@socials/*": ["src/socials/*"],
             "@roles": ["src/roles"],
-            "@roles/*": ["src/roles/*"]
+            "@roles/*": ["src/roles/*"],
+            "@files": ["src/files"],
+            "@files/*": ["src/files/*"],
+            "@s3": ["src/s3"],
+            "@s3/*": ["src/s3/*"]
         }
     }
 }

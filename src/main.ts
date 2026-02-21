@@ -1,4 +1,5 @@
 import cors from '@fastify/cors';
+import fastifyMultipart from '@fastify/multipart';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -35,6 +36,8 @@ async function bootstrap() {
         origin: configService.get('ALLOWED_ORIGINS')?.split(',') || '*',
         credentials: true
     });
+
+    await app.register(fastifyMultipart);
 
     const swaggerConfig = new DocumentBuilder()
         .setTitle('Photodel API documentation')

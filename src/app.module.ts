@@ -7,7 +7,9 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { DatabaseModule } from '@database/database.module';
 
 import { AppController } from './app.controller';
+import { FilesModule } from './files/files.module';
 import { RolesModule } from './roles/roles.module';
+import { S3Module } from './s3/s3.module';
 
 @Module({
     imports: [
@@ -16,7 +18,9 @@ import { RolesModule } from './roles/roles.module';
         }),
         DatabaseModule,
         AuthModule,
-        RolesModule
+        RolesModule,
+        FilesModule,
+        S3Module
     ],
     controllers: [AppController],
     providers: [

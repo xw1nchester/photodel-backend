@@ -10,10 +10,10 @@ import {
 } from 'typeorm';
 
 import { Code } from '@codes/codes.entity';
+import { Role } from '@roles/roles.entity';
 import { Token } from '@tokens/tokens.entity';
 
 import { Profile } from './profiles.entity';
-import { Role } from '@roles/roles.entity';
 
 @Entity('users')
 export class User {
