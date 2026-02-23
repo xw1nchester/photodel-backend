@@ -9,6 +9,6 @@ import { SocialsService } from './socials.service';
     imports: [TypeOrmModule.forFeature([Social])],
     controllers: [SocialsController],
     providers: [SocialsService],
-    exports: [SocialsService],
+    exports: [SocialsService]
 })
 export class SocialsModule {}

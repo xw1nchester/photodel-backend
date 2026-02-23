@@ -58,7 +58,7 @@ export class UsersService {
             firstName: user.firstName,
             lastName: user.lastName,
             // TODO: tmp
-            avatar: "https://avatars.githubusercontent.com/u/63304397",
+            avatar: 'https://avatars.githubusercontent.com/u/63304397',
             isAdult: user.isAdult,
             isProfessional: user.isProfessional,
             isVerified: user.isVerified,

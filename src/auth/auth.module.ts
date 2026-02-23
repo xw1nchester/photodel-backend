@@ -13,7 +13,6 @@ import { AuthService } from './auth.service';
 import { GUARDS } from './guards';
 import { STRATEGIES } from './strategies';
 
-
 @Module({
     imports: [
         PassportModule,

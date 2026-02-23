@@ -20,7 +20,10 @@ export class ProfileRequestDto {
     @IsOptional()
     conditions: string;
 
-    @ApiProperty({ example: 'Canon EOS R5, объективы 24-70, 70-200', nullable: true })
+    @ApiProperty({
+        example: 'Canon EOS R5, объективы 24-70, 70-200',
+        nullable: true
+    })
     @IsString()
     @IsOptional()
     equipment: string;
@@ -35,7 +38,10 @@ export class ProfileRequestDto {
     @IsString({ each: true })
     languages: string[];
 
-    @ApiProperty({ example: 'Профессиональный фотограф с 10-летним опытом', nullable: true })
+    @ApiProperty({
+        example: 'Профессиональный фотограф с 10-летним опытом',
+        nullable: true
+    })
     @IsString()
     @IsOptional()
     about: string;

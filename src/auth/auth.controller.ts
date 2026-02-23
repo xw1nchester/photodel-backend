@@ -1,6 +1,10 @@
 import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+    ApiBearerAuth,
+    ApiCreatedResponse,
+    ApiOkResponse
+} from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
 
 import { Token } from '@tokens/tokens.entity';
@@ -23,10 +27,7 @@ export class AuthController {
         private readonly authService: AuthService
     ) {}
 
-    private setRefreshTokenToCookie(
-        @Res() reply: FastifyReply,
-        token: Token
-    ) {
+    private setRefreshTokenToCookie(@Res() reply: FastifyReply, token: Token) {
         reply.setCookie(REFRESH_TOKEN, token.token, {
             httpOnly: true,
             sameSite: 'lax',

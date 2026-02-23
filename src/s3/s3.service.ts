@@ -24,7 +24,9 @@ export class S3Service implements OnModuleInit {
     private async createBucketIfNotExists() {
         try {
             await this.s3.send(
-                new CreateBucketCommand({ Bucket: this.configService.get('S3_BUCKET') })
+                new CreateBucketCommand({
+                    Bucket: this.configService.get('S3_BUCKET')
+                })
             );
             this.logger.debug(
                 `Bucket '${this.configService.get('S3_BUCKET')}' created or already exists.`
@@ -53,7 +55,9 @@ export class S3Service implements OnModuleInit {
                     Effect: 'Allow',
                     Principal: '*',
                     Action: ['s3:GetObject'],
-                    Resource: [`arn:aws:s3:::${this.configService.get('S3_BUCKET')}/*`]
+                    Resource: [
+                        `arn:aws:s3:::${this.configService.get('S3_BUCKET')}/*`
+                    ]
                 }
             ]
         };
@@ -65,7 +69,9 @@ export class S3Service implements OnModuleInit {
                     Policy: JSON.stringify(policy)
                 })
             );
-            this.logger.debug(`Bucket '${this.configService.get('S3_BUCKET')}' is now public.`);
+            this.logger.debug(
+                `Bucket '${this.configService.get('S3_BUCKET')}' is now public.`
+            );
         } catch (err) {
             this.logger.error('Error setting bucket policy:', err);
             throw err;

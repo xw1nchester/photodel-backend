@@ -5,8 +5,8 @@ import { Code } from './codes.entity';
 import { CodesService } from './codes.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Code])],
-  providers: [CodesService],
-  exports: [CodesService]
+    imports: [TypeOrmModule.forFeature([Code])],
+    providers: [CodesService],
+    exports: [CodesService]
 })
 export class CodesModule {}

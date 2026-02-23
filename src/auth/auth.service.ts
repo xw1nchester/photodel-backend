@@ -71,7 +71,7 @@ export class AuthService {
             const tokens = await this.generateTokens(
                 {
                     id: createdUser.id,
-                    roles: existingUser.roles.map(r => r.name)
+                    roles: createdUser.roles.map(r => r.name)
                 },
                 userAgent,
                 manager

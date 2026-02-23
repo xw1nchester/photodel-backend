@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { SocialDto } from './social.dto';
+export class SocialDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 'Instagram' })
+    name: string;
+}
 
 export class SocialsResponseDto {
     @ApiProperty({ type: SocialDto, isArray: true })

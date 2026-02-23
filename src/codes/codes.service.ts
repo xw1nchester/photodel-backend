@@ -73,7 +73,7 @@ export class CodesService {
     async validateVerificationCode(
         code: string,
         userId: number,
-        manager?: EntityManager,
+        manager?: EntityManager
     ) {
         const repo = manager
             ? manager.getRepository(Code)

@@ -5,8 +5,8 @@ import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 
 import { ProfileRequestDto } from './dto/profile-request.dto';
-import { ProfileWrapperResponseDto } from './dto/profile-wrapper-response.dto';
-import { UserWrapperResponseDto } from './dto/user-wrapper-response.dto';
+import { ProfileWrapperResponseDto } from './dto/profile-response.dto';
+import { UserWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')

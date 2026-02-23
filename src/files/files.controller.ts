@@ -1,10 +1,15 @@
 import { Controller, Post, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse } from '@nestjs/swagger';
+import {
+    ApiBearerAuth,
+    ApiBody,
+    ApiConsumes,
+    ApiOkResponse
+} from '@nestjs/swagger';
 import { FastifyRequest } from 'fastify';
 
 import { S3Service } from '@s3/s3.service';
 
-import { UploadFilesResponseDto } from './dto/uploaded-file.dto';
+import { FilesResponseDto } from './dto/files-response.dto';
 
 @Controller('files')
 export class FilesController {
@@ -27,7 +32,7 @@ export class FilesController {
             }
         }
     })
-    @ApiOkResponse({ type: UploadFilesResponseDto })
+    @ApiOkResponse({ type: FilesResponseDto })
     public async uploadFiles(@Req() request: FastifyRequest) {
         if (!request.isMultipart()) {
             return { message: 'Request is not multipart' };

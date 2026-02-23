@@ -9,11 +9,13 @@ export class UserResponseDto {
 
     @ApiProperty({ example: 'Иван' })
     firstName: string;
-    
+
     @ApiProperty({ example: 'Петров' })
     lastName: string;
 
-    @ApiProperty({ example: 'https://avatars.githubusercontent.com/u/63304397' })
+    @ApiProperty({
+        example: 'https://avatars.githubusercontent.com/u/63304397'
+    })
     avatar: string;
 
     @ApiProperty({ example: true })
@@ -30,4 +32,9 @@ export class UserResponseDto {
 
     @ApiProperty({ example: ['MODERATOR'] })
     roles: string[];
+}
+
+export class UserWrapperResponseDto {
+    @ApiProperty({ type: UserResponseDto })
+    user: UserResponseDto;
 }

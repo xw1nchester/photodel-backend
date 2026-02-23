@@ -26,6 +26,12 @@
         "^@pro-categories/(.*)$": "<rootDir>/../src/pro-categories/$1",
         "^@pro-categories$": "<rootDir>/../src/pro-categories",
         "^@socials/(.*)$": "<rootDir>/../src/socials/$1",
-        "^@socials$": "<rootDir>/../src/socials"
+        "^@socials$": "<rootDir>/../src/socials",
+        "^@roles/(.*)$": "<rootDir>/../src/roles/$1",
+        "^@roles$": "<rootDir>/../src/roles",
+        "^@files/(.*)$": "<rootDir>/../src/files/$1",
+        "^@files$": "<rootDir>/../src/files",
+        "^@s3/(.*)$": "<rootDir>/../src/s3/$1",
+        "^@s3$": "<rootDir>/../src/s3"
     }
 }

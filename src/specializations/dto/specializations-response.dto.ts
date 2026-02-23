@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { SpecializationDto } from './specialization.dto';
+export class SpecializationDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 'Архитектура' })
+    name: string;
+}
 
 export class SpecializationsResponseDto {
     @ApiProperty({ type: SpecializationDto, isArray: true })

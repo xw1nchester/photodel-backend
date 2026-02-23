@@ -9,12 +9,12 @@ import { SocialsService } from './socials.service';
 @ApiTags('Socials')
 @Controller('socials')
 export class SocialsController {
-  constructor(private readonly socialsService: SocialsService) {}
+    constructor(private readonly socialsService: SocialsService) {}
 
-  @Public()
-  @Get()
-  @ApiOkResponse({ type: SocialsResponseDto })
-  async findAll() {
-    return await this.socialsService.findAll();
-  }
+    @Public()
+    @Get()
+    @ApiOkResponse({ type: SocialsResponseDto })
+    async findAll() {
+        return await this.socialsService.findAll();
+    }
 }

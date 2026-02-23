@@ -29,7 +29,7 @@ export class SpecializationsService {
         const repo = manager
             ? manager.getRepository(Specialization)
             : this.specializarionaRepository;
-            
+
         ids = [...new Set(ids)];
 
         const specializations = await repo.find({

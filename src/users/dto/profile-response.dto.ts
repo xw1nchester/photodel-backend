@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { ProCategoryDto } from '@pro-categories/dto/pro-category.dto';
-import { SpecializationDto } from '@specializations/dto/specialization.dto';
+import { ProCategoryDto } from '@pro-categories/dto/pro-categories-response.dto';
+import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 
 export class SocialResponseDto {
     @ApiProperty({ example: 1 })
@@ -24,7 +24,10 @@ export class ProfileResponseDto {
     @ApiProperty({ example: 'Только на условиях предоплаты', nullable: true })
     conditions: string | null;
 
-    @ApiProperty({ example: 'Canon EOS R5, объективы 24-70, 70-200', nullable: true })
+    @ApiProperty({
+        example: 'Canon EOS R5, объективы 24-70, 70-200',
+        nullable: true
+    })
     equipment: string | null;
 
     @ApiProperty({ example: ['Москва', 'Санкт-Петербург', 'Екатеринбург'] })
@@ -33,7 +36,10 @@ export class ProfileResponseDto {
     @ApiProperty({ example: ['Русский', 'Английский'] })
     languages: string[];
 
-    @ApiProperty({ example: 'Профессиональный фотограф с 10-летним опытом', nullable: true })
+    @ApiProperty({
+        example: 'Профессиональный фотограф с 10-летним опытом',
+        nullable: true
+    })
     about: string | null;
 
     @ApiProperty({ type: [ProCategoryDto] })
@@ -44,4 +50,9 @@ export class ProfileResponseDto {
 
     @ApiProperty({ type: [SocialResponseDto] })
     socials: SocialResponseDto[];
+}
+
+export class ProfileWrapperResponseDto {
+    @ApiProperty({ type: ProfileResponseDto })
+    profile: ProfileResponseDto;
 }

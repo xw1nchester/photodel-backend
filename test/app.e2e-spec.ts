@@ -16,7 +16,7 @@ describe('AppController (e2e)', () => {
         }).compile();
 
         app = moduleFixture.createNestApplication(new FastifyAdapter());
-        
+
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });

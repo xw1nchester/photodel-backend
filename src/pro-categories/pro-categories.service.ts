@@ -20,7 +20,7 @@ export class ProCategoriesService {
         const repo = manager
             ? manager.getRepository(ProCategory)
             : this.proCategoriesRepository;
-            
+
         ids = [...new Set(ids)];
 
         const proCategories = await repo.find({
