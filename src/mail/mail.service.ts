@@ -23,4 +23,26 @@ export class MailService {
             this.logger.error(`Error sending email to ${email}`, error);
         }
     }
+
+    async sendPasswordRecoveryCode(email: string, code: string) {
+        try {
+            await this.mailerService.sendMail({
+                to: email,
+                subject: 'Восстановление пароля',
+                template: 'recovery',
+                context: {
+                    code
+                }
+            });
+
+            this.logger.debug(
+                `Password recovery email was successfully sent to ${email}`
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error sending password recovery email to ${email}`,
+                error
+            );
+        }
+    }
 }

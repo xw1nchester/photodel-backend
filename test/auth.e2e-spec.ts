@@ -8,6 +8,8 @@ import fastifyCookie from 'fastify-cookie';
 import * as request from 'supertest';
 import { DataSource } from 'typeorm';
 
+import { Code } from '@codes/codes.entity';
+import { CodeType } from '@codes/enums';
 import { MailService } from '@mail/mail.service';
 
 import { AppModule } from '../src/app.module';
@@ -135,5 +137,28 @@ describe('Auth & Users (e2e)', () => {
             .get('/auth/logout')
             .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
             .expect(200);
+    });
+
+    describe('Resend verification', () => {
+        it('Should reject resend if retry interval not expired', async () => {
+            await request(app.getHttpServer())
+                .get('/auth/resend-verification')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(400);
+        });
+
+        it('Should allow resend if retry interval expired', async () => {
+            const repo = dataSource.getRepository(Code);
+
+            await repo.update(
+                { type: CodeType.VERIFICATION },
+                { retryDate: new Date(Date.now() - 1) }
+            );
+
+            await request(app.getHttpServer())
+                .get('/auth/resend-verification')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(200);
+        });
     });
 });

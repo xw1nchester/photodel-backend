@@ -17,13 +17,13 @@ class FileDto {
     size: number;
 
     @ApiProperty({
-        example: '550e8400-e29b-41d4-a716-446655440000'
+        example: '019c8bc5-3ae1-77fd-8ac0-411117f900a4.jpeg'
     })
     key: string;
 
     @ApiProperty({
         example:
-            'https://cdn.example.com/uploads/550e8400-e29b-41d4-a716-446655440000'
+            'https://cdn.example.com/uploads/019c8bc5-3ae1-77fd-8ac0-411117f900a4.jpeg'
     })
     url: string;
 }

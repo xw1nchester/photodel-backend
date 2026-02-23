@@ -12,10 +12,13 @@ import { Token } from '@tokens/tokens.entity';
 import { AuthService } from './auth.service';
 import { Cookie, CurrentUser, Public, UserAgent } from './decorators';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { CodeRequestDto } from './dto/code-request.dto';
+import { CodeRequestDto as CodeDto } from './dto/code-request.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
+import { RecoveryPasswordDto } from './dto/recovery-password.dto';
+import { RecoveryRequestDto } from './dto/recovery-request.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
+import { VerifyRecoveryDto } from './dto/verify-recovery.dto';
 import { JwtPayload } from './interfaces';
 
 const REFRESH_TOKEN = 'refresh-token';
@@ -114,10 +117,35 @@ export class AuthController {
     @ApiBearerAuth()
     @Post('verify-email')
     async verifyEmail(
-        @Body() { code }: CodeRequestDto,
+        @Body() { code }: CodeDto,
         @CurrentUser() user: JwtPayload
     ) {
         await this.authService.verifyEmail(code, user.id);
+        return HttpStatus.OK;
+    }
+
+    @Public()
+    @Post('send-recovery')
+    async sendRecoveryCode(@Body() dto: RecoveryRequestDto) {
+        await this.authService.sendRecoveryCode(dto.email);
+        return HttpStatus.OK;
+    }
+
+    @Public()
+    @Post('verify-recovery')
+    @ApiOkResponse({ type: CodeDto })
+    async verifyRecoveryCode(@Body() dto: VerifyRecoveryDto) {
+        return await this.authService.verifyRecoveryCode(dto.email, dto.code);
+    }
+
+    @Public()
+    @Post('recovery-password')
+    async recoveryPassword(@Body() dto: RecoveryPasswordDto) {
+        await this.authService.recoveryPassword(
+            dto.email,
+            dto.code,
+            dto.password
+        );
         return HttpStatus.OK;
     }
 }

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
+import { S3Service } from '@s3/s3.service';
 import { SocialsService } from '@socials/socials.service';
 import { SpecializationsService } from '@specializations/specializations.service';
 
@@ -20,9 +21,8 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
         @InjectRepository(Profile)
         private readonly profilesRepository: Repository<Profile>,
-        @InjectRepository(ProfileSocial)
-        private profilesSocialsRepository: Repository<ProfileSocial>,
         private readonly proCategoriesService: ProCategoriesService,
+        private readonly s3Service: S3Service,
         private readonly specializationsService: SpecializationsService,
         private readonly socialsService: SocialsService
     ) {}
@@ -51,14 +51,13 @@ export class UsersService {
         });
     }
 
-    createDto(user: User) {
+    createUserDto(user: User) {
         return {
             id: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
-            // TODO: tmp
-            avatar: 'https://avatars.githubusercontent.com/u/63304397',
+            avatar: user.avatar ? this.s3Service.getUrl(user.avatar) : null,
             isAdult: user.isAdult,
             isProfessional: user.isProfessional,
             isVerified: user.isVerified,
@@ -67,7 +66,7 @@ export class UsersService {
         };
     }
 
-    async create(dto: CreateUserDto, manager?: EntityManager) {
+    async createUser(dto: CreateUserDto, manager?: EntityManager) {
         const repo = manager
             ? manager.getRepository(User)
             : this.usersRepository;
@@ -83,7 +82,7 @@ export class UsersService {
 
     async getUserDtoById(id: number) {
         const user = await this.findById(id);
-        return { user: this.createDto(user) };
+        return { user: this.createUserDto(user) };
     }
 
     async verifyById(id: number, manager?: EntityManager) {
@@ -178,5 +177,41 @@ export class UsersService {
 
             return await this.getProfileDtoByUserId(userId, manager);
         });
+    }
+
+    async updateAvatar(userId: number, avatar: string) {
+        const user = await this.findById(userId);
+
+        await this.usersRepository.update({ id: userId }, { avatar });
+
+        if (avatar != user.avatar) {
+            await this.s3Service.deleteFile(user.avatar);
+        }
+
+        return await this.getUserDtoById(userId);
+    }
+
+    async deleteAvatar(userId: number) {
+        const user = await this.findById(userId);
+
+        await this.usersRepository.update({ id: userId }, { avatar: null });
+
+        if (user.avatar) {
+            await this.s3Service.deleteFile(user.avatar);
+        }
+
+        return await this.getUserDtoById(userId);
+    }
+
+    async updatePassword(
+        userId: number,
+        passwordHash: string,
+        manager?: EntityManager
+    ) {
+        const repo = manager
+            ? manager.getRepository(User)
+            : this.usersRepository;
+
+        await repo.update({ id: userId }, { passwordHash });
     }
 }

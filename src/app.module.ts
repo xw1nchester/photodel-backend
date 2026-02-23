@@ -9,7 +9,6 @@ import { DatabaseModule } from '@database/database.module';
 import { AppController } from './app.controller';
 import { FilesModule } from './files/files.module';
 import { RolesModule } from './roles/roles.module';
-import { S3Module } from './s3/s3.module';
 
 @Module({
     imports: [
@@ -19,8 +18,7 @@ import { S3Module } from './s3/s3.module';
         DatabaseModule,
         AuthModule,
         RolesModule,
-        FilesModule,
-        S3Module
+        FilesModule
     ],
     controllers: [AppController],
     providers: [

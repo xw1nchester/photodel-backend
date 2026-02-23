@@ -37,7 +37,13 @@ async function bootstrap() {
         credentials: true
     });
 
-    await app.register(fastifyMultipart);
+    await app.register(fastifyMultipart, {
+        limits: {
+            // 10MB
+            fileSize: 10 * 1024 * 1024,
+            files: 10
+        }
+    });
 
     const swaggerConfig = new DocumentBuilder()
         .setTitle('Photodel API documentation')

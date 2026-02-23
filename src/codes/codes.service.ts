@@ -70,6 +70,30 @@ export class CodesService {
         return await this.create(repo, CodeType.VERIFICATION, userId, 1, 5);
     }
 
+    async createPasswordRecoveryCode(userId: number, manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(Code)
+            : this.codesRepository;
+
+        const existingCode = await repo.findOneBy({
+            type: CodeType.PASSWORD_RECOVERY,
+            user: { id: userId },
+            retryDate: MoreThan(new Date())
+        });
+
+        if (existingCode) {
+            throw new BadRequestException('Код уже отправлен');
+        }
+
+        return await this.create(
+            repo,
+            CodeType.PASSWORD_RECOVERY,
+            userId,
+            1,
+            5
+        );
+    }
+
     async validateVerificationCode(
         code: string,
         userId: number,
@@ -91,5 +115,30 @@ export class CodesService {
         }
 
         await this.deleteUserCodes(repo, CodeType.VERIFICATION, userId);
+    }
+
+    async validatePasswordRecoveryCode(
+        code: string,
+        userId: number,
+        manager?: EntityManager
+    ): Promise<number> {
+        const repo = manager
+            ? manager.getRepository(Code)
+            : this.codesRepository;
+
+        const existingCode = await repo.findOneBy({
+            type: CodeType.PASSWORD_RECOVERY,
+            code,
+            user: { id: userId },
+            expiryDate: MoreThan(new Date())
+        });
+
+        if (!existingCode) {
+            throw new BadRequestException('Код недействителен или истек');
+        }
+
+        await this.deleteUserCodes(repo, CodeType.PASSWORD_RECOVERY, userId);
+
+        return userId;
     }
 }

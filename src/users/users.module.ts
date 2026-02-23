@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ProCategoriesModule } from '@pro-categories/pro-categories.module';
+import { S3Module } from '@s3/s3.module';
 import { SocialsModule } from '@socials/socials.module';
 import { SpecializationsModule } from '@specializations/specializations.module';
 
@@ -15,6 +16,7 @@ import { UsersService } from './users.service';
     imports: [
         TypeOrmModule.forFeature([User, Profile, ProfileSocial]),
         ProCategoriesModule,
+        S3Module,
         SpecializationsModule,
         SocialsModule
     ],

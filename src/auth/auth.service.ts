@@ -1,6 +1,7 @@
 import {
     BadRequestException,
     Injectable,
+    Logger,
     UnauthorizedException
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -18,6 +19,8 @@ import { JwtPayload } from './interfaces';
 
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
+
     constructor(
         private readonly dataSource: DataSource,
         private readonly jwtService: JwtService,
@@ -56,7 +59,7 @@ export class AuthService {
                 );
             }
 
-            const createdUser = await this.usersService.create(
+            const createdUser = await this.usersService.createUser(
                 {
                     email: dto.email,
                     firstName: dto.firstName,
@@ -84,7 +87,10 @@ export class AuthService {
 
             this.mailService.sendVerificationCode(createdUser.email, code);
 
-            return { user: this.usersService.createDto(createdUser), tokens };
+            return {
+                user: this.usersService.createUserDto(createdUser),
+                tokens
+            };
         });
     }
 
@@ -105,7 +111,7 @@ export class AuthService {
             userAgent
         );
 
-        return { user: this.usersService.createDto(existingUser), tokens };
+        return { user: this.usersService.createUserDto(existingUser), tokens };
     }
 
     async refresh(token: string, userAgent: string) {
@@ -162,6 +168,71 @@ export class AuthService {
             );
 
             await this.usersService.verifyById(userId, manager);
+        });
+    }
+
+    async sendRecoveryCode(email: string): Promise<void> {
+        await this.dataSource.transaction(async manager => {
+            const user = await this.usersService.findByEmail(email, manager);
+
+            if (!user) {
+                this.logger.warn(
+                    `Recovery code requested for non-existent email: ${email}`
+                );
+                return;
+            }
+
+            const code = await this.codesService.createPasswordRecoveryCode(
+                user.id,
+                manager
+            );
+
+            this.mailService.sendPasswordRecoveryCode(user.email, code);
+        });
+    }
+
+    async verifyRecoveryCode(email: string, code: string) {
+        return await this.dataSource.transaction(async manager => {
+            const user = await this.usersService.findByEmail(email, manager);
+
+            if (!user) {
+                throw new BadRequestException('Код недействителен или истек');
+            }
+
+            await this.codesService.validatePasswordRecoveryCode(
+                code,
+                user.id,
+                manager
+            );
+
+            const newCode = await this.codesService.createPasswordRecoveryCode(
+                user.id,
+                manager
+            );
+
+            return { code: newCode };
+        });
+    }
+
+    async recoveryPassword(email: string, code: string, password: string) {
+        return await this.dataSource.transaction(async manager => {
+            const user = await this.usersService.findByEmail(email, manager);
+
+            if (!user) {
+                throw new BadRequestException('Код недействителен или истек');
+            }
+
+            await this.codesService.validatePasswordRecoveryCode(
+                code,
+                user.id,
+                manager
+            );
+
+            await this.usersService.updatePassword(
+                user.id,
+                hashSync(password, genSaltSync(10)),
+                manager
+            );
         });
     }
 }

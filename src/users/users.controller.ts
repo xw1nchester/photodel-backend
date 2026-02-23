@@ -1,9 +1,10 @@
-import { Controller, Get, Body, Patch } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Delete } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 
+import { AvatarRequestDto } from './dto/avatar-request.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
 import { ProfileWrapperResponseDto } from './dto/profile-response.dto';
 import { UserWrapperResponseDto } from './dto/user-response.dto';
@@ -35,5 +36,22 @@ export class UsersController {
         @Body() dto: ProfileRequestDto
     ) {
         return await this.usersService.updateProfile(user.id, dto);
+    }
+
+    @Patch('avatar')
+    @ApiBearerAuth()
+    @ApiOkResponse({ type: UserWrapperResponseDto })
+    async updateAvatar(
+        @CurrentUser() user: JwtPayload,
+        @Body() dto: AvatarRequestDto
+    ) {
+        return await this.usersService.updateAvatar(user.id, dto.avatar);
+    }
+
+    @Delete('avatar')
+    @ApiBearerAuth()
+    @ApiOkResponse({ type: UserWrapperResponseDto })
+    async deleteAvatar(@CurrentUser() user: JwtPayload) {
+        return await this.usersService.deleteAvatar(user.id);
     }
 }

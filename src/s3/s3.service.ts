@@ -12,7 +12,7 @@ import {
     OnModuleInit
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { v4 } from 'uuid';
+import { v7 } from 'uuid';
 
 @Injectable()
 export class S3Service implements OnModuleInit {
@@ -109,7 +109,8 @@ export class S3Service implements OnModuleInit {
 
     async uploadFile(body: Buffer, contentType: string) {
         try {
-            const key = v4();
+            const ext = contentType.split('/')[1];
+            const key = `${v7()}.${ext}`;
 
             await this.s3.send(
                 new PutObjectCommand({
