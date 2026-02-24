@@ -8,13 +8,19 @@ import { SpecializationsModule } from '@specializations/specializations.module';
 
 import { ProfileSocial } from './entities/profiles-socials.entity';
 import { Profile } from './entities/profiles.entity';
+import { TemporaryLocation } from './entities/temporary-locations.entity';
 import { User } from './entities/users.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([User, Profile, ProfileSocial]),
+        TypeOrmModule.forFeature([
+            User,
+            Profile,
+            ProfileSocial,
+            TemporaryLocation
+        ]),
         ProCategoriesModule,
         S3Module,
         SpecializationsModule,

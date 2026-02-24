@@ -14,6 +14,26 @@ export class SocialResponseDto {
     value: string;
 }
 
+export class TemporaryLocationResponseDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: '2024-06-01' })
+    startDate: string;
+
+    @ApiProperty({ example: '2024-08-31' })
+    endDate: string;
+
+    @ApiProperty({ example: 37.6173 })
+    longitude: number;
+
+    @ApiProperty({ example: 55.7558 })
+    latitude: number;
+
+    @ApiProperty({ example: 'Отпуск в Италии', nullable: true })
+    comment: string | null;
+}
+
 export class ProfileResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
@@ -50,6 +70,9 @@ export class ProfileResponseDto {
 
     @ApiProperty({ type: [SocialResponseDto] })
     socials: SocialResponseDto[];
+
+    @ApiProperty({ type: [TemporaryLocationResponseDto] })
+    temporaryLocations: TemporaryLocationResponseDto[];
 }
 
 export class ProfileWrapperResponseDto {

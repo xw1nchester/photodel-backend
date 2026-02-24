@@ -43,7 +43,9 @@
             "@files": ["src/files"],
             "@files/*": ["src/files/*"],
             "@s3": ["src/s3"],
-            "@s3/*": ["src/s3/*"]
+            "@s3/*": ["src/s3/*"],
+            "@shared": ["src/shared"],
+            "@shared/*": ["src/shared/*"]
         }
     }
 }

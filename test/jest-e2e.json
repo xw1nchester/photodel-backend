@@ -32,6 +32,8 @@
         "^@files/(.*)$": "<rootDir>/../src/files/$1",
         "^@files$": "<rootDir>/../src/files",
         "^@s3/(.*)$": "<rootDir>/../src/s3/$1",
-        "^@s3$": "<rootDir>/../src/s3"
+        "^@s3$": "<rootDir>/../src/s3",
+        "^@shared/(.*)$": "<rootDir>/../src/shared/$1",
+        "^@shared$": "<rootDir>/../src/shared"
     }
 }

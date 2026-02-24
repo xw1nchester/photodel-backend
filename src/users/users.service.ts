@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, Point, Repository } from 'typeorm';
 
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { S3Service } from '@s3/s3.service';
@@ -11,6 +11,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
 import { ProfileSocial } from './entities/profiles-socials.entity';
 import { Profile } from './entities/profiles.entity';
+import { TemporaryLocation } from './entities/temporary-locations.entity';
 import { User } from './entities/users.entity';
 
 @Injectable()
@@ -105,7 +106,8 @@ export class UsersService {
                 specializations: true,
                 socials: {
                     social: true
-                }
+                },
+                temporaryLocations: true
             }
         });
 
@@ -121,7 +123,23 @@ export class UsersService {
             ...s.social,
             value: s.value
         }));
-        return { ...profile, socials };
+
+        const temporaryLocations = profile.temporaryLocations.map(loc => ({
+            id: loc.id,
+            startDate:
+                loc.startDate instanceof Date
+                    ? loc.startDate.toISOString().split('T')[0]
+                    : loc.startDate,
+            endDate:
+                loc.endDate instanceof Date
+                    ? loc.endDate.toISOString().split('T')[0]
+                    : loc.endDate,
+            longitude: loc.coordinates.coordinates[0],
+            latitude: loc.coordinates.coordinates[1],
+            comment: loc.comment
+        }));
+
+        return { ...profile, socials, temporaryLocations };
     }
 
     async getProfileDtoByUserId(userId: number, manager?: EntityManager) {
@@ -133,6 +151,8 @@ export class UsersService {
         return await this.dataSource.transaction(async manager => {
             const profilesRepo = manager.getRepository(Profile);
             const profileSocialsRepo = manager.getRepository(ProfileSocial);
+            const temporaryLocationsRepo =
+                manager.getRepository(TemporaryLocation);
 
             const profile = await this.findProfileByUserId(userId, manager);
 
@@ -142,6 +162,18 @@ export class UsersService {
             profile.geography = dto.geography;
             profile.languages = dto.languages;
             profile.about = dto.about;
+
+            if (dto.coordinates) {
+                const coordinates: Point = {
+                    type: 'Point',
+                    coordinates: [
+                        dto.coordinates.longitude,
+                        dto.coordinates.latitude
+                    ]
+                };
+
+                profile.coordinates = coordinates;
+            }
 
             profile.proCategories =
                 await this.proCategoriesService.findAndValidateByIds(
@@ -171,6 +203,26 @@ export class UsersService {
                     value: dto.value
                 });
                 return profileSocial;
+            });
+
+            await temporaryLocationsRepo.delete({ profileId: profile.id });
+
+            profile.temporaryLocations = dto.temporaryLocations.map(locDto => {
+                const coordinates: Point = {
+                    type: 'Point',
+                    coordinates: [
+                        locDto.coordinates.longitude,
+                        locDto.coordinates.latitude
+                    ]
+                };
+
+                return temporaryLocationsRepo.create({
+                    profileId: profile.id,
+                    startDate: new Date(locDto.startDate),
+                    endDate: new Date(locDto.endDate),
+                    coordinates,
+                    comment: locDto.comment
+                });
             });
 
             await profilesRepo.save(profile);
@@ -213,5 +265,40 @@ export class UsersService {
             : this.usersRepository;
 
         await repo.update({ id: userId }, { passwordHash });
+    }
+
+    async findNearbyUsers(lat: number, lng: number) {
+        const qb = this.usersRepository
+            .createQueryBuilder('user')
+            .leftJoin('user.profile', 'profile')
+            .select([
+                'user.id AS id',
+                'user.firstName AS "firstName"',
+                'user.lastName AS "lastName"',
+                'user.avatar AS avatar'
+            ])
+            .addSelect(
+                `
+                ST_Distance(
+                    profile.coordinates,
+                    ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)
+                )
+                `,
+                'distance'
+            )
+            .where('profile.coordinates IS NOT NULL')
+            .setParameters({ lat, lng });
+
+        const result = await qb.orderBy('distance', 'ASC').getRawMany();
+
+        const users = result.map(user => ({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatar: user.avatar,
+            distance: Number((user.distance / 1000).toFixed(1))
+        }));
+
+        return { users };
     }
 }

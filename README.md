@@ -15,7 +15,7 @@ npm run seed
 
 Выдать роли пользователю:
 ```sql
-INSERT INTO user_roles (user_id, role_id)
+INSERT INTO users_roles (user_id, role_id)
 VALUES (<USER_ID>, <ROLE_ID>);
 ```
 

@@ -1,10 +1,19 @@
-import { Controller, Get, Body, Patch, Delete } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
+import {
+    Controller,
+    Get,
+    Body,
+    Patch,
+    Delete,
+    Query,
+    ParseFloatPipe
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 
-import { CurrentUser } from '@auth/decorators';
+import { CurrentUser, Public } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 
 import { AvatarRequestDto } from './dto/avatar-request.dto';
+import { NearbyUsersWrapperResponseDto } from './dto/nearby-user-response.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
 import { ProfileWrapperResponseDto } from './dto/profile-response.dto';
 import { UserWrapperResponseDto } from './dto/user-response.dto';
@@ -53,5 +62,17 @@ export class UsersController {
     @ApiOkResponse({ type: UserWrapperResponseDto })
     async deleteAvatar(@CurrentUser() user: JwtPayload) {
         return await this.usersService.deleteAvatar(user.id);
+    }
+
+    @Public()
+    @Get('nearby')
+    @ApiQuery({ name: 'latitude', example: 55.7558 })
+    @ApiQuery({ name: 'longitude', example: 37.6173 })
+    @ApiOkResponse({ type: NearbyUsersWrapperResponseDto })
+    async findNearbyUsers(
+        @Query('latitude', ParseFloatPipe) latitude: number,
+        @Query('longitude', ParseFloatPipe) longitude: number
+    ) {
+        return await this.usersService.findNearbyUsers(latitude, longitude);
     }
 }

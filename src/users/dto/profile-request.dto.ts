@@ -1,5 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+    IsArray,
+    IsDateString,
+    IsOptional,
+    IsString,
+    ValidateNested
+} from 'class-validator';
+
+import { CoordinatesDto } from '@shared/dto/coordinates.dto';
 
 export class ProfileSocialDto {
     @ApiProperty({ example: 1 })
@@ -7,6 +16,30 @@ export class ProfileSocialDto {
 
     @ApiProperty({ example: 'https://instagram.com/user' })
     value: string;
+}
+
+export class TemporaryLocationDto {
+    @ApiProperty({ example: '2024-06-01' })
+    @IsDateString()
+    startDate: string;
+
+    @ApiProperty({ example: '2024-08-31' })
+    @IsDateString()
+    endDate: string;
+
+    @ApiProperty({ type: CoordinatesDto })
+    @ValidateNested()
+    @Type(() => CoordinatesDto)
+    coordinates: CoordinatesDto;
+
+    @ApiProperty({
+        example: 'Отпуск в Италии',
+        required: false,
+        nullable: true
+    })
+    @IsString()
+    @IsOptional()
+    comment?: string;
 }
 
 export class ProfileRequestDto {
@@ -46,6 +79,12 @@ export class ProfileRequestDto {
     @IsOptional()
     about: string;
 
+    @ApiProperty({ type: CoordinatesDto })
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => CoordinatesDto)
+    coordinates: CoordinatesDto;
+
     @ApiProperty({ example: [1, 2] })
     @IsArray()
     proCategoryIds: number[];
@@ -57,4 +96,10 @@ export class ProfileRequestDto {
     @ApiProperty({ type: [ProfileSocialDto] })
     @IsArray()
     socials: ProfileSocialDto[];
+
+    @ApiProperty({ type: [TemporaryLocationDto], required: false })
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => TemporaryLocationDto)
+    temporaryLocations: TemporaryLocationDto[];
 }

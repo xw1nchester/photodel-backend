@@ -1,7 +1,17 @@
 services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: photodel
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db:/var/lib/postgresql/data
+
   minio:
     image: minio/minio:latest
-    container_name: minio
     restart: unless-stopped
     ports:
       - "9000:9000"     # API

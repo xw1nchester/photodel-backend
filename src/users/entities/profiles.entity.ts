@@ -5,6 +5,7 @@ import {
     ManyToMany,
     OneToMany,
     OneToOne,
+    Point,
     PrimaryGeneratedColumn
 } from 'typeorm';
 
@@ -12,6 +13,7 @@ import { ProCategory } from '@pro-categories/pro-categories.entity';
 import { Specialization } from '@specializations/specializations.entity';
 
 import { ProfileSocial } from './profiles-socials.entity';
+import { TemporaryLocation } from './temporary-locations.entity';
 import { User } from './users.entity';
 
 @Entity('profiles')
@@ -37,8 +39,15 @@ export class Profile {
     @Column({ nullable: true })
     about: string;
 
-    // TODO: location (postgis)
-    // TODO: tmp location
+    @Column({
+        type: 'geography',
+        srid: 4326,
+        spatialFeatureType: 'Point',
+        nullable: true
+    })
+    coordinates: Point;
+
+    // TODO: текстовое название?
 
     @OneToOne(() => User, user => user.profile)
     @JoinColumn({ name: 'user_id' })
@@ -54,4 +63,13 @@ export class Profile {
         cascade: true
     })
     socials: ProfileSocial[];
+
+    @OneToMany(
+        () => TemporaryLocation,
+        temporaryLocation => temporaryLocation.profile,
+        {
+            cascade: true
+        }
+    )
+    temporaryLocations: TemporaryLocation[];
 }
