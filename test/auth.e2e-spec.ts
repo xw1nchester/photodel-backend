@@ -4,6 +4,10 @@ import {
     NestFastifyApplication
 } from '@nestjs/platform-fastify';
 import { Test, TestingModule } from '@nestjs/testing';
+import {
+    StartedPostgreSqlContainer,
+    PostgreSqlContainer
+} from '@testcontainers/postgresql';
 import fastifyCookie from 'fastify-cookie';
 import * as request from 'supertest';
 import { DataSource } from 'typeorm';
@@ -13,8 +17,6 @@ import { CodeType } from '@codes/enums';
 import { MailService } from '@mail/mail.service';
 
 import { AppModule } from '../src/app.module';
-
-import { clearDatabase } from './utils/clear-db';
 
 const extractAndValidateRefreshCookie = (res: request.Response) => {
     const raw = res.headers['set-cookie'];
@@ -32,7 +34,11 @@ const extractAndValidateRefreshCookie = (res: request.Response) => {
 };
 
 describe('Auth & Users (e2e)', () => {
+    // чтобы успел стартануть тестовый контейнер с бд
+    jest.setTimeout(30000);
+
     let app: NestFastifyApplication;
+    let container: StartedPostgreSqlContainer;
     let dataSource: DataSource;
     let accessToken: string;
     let refreshTokenCookie: string;
@@ -42,7 +48,17 @@ describe('Auth & Users (e2e)', () => {
     };
 
     beforeAll(async () => {
-        process.env.NODE_ENV = 'test';
+        container = await new PostgreSqlContainer(
+            'postgis/postgis:16-3.4'
+        ).start();
+
+        // process.env.NODE_ENV = 'test';
+
+        process.env.DB_HOST = container.getHost();
+        process.env.DB_PORT = container.getMappedPort(5432).toString();
+        process.env.DB_USER = container.getUsername();
+        process.env.DB_PASSWORD = container.getPassword();
+        process.env.DB_NAME = container.getDatabase();
 
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [AppModule]
@@ -54,6 +70,7 @@ describe('Auth & Users (e2e)', () => {
         app = moduleFixture.createNestApplication(new FastifyAdapter());
 
         dataSource = app.get(DataSource);
+        await dataSource.runMigrations();
 
         app.useGlobalPipes(
             new ValidationPipe({
@@ -70,7 +87,8 @@ describe('Auth & Users (e2e)', () => {
     });
 
     afterAll(async () => {
-        await clearDatabase(dataSource);
+        // await clearDatabase(dataSource);
+        await container.stop();
         await app.close();
     });
 

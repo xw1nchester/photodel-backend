@@ -11,12 +11,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
                 port: configService.get('DB_PORT'),
                 username: configService.get('DB_USER'),
                 password: configService.get('DB_PASSWORD'),
-                database:
-                    configService.get('NODE_ENV') != 'test'
-                        ? configService.get('DB_NAME')
-                        : 'photodel_test',
+                database: configService.get('DB_NAME'),
                 autoLoadEntities: true, // OR entities: [__dirname + '/../**/*.entity{.ts,.js}']
-                synchronize: configService.get('NODE_ENV') == 'test'
+                migrations: [__dirname + '/migrations/*{.ts,.js}'],
+                // migrationsRun: configService.get('NODE_ENV') == 'test',
+                synchronize: false
             }),
             inject: [ConfigService]
         })
