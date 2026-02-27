@@ -5,7 +5,9 @@ import {
     Patch,
     Delete,
     Query,
-    ParseFloatPipe
+    Param,
+    ParseFloatPipe,
+    ParseIntPipe
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 
@@ -35,6 +37,13 @@ export class UsersController {
     @ApiOkResponse({ type: ProfileWrapperResponseDto })
     async getProfileDtoByUserId(@CurrentUser() user: JwtPayload) {
         return await this.usersService.getProfileDtoByUserId(user.id);
+    }
+
+    @Public()
+    @Get(':id/profile')
+    @ApiOkResponse({ type: ProfileWrapperResponseDto })
+    async getProfileDtoById(@Param('id', ParseIntPipe) id: number) {
+        return await this.usersService.getProfileDtoByUserId(id);
     }
 
     @Patch('profile')

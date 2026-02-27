@@ -39,6 +39,9 @@ export class ProfileResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
 
+    @ApiProperty({ example: 'Свободен', nullable: true })
+    status: string | null;
+
     @ApiProperty({ example: '5000', nullable: true })
     price: string | null;
 
@@ -63,7 +66,7 @@ export class ProfileResponseDto {
     })
     about: string | null;
 
-    @ApiProperty({ type: [LocationDto] })
+    @ApiProperty({ type: LocationDto })
     location: LocationDto;
 
     @ApiProperty({ type: [ProCategoryDto] })

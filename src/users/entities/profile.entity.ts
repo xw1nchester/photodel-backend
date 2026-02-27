@@ -23,6 +23,9 @@ export class Profile {
     id: number;
 
     @Column({ nullable: true })
+    status: string;
+
+    @Column({ nullable: true })
     price: string;
 
     @Column({ nullable: true })

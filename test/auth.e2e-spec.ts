@@ -104,56 +104,109 @@ describe('Auth & Users (e2e)', () => {
         password: 'StrongPass123!'
     };
 
-    it('Register a new user', async () => {
-        const res = await request(app.getHttpServer())
-            .post('/auth/register')
-            .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-            .send(testUser)
-            .expect(201);
+    describe('Register', () => {
+        it('should register a new user with valid data and return access token', async () => {
+            const res = await request(app.getHttpServer())
+                .post('/auth/register')
+                .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+                .send(testUser)
+                .expect(201);
 
-        expect(res.body).toHaveProperty('accessToken');
-        expect(res.body.user.email).toBe(testUser.email);
-        extractAndValidateRefreshCookie(res);
+            expect(res.body).toHaveProperty('accessToken');
+            expect(res.body.user.email).toBe(testUser.email);
+            extractAndValidateRefreshCookie(res);
+        });
+
+        it('should not register user with already existing email', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/register')
+                .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+                .send(testUser)
+                .expect(400);
+        });
     });
 
-    it('Login with registered user', async () => {
-        const res = await request(app.getHttpServer())
-            .post('/auth/login')
-            .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-            .send({
-                email: testUser.email,
-                password: testUser.password
-            })
-            .expect(201);
+    describe('Login', () => {
+        it('should login user with correct email and password', async () => {
+            const res = await request(app.getHttpServer())
+                .post('/auth/login')
+                .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+                .send({
+                    email: testUser.email,
+                    password: testUser.password
+                })
+                .expect(201);
 
-        expect(res.body).toHaveProperty('accessToken');
-        expect(res.body.user.email).toBe(testUser.email);
+            expect(res.body).toHaveProperty('accessToken');
+            expect(res.body.user.email).toBe(testUser.email);
 
-        accessToken = res.body.accessToken;
-        refreshTokenCookie = extractAndValidateRefreshCookie(res);
+            accessToken = res.body.accessToken;
+            refreshTokenCookie = extractAndValidateRefreshCookie(res);
+        });
+
+        it('should not login user with incorrect password', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/login')
+                .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+                .send({
+                    email: testUser.email,
+                    password: 'invalid123'
+                })
+                .expect(400);
+        });
     });
 
-    it('Get current user info', async () => {
-        const res = await request(app.getHttpServer())
-            .get('/users/me')
-            .set('Authorization', `Bearer ${accessToken}`)
-            .expect(200);
+    describe('Get user info', () => {
+        it('should return current user data when valid access token is provided', async () => {
+            const res = await request(app.getHttpServer())
+                .get('/users/me')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(200);
 
-        expect(res.body.user.email).toBe(testUser.email);
+            expect(res.body.user.email).toBe(testUser.email);
+        });
+
+        it('should not return user data when request is made without authorization header', async () => {
+            await request(app.getHttpServer()).get('/users/me').expect(401);
+        });
+
+        it('should not return user data when invalid token is provided', async () => {
+            await request(app.getHttpServer())
+                .get('/users/me')
+                .set('Authorization', 'Bearer invalid123')
+                .expect(401);
+        });
     });
 
-    it('Refresh token', async () => {
-        const res = await request(app.getHttpServer())
-            .get('/auth/refresh')
-            .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-            .set('Cookie', refreshTokenCookie)
-            .expect(200);
+    describe('Refresh token', () => {
+        it('should refresh access token with valid refresh cookie', async () => {
+            const res = await request(app.getHttpServer())
+                .get('/auth/refresh')
+                .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+                .set('Cookie', refreshTokenCookie)
+                .expect(200);
 
-        expect(res.body).toHaveProperty('accessToken');
-        extractAndValidateRefreshCookie(res);
+            expect(res.body).toHaveProperty('accessToken');
+            extractAndValidateRefreshCookie(res);
+        });
+
+        it('should not refresh token when refresh cookie is missing', async () => {
+            await request(app.getHttpServer())
+                .get('/auth/refresh')
+                .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+                .expect(401);
+        });
+
+        it('should not refresh token with invalid refresh cookie', async () => {
+            await request(app.getHttpServer())
+                .get('/auth/refresh')
+                .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+                .set('Cookie', 'refresh-token=invalid-token')
+                .expect(401);
+        });
     });
 
-    it('Logout user', async () => {
+    it('should clear refresh cookie and invalidate session on logout', async () => {
         await request(app.getHttpServer())
             .get('/auth/logout')
             .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
@@ -161,14 +214,14 @@ describe('Auth & Users (e2e)', () => {
     });
 
     describe('Resend verification', () => {
-        it('Should reject resend if retry interval not expired', async () => {
+        it('should not resend verification code if retry interval has not expired yet', async () => {
             await request(app.getHttpServer())
                 .get('/auth/resend-verification')
                 .set('Authorization', `Bearer ${accessToken}`)
                 .expect(400);
         });
 
-        it('Should allow resend if retry interval expired', async () => {
+        it('should resend verification code after retry interval has expired', async () => {
             const repo = dataSource.getRepository(Code);
 
             await repo.update(
@@ -180,6 +233,75 @@ describe('Auth & Users (e2e)', () => {
                 .get('/auth/resend-verification')
                 .set('Authorization', `Bearer ${accessToken}`)
                 .expect(200);
+        });
+
+        it('should not resend verification code when authorization header is missing', async () => {
+            await request(app.getHttpServer())
+                .get('/auth/resend-verification')
+                .expect(401);
+        });
+
+        it('should not resend verification code when invalid token is provided', async () => {
+            await request(app.getHttpServer())
+                .get('/auth/resend-verification')
+                .set('Authorization', 'Bearer invalid-token')
+                .expect(401);
+        });
+    });
+
+    describe('Verify email', () => {
+        it('should not verify email with invalid verification code', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/verify-email')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({ code: 'invalid' })
+                .expect(400);
+        });
+
+        it('should verify user email with valid verification code', async () => {
+            // First, update the retryDate to allow creating a new code
+            const codeRepo = dataSource.getRepository(Code);
+            await codeRepo.update(
+                { type: CodeType.VERIFICATION },
+                { retryDate: new Date(Date.now() - 1) }
+            );
+
+            // Create a new verification code
+            const code = await codeRepo.findOne({
+                where: {
+                    type: CodeType.VERIFICATION,
+                    user: { email: testUser.email }
+                }
+            });
+
+            await request(app.getHttpServer())
+                .post('/auth/verify-email')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({ code: code.code })
+                .expect(201);
+        });
+
+        it('should not verify email when user is already verified', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/verify-email')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({ code: '000000' })
+                .expect(400);
+        });
+
+        it('should not verify email when authorization header is missing', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/verify-email')
+                .send({ code: '000000' })
+                .expect(401);
+        });
+
+        it('should not verify email when invalid token is provided', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/verify-email')
+                .set('Authorization', 'Bearer invalid-token')
+                .send({ code: '000000' })
+                .expect(401);
         });
     });
 });

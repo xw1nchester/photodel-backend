@@ -41,6 +41,9 @@ export class User {
     @Column({ name: 'is_verified', default: false })
     isVerified: boolean;
 
+    @Column({ name: 'is_pro', default: false })
+    isPro: boolean;
+
     @Column({ nullable: true })
     avatar: string;
 

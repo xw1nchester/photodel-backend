@@ -63,6 +63,7 @@ export class UsersService {
             isAdult: user.isAdult,
             isProfessional: user.isProfessional,
             isVerified: user.isVerified,
+            isPro: user.isPro,
             createdAt: user.createdAt,
             roles: user.roles.map(r => r.name)
         };
@@ -123,15 +124,17 @@ export class UsersService {
     }
 
     createProfileDto(profile: Profile) {
-        const location = {
-            id: profile.location.id,
-            latitude: profile.location.coordinates.coordinates[1],
-            longitude: profile.location.coordinates.coordinates[0],
-            country: profile.location.country,
-            city: profile.location.city,
-            street: profile.location.street,
-            houseNumber: profile.location.houseNumber
-        };
+        const location = profile.location
+            ? {
+                  id: profile.location.id,
+                  latitude: profile.location.coordinates.coordinates[1],
+                  longitude: profile.location.coordinates.coordinates[0],
+                  country: profile.location.country,
+                  city: profile.location.city,
+                  street: profile.location.street,
+                  houseNumber: profile.location.houseNumber
+              }
+            : null;
 
         const socials = profile.socials.map(s => ({
             ...s.social,
@@ -172,6 +175,7 @@ export class UsersService {
 
             const profile = await this.findProfileByUserId(userId, manager);
 
+            profile.status = dto.status;
             profile.price = dto.price;
             profile.conditions = dto.conditions;
             profile.equipment = dto.equipment;

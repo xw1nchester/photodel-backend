@@ -43,6 +43,11 @@ export class TemporaryLocationDto {
 }
 
 export class ProfileRequestDto {
+    @ApiProperty({ example: 'Свободен', nullable: true })
+    @IsString()
+    @IsOptional()
+    status: string;
+
     @ApiProperty({ example: '5000', nullable: true })
     @IsString()
     @IsOptional()
