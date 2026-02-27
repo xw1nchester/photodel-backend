@@ -8,6 +8,7 @@ import { DatabaseModule } from '@database/database.module';
 
 import { AppController } from './app.controller';
 import { FilesModule } from './files/files.module';
+import { LocationModule } from './location/location.module';
 import { RolesModule } from './roles/roles.module';
 
 @Module({
@@ -18,7 +19,8 @@ import { RolesModule } from './roles/roles.module';
         DatabaseModule,
         AuthModule,
         RolesModule,
-        FilesModule
+        FilesModule,
+        LocationModule
     ],
     controllers: [AppController],
     providers: [

@@ -4,6 +4,9 @@ export class SocialDto {
     @ApiProperty({ example: 1 })
     id: number;
 
+    @ApiProperty({ example: 'Instagram.svg' })
+    icon: string;
+
     @ApiProperty({ example: 'Instagram' })
     name: string;
 }

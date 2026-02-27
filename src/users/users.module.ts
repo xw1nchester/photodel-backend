@@ -6,10 +6,10 @@ import { S3Module } from '@s3/s3.module';
 import { SocialsModule } from '@socials/socials.module';
 import { SpecializationsModule } from '@specializations/specializations.module';
 
-import { ProfileSocial } from './entities/profiles-socials.entity';
-import { Profile } from './entities/profiles.entity';
-import { TemporaryLocation } from './entities/temporary-locations.entity';
-import { User } from './entities/users.entity';
+import { ProfileSocial } from './entities/profile-social.entity';
+import { Profile } from './entities/profile.entity';
+import { TemporaryLocation } from './entities/temporary-location.entity';
+import { User } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 

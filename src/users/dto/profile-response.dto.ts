@@ -1,11 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { LocationDto } from '@location/dto/location.dto';
 import { ProCategoryDto } from '@pro-categories/dto/pro-categories-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 
 export class SocialResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
+
+    @ApiProperty({ example: 'Instagram.svg' })
+    icon: string;
 
     @ApiProperty({ example: 'Instagram' })
     name: string;
@@ -24,11 +28,8 @@ export class TemporaryLocationResponseDto {
     @ApiProperty({ example: '2024-08-31' })
     endDate: string;
 
-    @ApiProperty({ example: 37.6173 })
-    longitude: number;
-
-    @ApiProperty({ example: 55.7558 })
-    latitude: number;
+    @ApiProperty({ type: [LocationDto] })
+    location: LocationDto;
 
     @ApiProperty({ example: 'Отпуск в Италии', nullable: true })
     comment: string | null;
@@ -61,6 +62,9 @@ export class ProfileResponseDto {
         nullable: true
     })
     about: string | null;
+
+    @ApiProperty({ type: [LocationDto] })
+    location: LocationDto;
 
     @ApiProperty({ type: [ProCategoryDto] })
     proCategories: ProCategoryDto[];

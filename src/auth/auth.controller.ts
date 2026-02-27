@@ -7,7 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
 
-import { Token } from '@tokens/tokens.entity';
+import { Token } from '@tokens/token.entity';
 
 import { AuthService } from './auth.service';
 import { Cookie, CurrentUser, Public, UserAgent } from './decorators';

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { Social } from './social.entity';
 import { SocialsController } from './socials.controller';
-import { Social } from './socials.entity';
 import { SocialsService } from './socials.service';
 
 @Module({

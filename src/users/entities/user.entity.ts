@@ -9,11 +9,11 @@ import {
     JoinTable
 } from 'typeorm';
 
-import { Code } from '@codes/codes.entity';
-import { Role } from '@roles/roles.entity';
-import { Token } from '@tokens/tokens.entity';
+import { Code } from '@codes/code.entity';
+import { Role } from '@roles/role.entity';
+import { Token } from '@tokens/token.entity';
 
-import { Profile } from './profiles.entity';
+import { Profile } from './profile.entity';
 
 @Entity('users')
 export class User {

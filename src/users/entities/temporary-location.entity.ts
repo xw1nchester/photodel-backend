@@ -5,9 +5,10 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn
 } from 'typeorm';
-import { Point } from 'typeorm';
 
-import { Profile } from './profiles.entity';
+import { Location } from '@location/location.entity';
+
+import { Profile } from './profile.entity';
 
 @Entity('temporary_locations')
 export class TemporaryLocation {
@@ -23,14 +24,9 @@ export class TemporaryLocation {
     @Column({ type: 'date' })
     endDate: Date;
 
-    @Column({
-        type: 'geography',
-        srid: 4326,
-        spatialFeatureType: 'Point'
-    })
-    coordinates: Point;
-
-    // TODO: текстовое название?
+    @ManyToOne(() => Location, { cascade: true })
+    @JoinColumn({ name: 'location_id' })
+    location: Location;
 
     @Column({ nullable: true })
     comment: string;

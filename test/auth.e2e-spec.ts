@@ -12,9 +12,10 @@ import fastifyCookie from 'fastify-cookie';
 import * as request from 'supertest';
 import { DataSource } from 'typeorm';
 
-import { Code } from '@codes/codes.entity';
+import { Code } from '@codes/code.entity';
 import { CodeType } from '@codes/enums';
 import { MailService } from '@mail/mail.service';
+import { S3Service } from '@s3/s3.service';
 
 import { AppModule } from '../src/app.module';
 
@@ -65,6 +66,8 @@ describe('Auth & Users (e2e)', () => {
         })
             .overrideProvider(MailService)
             .useValue(mockMailService)
+            .overrideProvider(S3Service)
+            .useValue({})
             .compile();
 
         app = moduleFixture.createNestApplication(new FastifyAdapter());

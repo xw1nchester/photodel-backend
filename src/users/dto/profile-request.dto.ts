@@ -8,7 +8,7 @@ import {
     ValidateNested
 } from 'class-validator';
 
-import { CoordinatesDto } from '@shared/dto/coordinates.dto';
+import { LocationDto } from '@location/dto/location.dto';
 
 export class ProfileSocialDto {
     @ApiProperty({ example: 1 })
@@ -27,10 +27,10 @@ export class TemporaryLocationDto {
     @IsDateString()
     endDate: string;
 
-    @ApiProperty({ type: CoordinatesDto })
+    @ApiProperty({ type: LocationDto })
     @ValidateNested()
-    @Type(() => CoordinatesDto)
-    coordinates: CoordinatesDto;
+    @Type(() => LocationDto)
+    location: LocationDto;
 
     @ApiProperty({
         example: 'Отпуск в Италии',
@@ -79,11 +79,11 @@ export class ProfileRequestDto {
     @IsOptional()
     about: string;
 
-    @ApiProperty({ type: CoordinatesDto })
+    @ApiProperty({ type: LocationDto })
     @IsOptional()
     @ValidateNested()
-    @Type(() => CoordinatesDto)
-    coordinates: CoordinatesDto;
+    @Type(() => LocationDto)
+    location: LocationDto;
 
     @ApiProperty({ example: [1, 2] })
     @IsArray()

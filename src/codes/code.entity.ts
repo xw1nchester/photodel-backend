@@ -6,7 +6,7 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 
-import { User } from '@users/entities/users.entity';
+import { User } from '@users/entities/user.entity';
 
 import { CodeType } from './enums';
 

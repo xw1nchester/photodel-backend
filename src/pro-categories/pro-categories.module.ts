@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ProCategoriesController } from './pro-categories.controller';
-import { ProCategory } from './pro-categories.entity';
 import { ProCategoriesService } from './pro-categories.service';
+import { ProCategory } from './pro-category.entity';
 
 @Module({
     imports: [TypeOrmModule.forFeature([ProCategory])],

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, EntityManager } from 'typeorm';
 
-import { ProCategory } from './pro-categories.entity';
+import { ProCategory } from './pro-category.entity';
 
 @Injectable()
 export class ProCategoriesService {

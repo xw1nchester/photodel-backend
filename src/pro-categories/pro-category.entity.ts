@@ -6,8 +6,8 @@ import {
     JoinTable
 } from 'typeorm';
 
-import { Specialization } from '@specializations/specializations.entity';
-import { Profile } from '@users/entities/profiles.entity';
+import { Specialization } from '@specializations/specialization.entity';
+import { Profile } from '@users/entities/profile.entity';
 
 @Entity('pro_categories')
 export class ProCategory {

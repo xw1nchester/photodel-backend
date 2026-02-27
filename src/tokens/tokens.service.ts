@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { v4 } from 'uuid';
 
-import { Token } from './tokens.entity';
+import { Token } from './token.entity';
 
 @Injectable()
 export class TokensService {

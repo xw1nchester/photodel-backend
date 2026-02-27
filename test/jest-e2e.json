@@ -33,7 +33,7 @@
         "^@files$": "<rootDir>/../src/files",
         "^@s3/(.*)$": "<rootDir>/../src/s3/$1",
         "^@s3$": "<rootDir>/../src/s3",
-        "^@shared/(.*)$": "<rootDir>/../src/shared/$1",
-        "^@shared$": "<rootDir>/../src/shared"
+        "^@location/(.*)$": "<rootDir>/../src/location/$1",
+        "^@location$": "<rootDir>/../src/location"
     }
 }

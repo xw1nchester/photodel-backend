@@ -5,6 +5,8 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
+import { S3Service } from '@s3/s3.service';
+
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
@@ -13,7 +15,10 @@ describe('AppController (e2e)', () => {
     beforeEach(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [AppModule]
-        }).compile();
+        })
+            .overrideProvider(S3Service)
+            .useValue({})
+            .compile();
 
         app = moduleFixture.createNestApplication(new FastifyAdapter());
 

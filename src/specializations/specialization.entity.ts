@@ -6,8 +6,8 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 
-import { ProCategory } from '@pro-categories/pro-categories.entity';
-import { Profile } from '@users/entities/profiles.entity';
+import { ProCategory } from '@pro-categories/pro-category.entity';
+import { Profile } from '@users/entities/profile.entity';
 
 @Entity('specializations')
 export class Specialization {

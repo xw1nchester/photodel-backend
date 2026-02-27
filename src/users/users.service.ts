@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Point, Repository } from 'typeorm';
 
+import { Location } from '@location/location.entity';
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { S3Service } from '@s3/s3.service';
 import { SocialsService } from '@socials/socials.service';
@@ -9,10 +10,10 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
-import { ProfileSocial } from './entities/profiles-socials.entity';
-import { Profile } from './entities/profiles.entity';
-import { TemporaryLocation } from './entities/temporary-locations.entity';
-import { User } from './entities/users.entity';
+import { ProfileSocial } from './entities/profile-social.entity';
+import { Profile } from './entities/profile.entity';
+import { TemporaryLocation } from './entities/temporary-location.entity';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -102,12 +103,15 @@ export class UsersService {
         const profile = await repo.findOne({
             where: { user: { id } },
             relations: {
+                location: true,
                 proCategories: true,
                 specializations: true,
                 socials: {
                     social: true
                 },
-                temporaryLocations: true
+                temporaryLocations: {
+                    location: true
+                }
             }
         });
 
@@ -119,6 +123,16 @@ export class UsersService {
     }
 
     createProfileDto(profile: Profile) {
+        const location = {
+            id: profile.location.id,
+            latitude: profile.location.coordinates.coordinates[1],
+            longitude: profile.location.coordinates.coordinates[0],
+            country: profile.location.country,
+            city: profile.location.city,
+            street: profile.location.street,
+            houseNumber: profile.location.houseNumber
+        };
+
         const socials = profile.socials.map(s => ({
             ...s.social,
             value: s.value
@@ -126,20 +140,21 @@ export class UsersService {
 
         const temporaryLocations = profile.temporaryLocations.map(loc => ({
             id: loc.id,
-            startDate:
-                loc.startDate instanceof Date
-                    ? loc.startDate.toISOString().split('T')[0]
-                    : loc.startDate,
-            endDate:
-                loc.endDate instanceof Date
-                    ? loc.endDate.toISOString().split('T')[0]
-                    : loc.endDate,
-            longitude: loc.coordinates.coordinates[0],
-            latitude: loc.coordinates.coordinates[1],
+            startDate: loc.startDate,
+            endDate: loc.endDate,
+            location: {
+                id: loc.location.id,
+                latitude: loc.location.coordinates.coordinates[1],
+                longitude: loc.location.coordinates.coordinates[0],
+                country: loc.location.country,
+                city: loc.location.city,
+                street: loc.location.street,
+                houseNumber: loc.location.houseNumber
+            },
             comment: loc.comment
         }));
 
-        return { ...profile, socials, temporaryLocations };
+        return { ...profile, location, socials, temporaryLocations };
     }
 
     async getProfileDtoByUserId(userId: number, manager?: EntityManager) {
@@ -153,6 +168,7 @@ export class UsersService {
             const profileSocialsRepo = manager.getRepository(ProfileSocial);
             const temporaryLocationsRepo =
                 manager.getRepository(TemporaryLocation);
+            const locationsRepo = manager.getRepository(Location);
 
             const profile = await this.findProfileByUserId(userId, manager);
 
@@ -163,16 +179,22 @@ export class UsersService {
             profile.languages = dto.languages;
             profile.about = dto.about;
 
-            if (dto.coordinates) {
+            if (dto.location) {
+                // TODO: удалить локацию, которая раньше была привязана к профилю (аналогично для временных)
                 const coordinates: Point = {
                     type: 'Point',
-                    coordinates: [
-                        dto.coordinates.longitude,
-                        dto.coordinates.latitude
-                    ]
+                    coordinates: [dto.location.longitude, dto.location.latitude]
                 };
 
-                profile.coordinates = coordinates;
+                const location = locationsRepo.create({
+                    coordinates,
+                    country: dto.location.country,
+                    city: dto.location.city,
+                    street: dto.location.street,
+                    houseNumber: dto.location.houseNumber
+                });
+
+                profile.location = location;
             }
 
             profile.proCategories =
@@ -211,16 +233,24 @@ export class UsersService {
                 const coordinates: Point = {
                     type: 'Point',
                     coordinates: [
-                        locDto.coordinates.longitude,
-                        locDto.coordinates.latitude
+                        locDto.location.longitude,
+                        locDto.location.latitude
                     ]
                 };
+
+                const location = locationsRepo.create({
+                    coordinates,
+                    country: locDto.location.country,
+                    city: locDto.location.city,
+                    street: locDto.location.street,
+                    houseNumber: locDto.location.houseNumber
+                });
 
                 return temporaryLocationsRepo.create({
                     profileId: profile.id,
                     startDate: new Date(locDto.startDate),
                     endDate: new Date(locDto.endDate),
-                    coordinates,
+                    location,
                     comment: locDto.comment
                 });
             });

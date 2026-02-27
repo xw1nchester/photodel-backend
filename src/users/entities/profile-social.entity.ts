@@ -1,8 +1,8 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
-import { Social } from '@socials/socials.entity';
+import { Social } from '@socials/social.entity';
 
-import { Profile } from './profiles.entity';
+import { Profile } from './profile.entity';
 
 @Entity('profiles_socials')
 export class ProfileSocial {

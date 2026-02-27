@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, MoreThan, Repository } from 'typeorm';
 
-import { Code } from './codes.entity';
+import { Code } from './code.entity';
 import { CodeType } from './enums';
 
 @Injectable()
