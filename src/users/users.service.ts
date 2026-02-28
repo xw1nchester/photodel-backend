@@ -10,6 +10,7 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
+import { UpdateNameRequestDto } from './dto/update-name-request.dto';
 import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
@@ -299,6 +300,15 @@ export class UsersService {
             : this.usersRepository;
 
         await repo.update({ id: userId }, { passwordHash });
+    }
+
+    async updateName(userId: number, dto: UpdateNameRequestDto) {
+        await this.usersRepository.update(
+            { id: userId },
+            { firstName: dto.firstName, lastName: dto.lastName }
+        );
+
+        return await this.getUserDtoById(userId);
     }
 
     async findNearbyUsers(lat: number, lng: number) {

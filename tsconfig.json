@@ -45,7 +45,11 @@
             "@s3": ["src/s3"],
             "@s3/*": ["src/s3/*"],
             "@location": ["src/location"],
-            "@location/*": ["src/location/*"]
+            "@location/*": ["src/location/*"],
+            "@album": ["src/album"],
+            "@album/*": ["src/album/*"],
+            "@photo": ["src/photo"],
+            "@photo/*": ["src/photo/*"]
         }
     }
 }

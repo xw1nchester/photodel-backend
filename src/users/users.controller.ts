@@ -18,6 +18,7 @@ import { AvatarRequestDto } from './dto/avatar-request.dto';
 import { NearbyUsersWrapperResponseDto } from './dto/nearby-user-response.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
 import { ProfileWrapperResponseDto } from './dto/profile-response.dto';
+import { UpdateNameRequestDto } from './dto/update-name-request.dto';
 import { UserWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
@@ -54,6 +55,16 @@ export class UsersController {
         @Body() dto: ProfileRequestDto
     ) {
         return await this.usersService.updateProfile(user.id, dto);
+    }
+
+    @Patch('name')
+    @ApiBearerAuth()
+    @ApiOkResponse({ type: UserWrapperResponseDto })
+    async updateName(
+        @CurrentUser() user: JwtPayload,
+        @Body() dto: UpdateNameRequestDto
+    ) {
+        return await this.usersService.updateName(user.id, dto);
     }
 
     @Patch('avatar')

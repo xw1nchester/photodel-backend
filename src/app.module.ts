@@ -6,9 +6,11 @@ import { AuthModule } from '@auth/auth.module';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { DatabaseModule } from '@database/database.module';
 
+import { AlbumModule } from './album/album.module';
 import { AppController } from './app.controller';
 import { FilesModule } from './files/files.module';
 import { LocationModule } from './location/location.module';
+import { PhotoModule } from './photo/photo.module';
 import { RolesModule } from './roles/roles.module';
 
 @Module({
@@ -20,7 +22,9 @@ import { RolesModule } from './roles/roles.module';
         AuthModule,
         RolesModule,
         FilesModule,
-        LocationModule
+        LocationModule,
+        AlbumModule,
+        PhotoModule
     ],
     controllers: [AppController],
     providers: [

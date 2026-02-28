@@ -9,7 +9,9 @@ import {
     JoinTable
 } from 'typeorm';
 
+import { Album } from '@album/album.entity';
 import { Code } from '@codes/code.entity';
+import { Photo } from '@photo/photo.entity';
 import { Role } from '@roles/role.entity';
 import { Token } from '@tokens/token.entity';
 
@@ -61,6 +63,12 @@ export class User {
 
     @OneToMany(() => Code, code => code.user)
     codes: Code[];
+
+    @OneToMany(() => Album, album => album.user)
+    albums: Album[];
+
+    @OneToMany(() => Photo, photo => photo.user)
+    photos: Photo[];
 
     @ManyToMany(() => Role, role => role.users)
     @JoinTable({

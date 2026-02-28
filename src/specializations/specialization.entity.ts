@@ -6,6 +6,7 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 
+import { Photo } from '@photo/photo.entity';
 import { ProCategory } from '@pro-categories/pro-category.entity';
 import { Profile } from '@users/entities/profile.entity';
 
@@ -33,4 +34,7 @@ export class Specialization {
         }
     })
     profiles: Profile[];
+
+    @ManyToMany(() => Photo, photo => photo.specializations)
+    photos: Photo[];
 }
