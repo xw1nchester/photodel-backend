@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class $npmConfigName1772299723782 implements MigrationInterface {
-    name = ' $npmConfigName1772299723782';
+export class AddAlbumsTable1772299723782 implements MigrationInterface {
+    name = 'AddAlbumsTable1772299723782';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(

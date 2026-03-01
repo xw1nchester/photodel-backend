@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class $npmConfigName1772304187539 implements MigrationInterface {
-    name = ' $npmConfigName1772304187539';
+export class AddPhotosTableWithRelations1772304187539 implements MigrationInterface {
+    name = 'AddPhotosTableWithRelations1772304187539';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(

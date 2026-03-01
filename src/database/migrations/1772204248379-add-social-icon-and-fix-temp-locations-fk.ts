@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class $npmConfigName1772204248379 implements MigrationInterface {
-    name = ' $npmConfigName1772204248379';
+export class AddSocialIconAndFixTempLocationsFK1772204248379 implements MigrationInterface {
+    name = 'AddSocialIconAndFixTempLocationsFK1772204248379';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
