@@ -1,0 +1,13 @@
+db
+dist
+minio_data
+node_modules
+.dockerignore
+.env
+.env.example
+.eslintrc.js
+.gitignore
+.prettierrc
+docker-compose.yml
+Dockerfile
+README.md

@@ -23,7 +23,9 @@
         "migration:create": "npm run typeorm -- migration:create -d src/database/datasource.ts src/database/migrations/migration",
         "migration:run": "npm run typeorm -- migration:run -d src/database/datasource.ts",
         "migration:revert": "npm run typeorm -- migration:revert -d src/database/datasource.ts",
-        "seed": "npx typeorm-extension seed:run -d src/database/datasource.ts"
+        "seed": "npx typeorm-extension seed:run -d src/database/datasource.ts",
+        "migration:run:prod": "node ./node_modules/typeorm/cli.js migration:run -d dist/database/datasource.js",
+        "migration:revert:prod": "node ./node_modules/typeorm/cli.js migration:revert -d dist/database/datasource.js"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.995.0",
