@@ -16,8 +16,8 @@ import { JwtPayload } from '@auth/interfaces';
 import { AlbumsService } from './albums.service';
 import { AlbumRequestDto } from './dto/album-request.dto';
 import {
-    AlbumResponseDto,
-    AlbumsListWrapperResponseDto
+    AlbumsListWrapperResponseDto,
+    AlbumWrapperResponseDto
 } from './dto/album-response.dto';
 
 @Controller('albums')
@@ -26,7 +26,7 @@ export class AlbumsController {
 
     @Post()
     @ApiBearerAuth()
-    @ApiOkResponse({ type: AlbumResponseDto })
+    @ApiOkResponse({ type: AlbumWrapperResponseDto })
     async create(
         @CurrentUser() user: JwtPayload,
         @Body() dto: AlbumRequestDto
@@ -42,14 +42,14 @@ export class AlbumsController {
     }
 
     @Get(':id')
-    @ApiOkResponse({ type: AlbumResponseDto })
+    @ApiOkResponse({ type: AlbumWrapperResponseDto })
     async getDtoById(@Param('id', ParseIntPipe) id: number) {
         return await this.albumService.getDtoById(id);
     }
 
     @Patch(':id')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: AlbumResponseDto })
+    @ApiOkResponse({ type: AlbumWrapperResponseDto })
     async update(
         @CurrentUser() user: JwtPayload,
         @Param('id', ParseIntPipe) id: number,
@@ -60,7 +60,7 @@ export class AlbumsController {
 
     @Delete(':id')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: AlbumResponseDto })
+    @ApiOkResponse({ type: AlbumWrapperResponseDto })
     async remove(
         @CurrentUser() user: JwtPayload,
         @Param('id', ParseIntPipe) id: number
