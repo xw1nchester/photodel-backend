@@ -28,7 +28,7 @@ export class TemporaryLocationResponseDto {
     @ApiProperty({ example: '2024-08-31' })
     endDate: string;
 
-    @ApiProperty({ type: [LocationDto] })
+    @ApiProperty({ type: LocationDto })
     location: LocationDto;
 
     @ApiProperty({ example: 'Отпуск в Италии', nullable: true })
@@ -38,6 +38,26 @@ export class TemporaryLocationResponseDto {
 export class ProfileResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
+
+    @ApiProperty({ example: 'Иван' })
+    firstName: string;
+
+    @ApiProperty({ example: 'Петров' })
+    lastName: string;
+
+    @ApiProperty({
+        example: 'https://avatars.githubusercontent.com/u/63304397'
+    })
+    avatar: string;
+
+    @ApiProperty({ example: false })
+    isProfessional: boolean;
+
+    @ApiProperty({ example: false })
+    isPro: boolean;
+
+    @ApiProperty({ example: '2026-02-15T15:31:31.992Z' })
+    createdAt: string;
 
     @ApiProperty({ example: 'Свободен', nullable: true })
     status: string | null;

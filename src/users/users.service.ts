@@ -106,6 +106,7 @@ export class UsersService {
         const profile = await repo.findOne({
             where: { user: { id } },
             relations: {
+                user: true,
                 location: true,
                 proCategories: true,
                 specializations: true,
@@ -126,6 +127,10 @@ export class UsersService {
     }
 
     createProfileDto(profile: Profile) {
+        const { firstName, lastName, avatar, isProfessional, isPro, createdAt } = profile.user;
+
+        delete profile.user;
+
         const location = this.locationsService.getDto(profile.location);
 
         const socials = profile.socials.map(s => ({
@@ -141,7 +146,18 @@ export class UsersService {
             comment: loc.comment
         }));
 
-        return { ...profile, location, socials, temporaryLocations };
+        return {
+            ...profile,
+            firstName,
+            lastName,
+            avatar: avatar ? this.s3Service.getUrl(avatar) : null,
+            isProfessional,
+            isPro,
+            createdAt,
+            location,
+            socials,
+            temporaryLocations
+        };
     }
 
     async getProfileDtoByUserId(userId: number, manager?: EntityManager) {
@@ -248,7 +264,7 @@ export class UsersService {
 
         await this.usersRepository.update({ id: userId }, { avatar });
 
-        if (avatar != user.avatar) {
+        if (user.avatar && avatar != user.avatar) {
             await this.s3Service.deleteFile(user.avatar);
         }
 

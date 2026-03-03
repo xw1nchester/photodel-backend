@@ -21,11 +21,16 @@ export class UserResponseDto {
     @ApiProperty({ example: true })
     isAdult: boolean;
 
+    // исполнитель / клиент
     @ApiProperty({ example: false })
     isProfessional: boolean;
 
     @ApiProperty({ example: false })
     isVerified: boolean;
+
+    // подписка
+    @ApiProperty({ example: false })
+    isPro: boolean;
 
     @ApiProperty({ example: '2026-02-15T15:31:31.992Z' })
     createdAt: string;
