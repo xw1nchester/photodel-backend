@@ -6,7 +6,7 @@ import { Album } from './album.entity';
 import { AlbumRequestDto } from './dto/album-request.dto';
 
 @Injectable()
-export class AlbumService {
+export class AlbumsService {
     constructor(
         @InjectRepository(Album)
         private readonly albumRepository: Repository<Album>
@@ -20,8 +20,8 @@ export class AlbumService {
             image: album.image,
             isPublished: album.isPublished,
             userId: album.userId,
-            createdAt: album.createdAt.toISOString(),
-            updatedAt: album.updatedAt.toISOString()
+            createdAt: album.createdAt,
+            updatedAt: album.updatedAt
         };
     }
 

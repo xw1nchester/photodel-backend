@@ -18,11 +18,11 @@ import {
     PhotosListWrapperResponseDto,
     PhotoWrapperResponseDto
 } from './dto/photo-response.dto';
-import { PhotoService } from './photo.service';
+import { PhotosService } from './photos.service';
 
 @Controller('photos')
-export class PhotoController {
-    constructor(private readonly photoService: PhotoService) {}
+export class PhotosController {
+    constructor(private readonly photoService: PhotosService) {}
 
     @Post()
     @ApiBearerAuth()

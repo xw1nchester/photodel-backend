@@ -10,8 +10,8 @@ import {
     UpdateDateColumn
 } from 'typeorm';
 
-import { Album } from '@album/album.entity';
-import { Location } from '@location/location.entity';
+import { Album } from '@albums/album.entity';
+import { Location } from '@locations/location.entity';
 import { Specialization } from '@specializations/specialization.entity';
 import { User } from '@users/entities/user.entity';
 
@@ -26,7 +26,11 @@ export class Photo {
     @Column({ nullable: true })
     description: string;
 
-    @ManyToOne(() => Location, { cascade: true, nullable: true })
+    @ManyToOne(() => Location, {
+        cascade: true,
+        nullable: true,
+        onDelete: 'SET NULL'
+    })
     location: Location;
 
     @Column({ nullable: true })

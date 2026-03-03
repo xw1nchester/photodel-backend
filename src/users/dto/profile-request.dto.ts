@@ -8,7 +8,7 @@ import {
     ValidateNested
 } from 'class-validator';
 
-import { LocationDto } from '@location/dto/location.dto';
+import { LocationDto } from '@locations/dto/location.dto';
 
 export class ProfileSocialDto {
     @ApiProperty({ example: 1 })

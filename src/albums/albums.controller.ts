@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 
-import { AlbumService } from './album.service';
+import { AlbumsService } from './albums.service';
 import { AlbumRequestDto } from './dto/album-request.dto';
 import {
     AlbumResponseDto,
@@ -21,8 +21,8 @@ import {
 } from './dto/album-response.dto';
 
 @Controller('albums')
-export class AlbumController {
-    constructor(private readonly albumService: AlbumService) {}
+export class AlbumsController {
+    constructor(private readonly albumService: AlbumsService) {}
 
     @Post()
     @ApiBearerAuth()

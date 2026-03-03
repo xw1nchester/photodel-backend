@@ -9,7 +9,7 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 
-import { Location } from '@location/location.entity';
+import { Location } from '@locations/location.entity';
 import { ProCategory } from '@pro-categories/pro-category.entity';
 import { Specialization } from '@specializations/specialization.entity';
 
@@ -43,7 +43,7 @@ export class Profile {
     @Column({ nullable: true })
     about: string;
 
-    @ManyToOne(() => Location, { cascade: true })
+    @ManyToOne(() => Location, { cascade: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'location_id' })
     location: Location;
 
@@ -66,7 +66,8 @@ export class Profile {
         () => TemporaryLocation,
         temporaryLocation => temporaryLocation.profile,
         {
-            cascade: true
+            cascade: true,
+            orphanedRowAction: 'delete'
         }
     )
     temporaryLocations: TemporaryLocation[];

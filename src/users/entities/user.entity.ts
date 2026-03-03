@@ -9,9 +9,9 @@ import {
     JoinTable
 } from 'typeorm';
 
-import { Album } from '@album/album.entity';
+import { Album } from '@albums/album.entity';
 import { Code } from '@codes/code.entity';
-import { Photo } from '@photo/photo.entity';
+import { Photo } from '@photos/photo.entity';
 import { Role } from '@roles/role.entity';
 import { Token } from '@tokens/token.entity';
 

@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Point, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { Location } from '@location/location.entity';
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { S3Service } from '@s3/s3.service';
 import { SocialsService } from '@socials/socials.service';
@@ -15,6 +14,7 @@ import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
+import { LocationsService } from '@locations/locations.service';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +27,8 @@ export class UsersService {
         private readonly proCategoriesService: ProCategoriesService,
         private readonly s3Service: S3Service,
         private readonly specializationsService: SpecializationsService,
-        private readonly socialsService: SocialsService
+        private readonly socialsService: SocialsService,
+        private readonly locationsService: LocationsService
     ) {}
 
     async findById(id: number) {
@@ -125,17 +126,7 @@ export class UsersService {
     }
 
     createProfileDto(profile: Profile) {
-        const location = profile.location
-            ? {
-                  id: profile.location.id,
-                  latitude: profile.location.coordinates.coordinates[1],
-                  longitude: profile.location.coordinates.coordinates[0],
-                  country: profile.location.country,
-                  city: profile.location.city,
-                  street: profile.location.street,
-                  houseNumber: profile.location.houseNumber
-              }
-            : null;
+        const location = this.locationsService.getDto(profile.location);
 
         const socials = profile.socials.map(s => ({
             ...s.social,
@@ -146,15 +137,7 @@ export class UsersService {
             id: loc.id,
             startDate: loc.startDate,
             endDate: loc.endDate,
-            location: {
-                id: loc.location.id,
-                latitude: loc.location.coordinates.coordinates[1],
-                longitude: loc.location.coordinates.coordinates[0],
-                country: loc.location.country,
-                city: loc.location.city,
-                street: loc.location.street,
-                houseNumber: loc.location.houseNumber
-            },
+            location: this.locationsService.getDto(loc.location),
             comment: loc.comment
         }));
 
@@ -172,7 +155,6 @@ export class UsersService {
             const profileSocialsRepo = manager.getRepository(ProfileSocial);
             const temporaryLocationsRepo =
                 manager.getRepository(TemporaryLocation);
-            const locationsRepo = manager.getRepository(Location);
 
             const profile = await this.findProfileByUserId(userId, manager);
 
@@ -184,22 +166,26 @@ export class UsersService {
             profile.languages = dto.languages;
             profile.about = dto.about;
 
+            const locationIdsToDelete: number[] = [];
+
             if (dto.location) {
-                // TODO: удалить локацию, которая раньше была привязана к профилю (аналогично для временных)
-                const coordinates: Point = {
-                    type: 'Point',
-                    coordinates: [dto.location.longitude, dto.location.latitude]
-                };
-
-                const location = locationsRepo.create({
-                    coordinates,
-                    country: dto.location.country,
-                    city: dto.location.city,
-                    street: dto.location.street,
-                    houseNumber: dto.location.houseNumber
-                });
-
-                profile.location = location;
+                const createdLocation = this.locationsService.create(
+                    dto.location
+                );
+                if (profile.location) {
+                    profile.location.coordinates = createdLocation.coordinates;
+                    profile.location.country = dto.location.country;
+                    profile.location.city = dto.location.city;
+                    profile.location.street = dto.location.street;
+                    profile.location.houseNumber = dto.location.houseNumber;
+                } else {
+                    profile.location = createdLocation;
+                }
+            } else {
+                if (profile.location) {
+                    locationIdsToDelete.push(profile.location.id);
+                }
+                profile.location = null;
             }
 
             profile.proCategories =
@@ -232,33 +218,24 @@ export class UsersService {
                 return profileSocial;
             });
 
-            await temporaryLocationsRepo.delete({ profileId: profile.id });
+            locationIdsToDelete.push(
+                ...profile.temporaryLocations.map(loc => loc.location.id)
+            );
 
-            profile.temporaryLocations = dto.temporaryLocations.map(locDto => {
-                const coordinates: Point = {
-                    type: 'Point',
-                    coordinates: [
-                        locDto.location.longitude,
-                        locDto.location.latitude
-                    ]
-                };
+            await this.locationsService.deleteByIds(
+                locationIdsToDelete,
+                manager
+            );
 
-                const location = locationsRepo.create({
-                    coordinates,
-                    country: locDto.location.country,
-                    city: locDto.location.city,
-                    street: locDto.location.street,
-                    houseNumber: locDto.location.houseNumber
-                });
-
-                return temporaryLocationsRepo.create({
+            profile.temporaryLocations = dto.temporaryLocations.map(locDto =>
+                temporaryLocationsRepo.create({
                     profileId: profile.id,
                     startDate: new Date(locDto.startDate),
                     endDate: new Date(locDto.endDate),
-                    location,
+                    location: this.locationsService.create(locDto.location),
                     comment: locDto.comment
-                });
-            });
+                })
+            );
 
             await profilesRepo.save(profile);
 

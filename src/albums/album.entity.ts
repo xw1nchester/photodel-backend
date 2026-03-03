@@ -9,7 +9,7 @@ import {
     UpdateDateColumn
 } from 'typeorm';
 
-import { Photo } from '@photo/photo.entity';
+import { Photo } from '@photos/photo.entity';
 import { User } from '@users/entities/user.entity';
 
 @Entity('albums')
@@ -23,6 +23,7 @@ export class Album {
     @Column({ nullable: true })
     description: string;
 
+    // TODO: как вариант, сделать поле mainPhoto через связь с фото
     @Column({ nullable: true })
     image: string;
 

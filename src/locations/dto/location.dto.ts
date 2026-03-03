@@ -5,7 +5,7 @@ import { IsNumber, Min, Max, IsString, IsOptional } from 'class-validator';
 export class LocationDto {
     // поле исключительно для response
     @ApiProperty({ example: 1, required: false })
-    id: number;
+    id?: number;
 
     @ApiProperty({
         example: 55.7558,

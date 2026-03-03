@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { AlbumResponseDto } from '@album/dto/album-response.dto';
-import { LocationDto } from '@location/dto/location.dto';
+import { AlbumResponseDto } from '@albums/dto/album-response.dto';
+import { LocationDto } from '@locations/dto/location.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 
 export class PhotoResponseDto {

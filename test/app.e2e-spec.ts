@@ -7,7 +7,7 @@ import * as request from 'supertest';
 
 import { S3Service } from '@s3/s3.service';
 
-import { AppModule } from './../src/app.module';
+import { AppModule } from '../src/app.module';
 
 describe('AppController (e2e)', () => {
     let app: NestFastifyApplication;

@@ -33,7 +33,11 @@
         "^@files$": "<rootDir>/../src/files",
         "^@s3/(.*)$": "<rootDir>/../src/s3/$1",
         "^@s3$": "<rootDir>/../src/s3",
-        "^@location/(.*)$": "<rootDir>/../src/location/$1",
-        "^@location$": "<rootDir>/../src/location"
+        "^@locations/(.*)$": "<rootDir>/../src/locations/$1",
+        "^@locations$": "<rootDir>/../src/locations",
+        "^@albums/(.*)$": "<rootDir>/../src/albums/$1",
+        "^@albums$": "<rootDir>/../src/albums",
+        "^@photos/(.*)$": "<rootDir>/../src/photos/$1",
+        "^@photos$": "<rootDir>/../src/photos"
     }
 }

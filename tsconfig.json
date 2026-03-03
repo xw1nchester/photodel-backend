@@ -44,12 +44,12 @@
             "@files/*": ["src/files/*"],
             "@s3": ["src/s3"],
             "@s3/*": ["src/s3/*"],
-            "@location": ["src/location"],
-            "@location/*": ["src/location/*"],
-            "@album": ["src/album"],
-            "@album/*": ["src/album/*"],
-            "@photo": ["src/photo"],
-            "@photo/*": ["src/photo/*"]
+            "@locations": ["src/locations"],
+            "@locations/*": ["src/locations/*"],
+            "@albums": ["src/albums"],
+            "@albums/*": ["src/albums/*"],
+            "@photos": ["src/photos"],
+            "@photos/*": ["src/photos/*"],
         }
     }
 }

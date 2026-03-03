@@ -1,25 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
-import { Point } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { AlbumService } from '@album/album.service';
-import { Location } from '@location/location.entity';
+import { Location } from '@locations/location.entity';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
+import { AlbumsService } from '@albums/albums.service';
+import { LocationsService } from '@locations/locations.service';
 
 @Injectable()
-export class PhotoService {
+export class PhotosService {
     constructor(
         @InjectRepository(Photo)
         private readonly photoRepository: Repository<Photo>,
-        // @InjectRepository(Location)
-        // private readonly locationsRepository: Repository<Location>,
         private readonly dataSource: DataSource,
         private readonly specializationsService: SpecializationsService,
-        private readonly albumService: AlbumService
+        private readonly albumService: AlbumsService,
+        private readonly locationsService: LocationsService
     ) {}
 
     getPhotoDto(photo: Photo) {
@@ -27,18 +26,7 @@ export class PhotoService {
             id: photo.id,
             name: photo.name,
             description: photo.description,
-            // TODO: нужен метод в сервисе location
-            location: photo.location
-                ? {
-                      id: photo.location.id,
-                      latitude: photo.location.coordinates.coordinates[1],
-                      longitude: photo.location.coordinates.coordinates[0],
-                      country: photo.location.country,
-                      city: photo.location.city,
-                      street: photo.location.street,
-                      houseNumber: photo.location.houseNumber
-                  }
-                : null,
+            location: this.locationsService.getDto(photo.location),
             camera: photo.camera,
             aperture: photo.aperture,
             focalLength: photo.focalLength,
@@ -50,32 +38,18 @@ export class PhotoService {
             // userId: photo.userId,
             specializations: photo.specializations,
             albums: photo.albums,
-            createdAt: photo.createdAt.toISOString(),
-            updatedAt: photo.updatedAt.toISOString()
+            createdAt: photo.createdAt,
+            updatedAt: photo.updatedAt
         };
     }
 
     async create(userId: number, dto: PhotoRequestDto) {
         return await this.dataSource.transaction(async manager => {
             const photosRepo = manager.getRepository(Photo);
-            // TODO: думаю стоит вынести в сервис location
-            const locationsRepo = manager.getRepository(Location);
 
             let location: Location | null = null;
             if (dto.location) {
-                const coordinates: Point = {
-                    type: 'Point',
-                    coordinates: [dto.location.longitude, dto.location.latitude]
-                };
-
-                location = locationsRepo.create({
-                    coordinates,
-                    country: dto.location.country,
-                    city: dto.location.city,
-                    street: dto.location.street,
-                    houseNumber: dto.location.houseNumber
-                });
-                // location = await locationsRepo.save(location);
+                location = this.locationsService.create(dto.location);
             }
 
             const specializations =
@@ -90,7 +64,6 @@ export class PhotoService {
                 manager
             );
 
-            // TODO: поправить баг с созданием альбомов
             const createdPhoto = await photosRepo.save({
                 name: dto.name,
                 description: dto.description,
@@ -128,8 +101,12 @@ export class PhotoService {
         return { photos: photosDtos };
     }
 
-    async getDtoById(id: number) {
-        const photo = await this.photoRepository.findOne({
+    async getDtoById(id: number, manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(Photo)
+            : this.photoRepository;
+
+        const photo = await repo.findOne({
             where: { id },
             relations: {
                 location: true,
@@ -148,7 +125,11 @@ export class PhotoService {
     async findByIdAndUserId(id: number, userId: number) {
         const photo = await this.photoRepository.findOne({
             where: { id, userId },
-            relations: ['location', 'specializations', 'albums']
+            relations: {
+                location: true,
+                specializations: true,
+                albums: true
+            }
         });
 
         if (!photo) {
@@ -161,7 +142,6 @@ export class PhotoService {
     async update(id: number, userId: number, dto: PhotoRequestDto) {
         return await this.dataSource.transaction(async manager => {
             const photosRepo = manager.getRepository(Photo);
-            const locationsRepo = manager.getRepository(Location);
 
             const photo = await this.findByIdAndUserId(id, userId);
 
@@ -177,31 +157,26 @@ export class PhotoService {
             photo.isPublished = dto.isPublished;
 
             if (dto.location) {
-                const coordinates: Point = {
-                    type: 'Point',
-                    coordinates: [dto.location.longitude, dto.location.latitude]
-                };
-
-                let location: Location;
+                const createdLocation = this.locationsService.create(
+                    dto.location
+                );
                 if (photo.location) {
-                    location = photo.location;
-                    location.coordinates = coordinates;
-                    location.country = dto.location.country;
-                    location.city = dto.location.city;
-                    location.street = dto.location.street;
-                    location.houseNumber = dto.location.houseNumber;
-                    location = await locationsRepo.save(location);
+                    photo.location.coordinates = createdLocation.coordinates;
+                    photo.location.country = dto.location.country;
+                    photo.location.city = dto.location.city;
+                    photo.location.street = dto.location.street;
+                    photo.location.houseNumber = dto.location.houseNumber;
                 } else {
-                    location = locationsRepo.create({
-                        coordinates,
-                        country: dto.location.country,
-                        city: dto.location.city,
-                        street: dto.location.street,
-                        houseNumber: dto.location.houseNumber
-                    });
-                    // location = await locationsRepo.save(location);
+                    photo.location = createdLocation;
                 }
-                photo.location = location;
+            } else {
+                if (photo.location) {
+                    await this.locationsService.deleteByIds(
+                        [photo.location.id],
+                        manager
+                    );
+                }
+                photo.location = null;
             }
 
             photo.specializations =
@@ -218,7 +193,7 @@ export class PhotoService {
 
             await photosRepo.save(photo);
 
-            return await this.getDtoById(id);
+            return await this.getDtoById(id, manager);
         });
     }
 

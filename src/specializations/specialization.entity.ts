@@ -6,7 +6,7 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 
-import { Photo } from '@photo/photo.entity';
+import { Photo } from '@photos/photo.entity';
 import { ProCategory } from '@pro-categories/pro-category.entity';
 import { Profile } from '@users/entities/profile.entity';
 

@@ -6,7 +6,7 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 
-import { Location } from '@location/location.entity';
+import { Location } from '@locations/location.entity';
 
 import { Profile } from './profile.entity';
 
@@ -24,7 +24,7 @@ export class TemporaryLocation {
     @Column({ type: 'date' })
     endDate: Date;
 
-    @ManyToOne(() => Location, { cascade: true })
+    @ManyToOne(() => Location, { cascade: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'location_id' })
     location: Location;
 

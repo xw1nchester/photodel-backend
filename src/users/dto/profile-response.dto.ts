@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { LocationDto } from '@location/dto/location.dto';
+import { LocationDto } from '@locations/dto/location.dto';
 import { ProCategoryDto } from '@pro-categories/dto/pro-categories-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 
