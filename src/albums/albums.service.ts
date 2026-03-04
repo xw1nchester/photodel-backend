@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, EntityManager } from 'typeorm';
 
+import { S3Service } from '@s3/s3.service';
+
 import { Album } from './album.entity';
 import { AlbumRequestDto } from './dto/album-request.dto';
 
@@ -9,7 +11,8 @@ import { AlbumRequestDto } from './dto/album-request.dto';
 export class AlbumsService {
     constructor(
         @InjectRepository(Album)
-        private readonly albumRepository: Repository<Album>
+        private readonly albumRepository: Repository<Album>,
+        private readonly s3Service: S3Service
     ) {}
 
     getAlbumDto(album: Album) {
@@ -17,7 +20,7 @@ export class AlbumsService {
             id: album.id,
             title: album.title,
             description: album.description,
-            image: album.image,
+            image: album.image ? this.s3Service.getUrl(album.image) : null,
             isPublished: album.isPublished,
             userId: album.userId,
             createdAt: album.createdAt,

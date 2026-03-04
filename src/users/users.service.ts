@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 
+import { LocationsService } from '@locations/locations.service';
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { S3Service } from '@s3/s3.service';
 import { SocialsService } from '@socials/socials.service';
@@ -14,7 +15,6 @@ import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
-import { LocationsService } from '@locations/locations.service';
 
 @Injectable()
 export class UsersService {
@@ -127,7 +127,14 @@ export class UsersService {
     }
 
     createProfileDto(profile: Profile) {
-        const { firstName, lastName, avatar, isProfessional, isPro, createdAt } = profile.user;
+        const {
+            firstName,
+            lastName,
+            avatar,
+            isProfessional,
+            isPro,
+            createdAt
+        } = profile.user;
 
         delete profile.user;
 

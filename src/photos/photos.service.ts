@@ -2,13 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 
+import { AlbumsService } from '@albums/albums.service';
 import { Location } from '@locations/location.entity';
+import { LocationsService } from '@locations/locations.service';
+import { S3Service } from '@s3/s3.service';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
-import { AlbumsService } from '@albums/albums.service';
-import { LocationsService } from '@locations/locations.service';
 
 @Injectable()
 export class PhotosService {
@@ -18,12 +19,14 @@ export class PhotosService {
         private readonly dataSource: DataSource,
         private readonly specializationsService: SpecializationsService,
         private readonly albumService: AlbumsService,
-        private readonly locationsService: LocationsService
+        private readonly locationsService: LocationsService,
+        private readonly s3Service: S3Service
     ) {}
 
     getPhotoDto(photo: Photo) {
         return {
             id: photo.id,
+            image: this.s3Service.getUrl(photo.image),
             name: photo.name,
             description: photo.description,
             location: this.locationsService.getDto(photo.location),
@@ -65,6 +68,7 @@ export class PhotosService {
             );
 
             const createdPhoto = await photosRepo.save({
+                image: dto.image,
                 name: dto.name,
                 description: dto.description,
                 location,
@@ -145,6 +149,7 @@ export class PhotosService {
 
             const photo = await this.findByIdAndUserId(id, userId);
 
+            photo.image = dto.image;
             photo.name = dto.name;
             photo.description = dto.description;
             photo.camera = dto.camera;

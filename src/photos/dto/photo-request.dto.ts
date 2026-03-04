@@ -12,6 +12,10 @@ import {
 import { LocationDto } from '@locations/dto/location.dto';
 
 export class PhotoRequestDto {
+    @ApiProperty({ example: 'e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg' })
+    @IsString()
+    image: string;
+
     @ApiProperty({ example: 'Моя фотография' })
     @IsString()
     name: string;

@@ -21,6 +21,9 @@ export class Photo {
     id: number;
 
     @Column()
+    image: string;
+
+    @Column()
     name: string;
 
     @Column({ nullable: true })

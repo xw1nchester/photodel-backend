@@ -46,6 +46,7 @@ async function bootstrap() {
 
     await app.register(cors, {
         origin: configService.get('ALLOWED_ORIGINS')?.split(',') || '*',
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         credentials: true
     });
 
