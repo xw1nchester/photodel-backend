@@ -61,8 +61,3 @@ export class PhotoWrapperResponseDto {
     @ApiProperty({ type: PhotoResponseDto })
     photo: PhotoResponseDto;
 }
-
-export class PhotosListWrapperResponseDto {
-    @ApiProperty({ type: [PhotoResponseDto] })
-    photos: PhotoResponseDto[];
-}

@@ -50,6 +50,8 @@
             "@albums/*": ["src/albums/*"],
             "@photos": ["src/photos"],
             "@photos/*": ["src/photos/*"],
+            "@shared": ["src/shared"],
+            "@shared/*": ["src/shared/*"],
         }
     }
 }

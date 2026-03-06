@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, EntityManager } from 'typeorm';
 
 import { S3Service } from '@s3/s3.service';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationDto } from '@shared/dto/pagination.dto';
 
 import { Album } from './album.entity';
 import { AlbumRequestDto } from './dto/album-request.dto';
@@ -39,15 +41,17 @@ export class AlbumsService {
         return { album: this.getAlbumDto(createdAlbum) };
     }
 
-    async findAllByUserId(userId: number) {
-        const albums = await this.albumRepository.find({
+    async findAllByUserId(userId: number, { page, limit }: PaginationQueryDto) {
+        const [albums, total] = await this.albumRepository.findAndCount({
             where: { userId },
-            order: { createdAt: 'DESC' }
+            order: { createdAt: 'DESC' },
+            skip: (page - 1) * limit,
+            take: limit
         });
 
         const albumsDtos = albums.map(album => this.getAlbumDto(album));
 
-        return { albums: albumsDtos };
+        return new PaginationDto(albumsDtos, total, page, limit);
     }
 
     async getDtoById(id: number) {

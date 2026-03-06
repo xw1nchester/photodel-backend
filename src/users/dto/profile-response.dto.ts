@@ -35,6 +35,7 @@ export class TemporaryLocationResponseDto {
     comment: string | null;
 }
 
+// возможно стоит сделать отдельное dto для своего профиля и запрашиваемого
 export class ProfileResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
@@ -88,6 +89,9 @@ export class ProfileResponseDto {
 
     @ApiProperty({ type: LocationDto })
     location: LocationDto;
+
+    @ApiProperty({ type: LocationDto, nullable: true })
+    activeTemporaryLocation: LocationDto | null;
 
     @ApiProperty({ type: [ProCategoryDto] })
     proCategories: ProCategoryDto[];

@@ -14,7 +14,9 @@ import { TokensService } from '@tokens/tokens.service';
 import { UsersService } from '@users/users.service';
 
 import { LoginRequestDto } from './dto/login-request.dto';
+import { RecoveryPasswordDto } from './dto/recovery-password.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
+import { VerifyRecoveryDto } from './dto/verify-recovery.dto';
 import { JwtPayload } from './interfaces';
 
 @Injectable()
@@ -191,7 +193,7 @@ export class AuthService {
         });
     }
 
-    async verifyRecoveryCode(email: string, code: string) {
+    async verifyRecoveryCode({ email, code }: VerifyRecoveryDto) {
         return await this.dataSource.transaction(async manager => {
             const user = await this.usersService.findByEmail(email, manager);
 
@@ -214,7 +216,7 @@ export class AuthService {
         });
     }
 
-    async recoveryPassword(email: string, code: string, password: string) {
+    async recoveryPassword({ email, code, password }: RecoveryPasswordDto) {
         return await this.dataSource.transaction(async manager => {
             const user = await this.usersService.findByEmail(email, manager);
 

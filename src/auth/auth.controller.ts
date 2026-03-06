@@ -1,4 +1,12 @@
-import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    HttpStatus,
+    Post,
+    Res,
+    UnauthorizedException
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiBearerAuth,
@@ -87,14 +95,19 @@ export class AuthController {
         @UserAgent() userAgent: string,
         @Res() reply: FastifyReply
     ) {
-        const { refreshToken, accessToken } = await this.authService.refresh(
-            token,
-            userAgent
-        );
+        try {
+            const { refreshToken, accessToken } =
+                await this.authService.refresh(token, userAgent);
 
-        this.setRefreshTokenToCookie(reply, refreshToken);
+            this.setRefreshTokenToCookie(reply, refreshToken);
 
-        reply.send({ accessToken });
+            reply.send({ accessToken });
+        } catch (error) {
+            if (error instanceof UnauthorizedException) {
+                reply.clearCookie(REFRESH_TOKEN);
+            }
+            throw error;
+        }
     }
 
     @Public()
@@ -126,8 +139,8 @@ export class AuthController {
 
     @Public()
     @Post('send-recovery')
-    async sendRecoveryCode(@Body() dto: RecoveryRequestDto) {
-        await this.authService.sendRecoveryCode(dto.email);
+    async sendRecoveryCode(@Body() { email }: RecoveryRequestDto) {
+        await this.authService.sendRecoveryCode(email);
         return HttpStatus.OK;
     }
 
@@ -135,17 +148,13 @@ export class AuthController {
     @Post('verify-recovery')
     @ApiOkResponse({ type: CodeDto })
     async verifyRecoveryCode(@Body() dto: VerifyRecoveryDto) {
-        return await this.authService.verifyRecoveryCode(dto.email, dto.code);
+        return await this.authService.verifyRecoveryCode(dto);
     }
 
     @Public()
     @Post('recovery-password')
     async recoveryPassword(@Body() dto: RecoveryPasswordDto) {
-        await this.authService.recoveryPassword(
-            dto.email,
-            dto.code,
-            dto.password
-        );
+        await this.authService.recoveryPassword(dto);
         return HttpStatus.OK;
     }
 }

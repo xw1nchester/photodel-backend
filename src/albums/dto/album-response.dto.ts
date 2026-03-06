@@ -30,8 +30,3 @@ export class AlbumWrapperResponseDto {
     @ApiProperty({ type: AlbumResponseDto })
     album: AlbumResponseDto;
 }
-
-export class AlbumsListWrapperResponseDto {
-    @ApiProperty({ type: [AlbumResponseDto] })
-    albums: AlbumResponseDto[];
-}

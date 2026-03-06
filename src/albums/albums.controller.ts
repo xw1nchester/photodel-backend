@@ -6,17 +6,20 @@ import {
     Delete,
     Body,
     Param,
-    ParseIntPipe
+    ParseIntPipe,
+    Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationResponseDtoFactory } from '@shared/dto/pagination-response.factory';
 
 import { AlbumsService } from './albums.service';
 import { AlbumRequestDto } from './dto/album-request.dto';
 import {
-    AlbumsListWrapperResponseDto,
+    AlbumResponseDto,
     AlbumWrapperResponseDto
 } from './dto/album-response.dto';
 
@@ -36,9 +39,12 @@ export class AlbumsController {
 
     @Get('my')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: AlbumsListWrapperResponseDto })
-    async findAllMy(@CurrentUser() user: JwtPayload) {
-        return await this.albumService.findAllByUserId(user.id);
+    @ApiOkResponse({ type: PaginationResponseDtoFactory(AlbumResponseDto) })
+    async findAllMy(
+        @CurrentUser() user: JwtPayload,
+        @Query() pagination: PaginationQueryDto
+    ) {
+        return await this.albumService.findAllByUserId(user.id, pagination);
     }
 
     @Get(':id')

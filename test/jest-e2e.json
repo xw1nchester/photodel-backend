@@ -38,6 +38,8 @@
         "^@albums/(.*)$": "<rootDir>/../src/albums/$1",
         "^@albums$": "<rootDir>/../src/albums",
         "^@photos/(.*)$": "<rootDir>/../src/photos/$1",
-        "^@photos$": "<rootDir>/../src/photos"
+        "^@photos$": "<rootDir>/../src/photos",
+        "^@shared/(.*)$": "<rootDir>/../src/shared/$1",
+        "^@shared$": "<rootDir>/../src/shared"
     }
 }

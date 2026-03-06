@@ -6,18 +6,18 @@ import {
     Delete,
     Body,
     Param,
-    ParseIntPipe
+    ParseIntPipe,
+    Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationResponseDtoFactory } from '@shared/dto/pagination-response.factory';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
-import {
-    PhotosListWrapperResponseDto,
-    PhotoWrapperResponseDto
-} from './dto/photo-response.dto';
+import { PhotoWrapperResponseDto } from './dto/photo-response.dto';
 import { PhotosService } from './photos.service';
 
 @Controller('photos')
@@ -36,9 +36,12 @@ export class PhotosController {
 
     @Get('my')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: PhotosListWrapperResponseDto })
-    async findAllMy(@CurrentUser() user: JwtPayload) {
-        return await this.photoService.findAllByUserId(user.id);
+    @ApiOkResponse({ type: PaginationResponseDtoFactory(PhotoRequestDto) })
+    async findAllMy(
+        @CurrentUser() user: JwtPayload,
+        @Query() pagination: PaginationQueryDto
+    ) {
+        return await this.photoService.findAllByUserId(user.id, pagination);
     }
 
     @Get(':id')

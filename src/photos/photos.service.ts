@@ -6,6 +6,8 @@ import { AlbumsService } from '@albums/albums.service';
 import { Location } from '@locations/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { S3Service } from '@s3/s3.service';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationDto } from '@shared/dto/pagination.dto';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
@@ -89,20 +91,22 @@ export class PhotosService {
         });
     }
 
-    async findAllByUserId(userId: number) {
-        const photos = await this.photoRepository.find({
+    async findAllByUserId(userId: number, { page, limit }: PaginationQueryDto) {
+        const [photos, total] = await this.photoRepository.findAndCount({
             where: { userId },
             relations: {
                 location: true,
                 specializations: true,
                 albums: true
             },
-            order: { createdAt: 'DESC' }
+            order: { createdAt: 'DESC' },
+            skip: (page - 1) * limit,
+            take: limit
         });
 
         const photosDtos = photos.map(photo => this.getPhotoDto(photo));
 
-        return { photos: photosDtos };
+        return new PaginationDto(photosDtos, total, page, limit);
     }
 
     async getDtoById(id: number, manager?: EntityManager) {

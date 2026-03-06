@@ -126,6 +126,21 @@ export class UsersService {
         return profile;
     }
 
+    private getActiveTemporaryLocation(
+        temporaryLocations: TemporaryLocation[]
+    ) {
+        const now = new Date();
+
+        const active = temporaryLocations.find(loc => {
+            const start = new Date(loc.startDate);
+            const end = new Date(loc.endDate);
+
+            return start <= now && now <= end;
+        });
+
+        return active?.location ?? null;
+    }
+
     createProfileDto(profile: Profile) {
         const {
             firstName,
@@ -139,6 +154,10 @@ export class UsersService {
         delete profile.user;
 
         const location = this.locationsService.getDto(profile.location);
+
+        const temporaryLocation = this.getActiveTemporaryLocation(
+            profile.temporaryLocations
+        );
 
         const socials = profile.socials.map(s => ({
             ...s.social,
@@ -162,6 +181,7 @@ export class UsersService {
             isPro,
             createdAt,
             location,
+            temporaryLocation,
             socials,
             temporaryLocations
         };

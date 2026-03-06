@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 
 import { LocationDto } from '@locations/dto/location.dto';
+import { NoDateOverlap } from '@users/validators/no-date-overlap.decorator';
 
 export class ProfileSocialDto {
     @ApiProperty({ example: 1 })
@@ -106,5 +107,6 @@ export class ProfileRequestDto {
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => TemporaryLocationDto)
+    @NoDateOverlap({ message: 'Некорретные даты временных местоположений' })
     temporaryLocations: TemporaryLocationDto[];
 }
