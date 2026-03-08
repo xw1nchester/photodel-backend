@@ -5,7 +5,7 @@ export class PaginationDto<T> {
     constructor(
         public readonly data: T[],
         public readonly total: number,
-        page: number,
+        public readonly page: number,
         limit: number
     ) {
         this.totalPages = Math.ceil(total / limit);

@@ -48,6 +48,7 @@ export class AlbumsController {
     }
 
     @Get(':id')
+    @ApiBearerAuth()
     @ApiOkResponse({ type: AlbumWrapperResponseDto })
     async getDtoById(@Param('id', ParseIntPipe) id: number) {
         return await this.albumService.getDtoById(id);

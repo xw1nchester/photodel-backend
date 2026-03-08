@@ -365,4 +365,9 @@ export class UsersService {
 
         return { users };
     }
+
+    async exists(id: number) {
+        const count = await this.usersRepository.count({ where: { id } });
+        return count > 0;
+    }
 }

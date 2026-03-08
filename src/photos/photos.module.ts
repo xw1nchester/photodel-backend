@@ -19,6 +19,7 @@ import { PhotosService } from './photos.service';
         S3Module
     ],
     controllers: [PhotosController],
-    providers: [PhotosService]
+    providers: [PhotosService],
+    exports: [PhotosService]
 })
 export class PhotosModule {}

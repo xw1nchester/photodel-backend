@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 
 import { Public } from '@auth/decorators';
 
@@ -8,7 +8,8 @@ export class AppController {
 
     @Public()
     @Get('health')
-    getHello() {
-        return HttpStatus.OK;
+    @HttpCode(HttpStatus.OK)
+    healthCheck() {
+        return;
     }
 }

@@ -35,7 +35,7 @@ export class TemporaryLocationResponseDto {
     comment: string | null;
 }
 
-// возможно стоит сделать отдельное dto для своего профиля и запрашиваемого
+// TODO: OwnProfileResponseDto / PublicProfileResponseDto
 export class ProfileResponseDto {
     @ApiProperty({ example: 1 })
     id: number;

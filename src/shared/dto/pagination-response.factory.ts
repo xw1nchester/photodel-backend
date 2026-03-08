@@ -9,6 +9,9 @@ export const PaginationResponseDtoFactory = <T>(itemType: Type<T>) => {
         @ApiProperty({ example: 120 })
         total: number;
 
+        @ApiProperty({ example: 4 })
+        page: number;
+
         @ApiProperty({ example: 7 })
         totalPages: number;
 

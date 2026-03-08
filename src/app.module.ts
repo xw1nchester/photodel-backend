@@ -8,6 +8,7 @@ import { DatabaseModule } from '@database/database.module';
 
 import { AlbumsModule } from './albums/albums.module';
 import { AppController } from './app.controller';
+import { FavoritesModule } from './favorites/favorites.module';
 import { FilesModule } from './files/files.module';
 import { LocationsModule } from './locations/locations.module';
 import { PhotosModule } from './photos/photos.module';
@@ -24,7 +25,8 @@ import { RolesModule } from './roles/roles.module';
         FilesModule,
         LocationsModule,
         AlbumsModule,
-        PhotosModule
+        PhotosModule,
+        FavoritesModule
     ],
     controllers: [AppController],
     providers: [

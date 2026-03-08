@@ -17,7 +17,10 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDtoFactory } from '@shared/dto/pagination-response.factory';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
-import { PhotoWrapperResponseDto } from './dto/photo-response.dto';
+import {
+    PhotoResponseDto,
+    PhotoWrapperResponseDto
+} from './dto/photo-response.dto';
 import { PhotosService } from './photos.service';
 
 @Controller('photos')
@@ -36,7 +39,7 @@ export class PhotosController {
 
     @Get('my')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: PaginationResponseDtoFactory(PhotoRequestDto) })
+    @ApiOkResponse({ type: PaginationResponseDtoFactory(PhotoResponseDto) })
     async findAllMy(
         @CurrentUser() user: JwtPayload,
         @Query() pagination: PaginationQueryDto
@@ -45,6 +48,7 @@ export class PhotosController {
     }
 
     @Get(':id')
+    @ApiBearerAuth()
     @ApiOkResponse({ type: PhotoWrapperResponseDto })
     async getDtoById(@Param('id', ParseIntPipe) id: number) {
         return await this.photoService.getDtoById(id);

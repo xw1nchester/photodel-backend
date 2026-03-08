@@ -52,6 +52,8 @@
             "@photos/*": ["src/photos/*"],
             "@shared": ["src/shared"],
             "@shared/*": ["src/shared/*"],
+            "@favorites": ["src/favorites"],
+            "@favorites/*": ["src/favorites/*"],
         }
     }
 }

@@ -213,4 +213,9 @@ export class PhotosService {
 
         return { photo: this.getPhotoDto(photo) };
     }
+
+    async exists(id: number) {
+        const count = await this.photoRepository.count({ where: { id } });
+        return count > 0;
+    }
 }
