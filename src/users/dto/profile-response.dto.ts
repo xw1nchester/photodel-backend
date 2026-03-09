@@ -47,7 +47,8 @@ export class ProfileResponseDto {
     lastName: string;
 
     @ApiProperty({
-        example: 'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
+        example:
+            'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
     })
     avatar: string;
 

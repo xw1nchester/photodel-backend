@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { IsInt, IsOptional } from 'class-validator';
+
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 
 export class PhotoQueryDto extends PaginationQueryDto {
     @ApiProperty({
@@ -12,5 +13,6 @@ export class PhotoQueryDto extends PaginationQueryDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt()
+    @Expose({ name: 'album_id' })
     albumId?: number;
 }

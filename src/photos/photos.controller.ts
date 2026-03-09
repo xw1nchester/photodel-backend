@@ -21,15 +21,15 @@ import {
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
+import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
+import { PhotoQueryDto } from './dto/photo-query.dto';
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import {
     PhotoResponseDto,
     PhotoWrapperResponseDto
 } from './dto/photo-response.dto';
 import { PhotosService } from './photos.service';
-import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
-import { PhotoQueryDto } from './dto/photo-query.dto';
 
 @Controller('photos')
 export class PhotosController {

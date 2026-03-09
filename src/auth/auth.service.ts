@@ -113,7 +113,10 @@ export class AuthService {
             userAgent
         );
 
-        return { user: this.usersService.createUserMeDto(existingUser), tokens };
+        return {
+            user: this.usersService.createUserMeDto(existingUser),
+            tokens
+        };
     }
 
     async refresh(token: string, userAgent: string) {

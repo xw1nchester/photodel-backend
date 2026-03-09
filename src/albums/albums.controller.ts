@@ -20,7 +20,9 @@ import {
 
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
+import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
 import { AlbumsService } from './albums.service';
 import { AlbumRequestDto } from './dto/album-request.dto';
@@ -28,8 +30,6 @@ import {
     AlbumResponseDto,
     AlbumWrapperResponseDto
 } from './dto/album-response.dto';
-import { IdsRequestDto } from '@shared/dto/ids-request.dto';
-import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
 @Controller('albums')
 export class AlbumsController {

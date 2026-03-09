@@ -17,8 +17,15 @@ import {
     getSchemaPath
 } from '@nestjs/swagger';
 
+import { AlbumsService } from '@albums/albums.service';
+import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser, Public } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
+import { PhotoQueryDto } from '@photos/dto/photo-query.dto';
+import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
+import { PhotosService } from '@photos/photos.service';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
 import { AvatarRequestDto } from './dto/avatar-request.dto';
 import { NearbyUsersWrapperResponseDto } from './dto/nearby-user-response.dto';
@@ -27,16 +34,13 @@ import { ProfileWrapperResponseDto } from './dto/profile-response.dto';
 import { UpdateNameRequestDto } from './dto/update-name-request.dto';
 import { UserMeWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
-import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
-import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
-import { AlbumResponseDto } from '@albums/dto/album-response.dto';
-import { AlbumsService } from '@albums/albums.service';
 
 @Controller('users')
 export class UsersController {
     constructor(
         private readonly usersService: UsersService,
-        private readonly albumsService: AlbumsService
+        private readonly albumsService: AlbumsService,
+        private readonly photosService: PhotosService
     ) {}
 
     @Get('me')
@@ -132,5 +136,36 @@ export class UsersController {
         @Query() pagination: PaginationQueryDto
     ) {
         return await this.albumsService.findAllByUserId(id, pagination, true);
+    }
+
+    @Public()
+    @Get(':id/photos')
+    @ApiExtraModels(PaginationResponseDto, PhotoResponseDto)
+    @ApiOkResponse({
+        schema: {
+            allOf: [
+                {
+                    properties: {
+                        data: {
+                            type: 'array',
+                            items: { $ref: getSchemaPath(PhotoResponseDto) }
+                        }
+                    }
+                },
+                { $ref: getSchemaPath(PaginationResponseDto) }
+            ]
+        }
+    })
+    async getUserPhotos(
+        @Param('id', ParseIntPipe) userId: number,
+        @Query() query: PhotoQueryDto
+    ) {
+        return await this.photosService.findAllByUserId({
+            userId,
+            page: query.page,
+            limit: query.limit,
+            albumId: query.albumId,
+            isPublished: true
+        });
     }
 }

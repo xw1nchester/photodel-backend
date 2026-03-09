@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AlbumsModule } from '@albums/albums.module';
 import { LocationsModule } from '@locations/locations.module';
+import { PhotosModule } from '@photos/photos.module';
 import { ProCategoriesModule } from '@pro-categories/pro-categories.module';
 import { S3Module } from '@s3/s3.module';
 import { SocialsModule } from '@socials/socials.module';
@@ -13,7 +15,6 @@ import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { AlbumsModule } from '@albums/albums.module';
 
 @Module({
     imports: [
@@ -28,7 +29,8 @@ import { AlbumsModule } from '@albums/albums.module';
         SpecializationsModule,
         SocialsModule,
         LocationsModule,
-        AlbumsModule
+        AlbumsModule,
+        PhotosModule
     ],
     controllers: [UsersController],
     providers: [UsersService],
