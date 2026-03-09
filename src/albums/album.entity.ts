@@ -36,7 +36,7 @@ export class Album {
     @JoinColumn({ name: 'user_id' })
     user: User;
 
-    @ManyToMany(() => Photo, photo => photo.albums)
+    @ManyToMany(() => Photo, photo => photo.albums, { onDelete: 'CASCADE' })
     photos: Photo[];
 
     @CreateDateColumn({ name: 'created_at' })

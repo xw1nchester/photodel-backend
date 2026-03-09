@@ -7,7 +7,9 @@ import {
     Body,
     Param,
     ParseIntPipe,
-    Query
+    Query,
+    HttpCode,
+    HttpStatus
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 
@@ -15,6 +17,7 @@ import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDtoFactory } from '@shared/dto/pagination-response.factory';
+import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import {
@@ -73,6 +76,16 @@ export class PhotosController {
         @Param('id', ParseIntPipe) id: number
     ) {
         return await this.photoService.remove(id, user.id);
+    }
+
+    @Post('bulk-delete')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiBearerAuth()
+    async bulkRemove(
+        @CurrentUser() user: JwtPayload,
+        @Body() { ids }: IdsRequestDto
+    ) {
+        await this.photoService.bulkRemove(user.id, ids);
     }
 
     // TODO: запросы публичных фотографий/фотографий пользователя

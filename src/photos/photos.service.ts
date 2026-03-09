@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { AlbumsService } from '@albums/albums.service';
 import { Location } from '@locations/location.entity';
@@ -27,7 +27,7 @@ export class PhotosService {
         private readonly usersService: UsersService
     ) {}
 
-    getPhotoDto(photo: Photo) {
+    createDto(photo: Photo) {
         return {
             id: photo.id,
             imageKey: photo.image,
@@ -66,7 +66,7 @@ export class PhotosService {
                     manager
                 );
 
-            const albums = await this.albumService.findAndValidateByIds(
+            const albums = await this.albumService.findAndValidateByIdsAndUserId(
                 dto.albumIds,
                 userId,
                 manager
@@ -110,7 +110,7 @@ export class PhotosService {
             take: limit
         });
 
-        const photosDtos = photos.map(photo => this.getPhotoDto(photo));
+        const photosDtos = photos.map(photo => this.createDto(photo));
 
         return new PaginationDto(photosDtos, total, page, limit);
     }
@@ -134,7 +134,7 @@ export class PhotosService {
             throw new NotFoundException('Фотография не найдена');
         }
 
-        return { photo: this.getPhotoDto(photo) };
+        return { photo: this.createDto(photo) };
     }
 
     async findByIdAndUserId(id: number, userId: number) {
@@ -143,7 +143,8 @@ export class PhotosService {
             relations: {
                 location: true,
                 specializations: true,
-                albums: true
+                albums: true,
+                user: true
             }
         });
 
@@ -201,7 +202,7 @@ export class PhotosService {
                     manager
                 );
 
-            photo.albums = await this.albumService.findAndValidateByIds(
+            photo.albums = await this.albumService.findAndValidateByIdsAndUserId(
                 dto.albumIds,
                 userId,
                 manager
@@ -218,11 +219,41 @@ export class PhotosService {
 
         await this.photoRepository.remove(photo);
 
-        return { photo: this.getPhotoDto(photo) };
+        return { photo: this.createDto(photo) };
     }
 
     async exists(id: number) {
         const count = await this.photoRepository.count({ where: { id } });
         return count > 0;
+    }
+
+    async findAndValidateByIdsAndUserId(
+        ids: number[],
+        userId: number,
+        manager?: EntityManager
+    ) {
+        const repo = manager
+            ? manager.getRepository(Photo)
+            : this.photoRepository;
+
+        ids = [...new Set(ids)];
+
+        const photos = await repo.find({
+            where: { id: In(ids), userId }
+        });
+
+        if (ids.length != photos.length) {
+            throw new NotFoundException('Фото не найдено');
+        }
+
+        return photos;
+    }
+
+    async bulkRemove(userId: number, ids: number[]) {
+        await this.findAndValidateByIdsAndUserId(ids, userId);
+
+        await this.photoRepository.delete({
+            id: In(ids)
+        });
     }
 }

@@ -17,7 +17,7 @@ export class AlbumsService {
         private readonly s3Service: S3Service
     ) {}
 
-    getAlbumDto(album: Album) {
+    createDto(album: Album) {
         return {
             id: album.id,
             title: album.title,
@@ -41,7 +41,7 @@ export class AlbumsService {
             userId
         });
 
-        return { album: this.getAlbumDto(createdAlbum) };
+        return { album: this.createDto(createdAlbum) };
     }
 
     async findAllByUserId(userId: number, { page, limit }: PaginationQueryDto) {
@@ -54,7 +54,7 @@ export class AlbumsService {
             .take(limit)
             .getManyAndCount();
 
-        const albumsDtos = albums.map(album => this.getAlbumDto(album));
+        const albumsDtos = albums.map(album => this.createDto(album));
 
         return new PaginationDto(albumsDtos, total, page, limit);
     }
@@ -70,7 +70,7 @@ export class AlbumsService {
             throw new NotFoundException('Альбом с не найден');
         }
 
-        return { album: this.getAlbumDto(album) };
+        return { album: this.createDto(album) };
     }
 
     async findByIdAndUserId(id: number, userId: number) {
@@ -103,10 +103,10 @@ export class AlbumsService {
 
         await this.albumRepository.remove(album);
 
-        return { album: this.getAlbumDto(album) };
+        return { album: this.createDto(album) };
     }
 
-    async findAndValidateByIds(
+    async findAndValidateByIdsAndUserId(
         ids: number[],
         userId: number,
         manager?: EntityManager
@@ -126,5 +126,13 @@ export class AlbumsService {
         }
 
         return albums;
+    }
+
+    async bulkRemove(userId: number, ids: number[]) {
+        await this.findAndValidateByIdsAndUserId(ids, userId);
+
+        await this.albumRepository.delete({
+            id: In(ids)
+        });
     }
 }

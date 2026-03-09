@@ -7,7 +7,9 @@ import {
     Body,
     Param,
     ParseIntPipe,
-    Query
+    Query,
+    HttpCode,
+    HttpStatus
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 
@@ -22,6 +24,7 @@ import {
     AlbumResponseDto,
     AlbumWrapperResponseDto
 } from './dto/album-response.dto';
+import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 
 @Controller('albums')
 export class AlbumsController {
@@ -73,6 +76,16 @@ export class AlbumsController {
         @Param('id', ParseIntPipe) id: number
     ) {
         return await this.albumService.remove(id, user.id);
+    }
+
+    @Post('bulk-delete')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiBearerAuth()
+    async bulkRemove(
+        @CurrentUser() user: JwtPayload,
+        @Body() { ids }: IdsRequestDto
+    ) {
+        await this.albumService.bulkRemove(user.id, ids);
     }
 
     // TODO: запросы публичных альбомов/альбома пользователя
