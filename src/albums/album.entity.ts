@@ -44,4 +44,6 @@ export class Album {
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    photosCount?: number;
 }

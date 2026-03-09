@@ -25,11 +25,13 @@ export class AlbumsService {
             imageKey: album.image,
             imageUrl: album.image ? this.s3Service.getUrl(album.image) : null,
             isPublished: album.isPublished,
-            userId: album.userId,
+            photosCount: album.photosCount || 0,
             createdAt: album.createdAt,
             updatedAt: album.updatedAt
         };
     }
+
+    async;
 
     async create(userId: number, dto: AlbumRequestDto) {
         const createdAlbum = await this.albumRepository.save({
@@ -43,12 +45,14 @@ export class AlbumsService {
     }
 
     async findAllByUserId(userId: number, { page, limit }: PaginationQueryDto) {
-        const [albums, total] = await this.albumRepository.findAndCount({
-            where: { userId },
-            order: { createdAt: 'DESC' },
-            skip: (page - 1) * limit,
-            take: limit
-        });
+        const [albums, total] = await this.albumRepository
+            .createQueryBuilder('album')
+            .where('album.userId = :userId', { userId })
+            .loadRelationCountAndMap('album.photosCount', 'album.photos')
+            .orderBy('album.createdAt', 'DESC')
+            .skip((page - 1) * limit)
+            .take(limit)
+            .getManyAndCount();
 
         const albumsDtos = albums.map(album => this.getAlbumDto(album));
 
@@ -56,9 +60,11 @@ export class AlbumsService {
     }
 
     async getDtoById(id: number) {
-        const album = await this.albumRepository.findOne({
-            where: { id }
-        });
+        const album = await this.albumRepository
+            .createQueryBuilder('album')
+            .where('album.id = :id', { id })
+            .loadRelationCountAndMap('album.photosCount', 'album.photos')
+            .getOne();
 
         if (!album) {
             throw new NotFoundException('Альбом с не найден');

@@ -22,7 +22,7 @@ export class AlbumResponseDto {
     isPublished: boolean;
 
     @ApiProperty({ example: 1 })
-    userId: number;
+    photosCount: number;
 
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
     createdAt: string;
