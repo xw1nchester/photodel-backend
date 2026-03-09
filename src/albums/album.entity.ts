@@ -23,7 +23,6 @@ export class Album {
     @Column({ nullable: true })
     description: string;
 
-    // TODO: как вариант, сделать поле mainPhoto через связь с фото
     @Column({ nullable: true })
     image: string;
 

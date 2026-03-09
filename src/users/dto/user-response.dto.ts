@@ -13,10 +13,13 @@ export class UserResponseDto {
     @ApiProperty({ example: 'Петров' })
     lastName: string;
 
+    @ApiProperty({ example: 'e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg' })
+    avatarKey: string;
+
     @ApiProperty({
-        example: 'https://avatars.githubusercontent.com/u/63304397'
+        example: 'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
     })
-    avatar: string;
+    avatarUrl: string;
 
     @ApiProperty({ example: true })
     isAdult: boolean;

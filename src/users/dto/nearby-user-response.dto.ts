@@ -11,7 +11,7 @@ export class NearbyUserResponseDto {
     lastName: string;
 
     @ApiProperty({
-        example: 'https://avatars.githubusercontent.com/u/63304397',
+        example: 'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg',
         nullable: true
     })
     avatar: string;

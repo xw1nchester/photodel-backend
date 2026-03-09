@@ -28,7 +28,8 @@ export class PhotosService {
     getPhotoDto(photo: Photo) {
         return {
             id: photo.id,
-            image: this.s3Service.getUrl(photo.image),
+            imageKey: photo.image,
+            imageUrl: this.s3Service.getUrl(photo.image),
             name: photo.name,
             description: photo.description,
             location: this.locationsService.getDto(photo.location),
