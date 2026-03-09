@@ -13,6 +13,7 @@ import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { AlbumsModule } from '@albums/albums.module';
 
 @Module({
     imports: [
@@ -26,7 +27,8 @@ import { UsersService } from './users.service';
         S3Module,
         SpecializationsModule,
         SocialsModule,
-        LocationsModule
+        LocationsModule,
+        AlbumsModule
     ],
     controllers: [UsersController],
     providers: [UsersService],

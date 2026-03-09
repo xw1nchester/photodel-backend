@@ -72,16 +72,16 @@ export class UsersService {
         };
     }
 
-    createUserBasicDto(user: User) {
-        return {
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            avatarKey: user.avatar,
-            avatarUrl: user.avatar ? this.s3Service.getUrl(user.avatar) : null,
-            isPro: user.isPro
-        };
-    }
+    // createUserBasicDto(user: User) {
+    //     return {
+    //         id: user.id,
+    //         firstName: user.firstName,
+    //         lastName: user.lastName,
+    //         avatarKey: user.avatar,
+    //         avatarUrl: user.avatar ? this.s3Service.getUrl(user.avatar) : null,
+    //         isPro: user.isPro
+    //     };
+    // }
 
     async createUser(dto: CreateUserDto, manager?: EntityManager) {
         const repo = manager

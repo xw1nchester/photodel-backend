@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+    forwardRef,
+    Inject,
+    Injectable,
+    NotFoundException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
@@ -6,13 +11,11 @@ import { AlbumsService } from '@albums/albums.service';
 import { Location } from '@locations/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { S3Service } from '@s3/s3.service';
-import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
-import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class PhotosService {
@@ -21,13 +24,25 @@ export class PhotosService {
         private readonly photoRepository: Repository<Photo>,
         private readonly dataSource: DataSource,
         private readonly specializationsService: SpecializationsService,
+        @Inject(forwardRef(() => AlbumsService))
         private readonly albumService: AlbumsService,
         private readonly locationsService: LocationsService,
-        private readonly s3Service: S3Service,
-        private readonly usersService: UsersService
+        private readonly s3Service: S3Service
     ) {}
 
     createDto(photo: Photo) {
+        // чтобы модуль фото не зависел от модуля юзеров
+        const user = {
+            id: photo.user.id,
+            firstName: photo.user.firstName,
+            lastName: photo.user.lastName,
+            avatarKey: photo.user.avatar,
+            avatarUrl: photo.user.avatar
+                ? this.s3Service.getUrl(photo.user.avatar)
+                : null,
+            isPro: photo.user.isPro
+        };
+
         return {
             id: photo.id,
             imageKey: photo.image,
@@ -47,7 +62,7 @@ export class PhotosService {
             albums: photo.albums,
             createdAt: photo.createdAt,
             updatedAt: photo.updatedAt,
-            user: this.usersService.createUserBasicDto(photo.user)
+            user
         };
     }
 
@@ -66,11 +81,12 @@ export class PhotosService {
                     manager
                 );
 
-            const albums = await this.albumService.findAndValidateByIdsAndUserId(
-                dto.albumIds,
-                userId,
-                manager
-            );
+            const albums =
+                await this.albumService.findAndValidateByIdsAndUserId(
+                    dto.albumIds,
+                    userId,
+                    manager
+                );
 
             const createdPhoto = await photosRepo.save({
                 image: dto.image,
@@ -96,19 +112,42 @@ export class PhotosService {
         });
     }
 
-    async findAllByUserId(userId: number, { page, limit }: PaginationQueryDto) {
-        const [photos, total] = await this.photoRepository.findAndCount({
-            where: { userId },
-            relations: {
-                location: true,
-                specializations: true,
-                albums: true,
-                user: true
-            },
-            order: { createdAt: 'DESC' },
-            skip: (page - 1) * limit,
-            take: limit
-        });
+    async findAllByUserId({
+        userId,
+        page,
+        limit,
+        albumId,
+        isPublished
+    }: {
+        userId: number;
+        page: number;
+        limit: number;
+        albumId?: number;
+        isPublished?: boolean;
+    }) {
+        const query = this.photoRepository
+            .createQueryBuilder('photo')
+            .leftJoinAndSelect('photo.location', 'location')
+            .leftJoinAndSelect('photo.specializations', 'specialization')
+            .leftJoinAndSelect('photo.albums', 'album')
+            .leftJoinAndSelect('photo.user', 'user')
+            .where('user.id = :userId', { userId })
+            .orderBy('photo.createdAt', 'DESC')
+            .take(limit)
+            .skip((page - 1) * limit);
+
+        if (albumId != undefined) {
+            query.andWhere(
+                `(album.id = :albumId AND (album.userId = :userId OR album.isPublished = true))`,
+                { albumId, userId }
+            );
+        }
+
+        if (isPublished != undefined) {
+            query.andWhere('photo.isPublished = :isPublished', { isPublished });
+        }
+
+        const [photos, total] = await query.getManyAndCount();
 
         const photosDtos = photos.map(photo => this.createDto(photo));
 
@@ -202,11 +241,12 @@ export class PhotosService {
                     manager
                 );
 
-            photo.albums = await this.albumService.findAndValidateByIdsAndUserId(
-                dto.albumIds,
-                userId,
-                manager
-            );
+            photo.albums =
+                await this.albumService.findAndValidateByIdsAndUserId(
+                    dto.albumIds,
+                    userId,
+                    manager
+                );
 
             await photosRepo.save(photo);
 

@@ -9,7 +9,13 @@ import {
     ParseFloatPipe,
     ParseIntPipe
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
+import {
+    ApiBearerAuth,
+    ApiExtraModels,
+    ApiOkResponse,
+    ApiQuery,
+    getSchemaPath
+} from '@nestjs/swagger';
 
 import { CurrentUser, Public } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
@@ -21,10 +27,17 @@ import { ProfileWrapperResponseDto } from './dto/profile-response.dto';
 import { UpdateNameRequestDto } from './dto/update-name-request.dto';
 import { UserMeWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
+import { AlbumResponseDto } from '@albums/dto/album-response.dto';
+import { AlbumsService } from '@albums/albums.service';
 
 @Controller('users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) {}
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly albumsService: AlbumsService
+    ) {}
 
     @Get('me')
     @ApiBearerAuth()
@@ -94,5 +107,30 @@ export class UsersController {
         @Query('longitude', ParseFloatPipe) longitude: number
     ) {
         return await this.usersService.findNearbyUsers(latitude, longitude);
+    }
+
+    @Public()
+    @Get(':id/albums')
+    @ApiExtraModels(PaginationResponseDto, AlbumResponseDto)
+    @ApiOkResponse({
+        schema: {
+            allOf: [
+                {
+                    properties: {
+                        data: {
+                            type: 'array',
+                            items: { $ref: getSchemaPath(AlbumResponseDto) }
+                        }
+                    }
+                },
+                { $ref: getSchemaPath(PaginationResponseDto) }
+            ]
+        }
+    })
+    async getUserAlbums(
+        @Param('id', ParseIntPipe) id: number,
+        @Query() pagination: PaginationQueryDto
+    ) {
+        return await this.albumsService.findAllByUserId(id, pagination, true);
     }
 }

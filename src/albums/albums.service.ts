@@ -31,8 +31,6 @@ export class AlbumsService {
         };
     }
 
-    async;
-
     async create(userId: number, dto: AlbumRequestDto) {
         const createdAlbum = await this.albumRepository.save({
             title: dto.title,
@@ -44,12 +42,22 @@ export class AlbumsService {
         return { album: this.createDto(createdAlbum) };
     }
 
-    async findAllByUserId(userId: number, { page, limit }: PaginationQueryDto) {
-        const [albums, total] = await this.albumRepository
+    async findAllByUserId(
+        userId: number,
+        { page, limit }: PaginationQueryDto,
+        isPublished?: boolean
+    ) {
+        const query = this.albumRepository
             .createQueryBuilder('album')
             .where('album.userId = :userId', { userId })
             .loadRelationCountAndMap('album.photosCount', 'album.photos')
-            .orderBy('album.createdAt', 'DESC')
+            .orderBy('album.createdAt', 'DESC');
+
+        if (typeof isPublished === 'boolean') {
+            query.andWhere('album.isPublished = :isPublished', { isPublished });
+        }
+
+        const [albums, total] = await query
             .skip((page - 1) * limit)
             .take(limit)
             .getManyAndCount();

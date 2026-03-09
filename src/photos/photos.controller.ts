@@ -20,7 +20,6 @@ import {
 
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
-import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
@@ -30,6 +29,7 @@ import {
 } from './dto/photo-response.dto';
 import { PhotosService } from './photos.service';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
+import { PhotoQueryDto } from './dto/photo-query.dto';
 
 @Controller('photos')
 export class PhotosController {
@@ -65,9 +65,14 @@ export class PhotosController {
     })
     async findAllMy(
         @CurrentUser() user: JwtPayload,
-        @Query() pagination: PaginationQueryDto
+        @Query() query: PhotoQueryDto
     ) {
-        return await this.photoService.findAllByUserId(user.id, pagination);
+        return await this.photoService.findAllByUserId({
+            userId: user.id,
+            page: query.page,
+            limit: query.limit,
+            albumId: query.albumId
+        });
     }
 
     @Get(':id')
