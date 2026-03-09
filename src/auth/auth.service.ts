@@ -90,7 +90,7 @@ export class AuthService {
             this.mailService.sendVerificationCode(createdUser.email, code);
 
             return {
-                user: this.usersService.createUserDto(createdUser),
+                user: this.usersService.createUserMeDto(createdUser),
                 tokens
             };
         });
@@ -113,7 +113,7 @@ export class AuthService {
             userAgent
         );
 
-        return { user: this.usersService.createUserDto(existingUser), tokens };
+        return { user: this.usersService.createUserMeDto(existingUser), tokens };
     }
 
     async refresh(token: string, userAgent: string) {

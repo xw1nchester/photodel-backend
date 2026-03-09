@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UserResponseDto {
+export class UserMeResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
 
@@ -17,7 +17,8 @@ export class UserResponseDto {
     avatarKey: string;
 
     @ApiProperty({
-        example: 'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
+        example:
+            'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
     })
     avatarUrl: string;
 
@@ -42,7 +43,29 @@ export class UserResponseDto {
     roles: string[];
 }
 
-export class UserWrapperResponseDto {
-    @ApiProperty({ type: UserResponseDto })
-    user: UserResponseDto;
+export class UserMeWrapperResponseDto {
+    @ApiProperty({ type: UserMeResponseDto })
+    user: UserMeResponseDto;
 }
+
+export class UserBasicDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 'Иван' })
+    firstName: string;
+
+    @ApiProperty({ example: 'Петров' })
+    lastName: string;
+
+    @ApiProperty({
+        example:
+            'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
+    })
+    avatarUrl: string;
+
+    @ApiProperty({ example: false })
+    isPro: boolean;
+}
+
+// нужно будет отдельное dto на основе UserBasicDto c distance, categories, specializations

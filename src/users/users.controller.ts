@@ -19,7 +19,7 @@ import { NearbyUsersWrapperResponseDto } from './dto/nearby-user-response.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
 import { ProfileWrapperResponseDto } from './dto/profile-response.dto';
 import { UpdateNameRequestDto } from './dto/update-name-request.dto';
-import { UserWrapperResponseDto } from './dto/user-response.dto';
+import { UserMeWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -28,9 +28,9 @@ export class UsersController {
 
     @Get('me')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: UserWrapperResponseDto })
+    @ApiOkResponse({ type: UserMeWrapperResponseDto })
     async getUserDtoById(@CurrentUser() user: JwtPayload) {
-        return await this.usersService.getUserDtoById(user.id);
+        return await this.usersService.getUserMeDtoById(user.id);
     }
 
     @Get('profile')
@@ -59,7 +59,7 @@ export class UsersController {
 
     @Patch('name')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: UserWrapperResponseDto })
+    @ApiOkResponse({ type: UserMeWrapperResponseDto })
     async updateName(
         @CurrentUser() user: JwtPayload,
         @Body() dto: UpdateNameRequestDto
@@ -69,7 +69,7 @@ export class UsersController {
 
     @Patch('avatar')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: UserWrapperResponseDto })
+    @ApiOkResponse({ type: UserMeWrapperResponseDto })
     async updateAvatar(
         @CurrentUser() user: JwtPayload,
         @Body() dto: AvatarRequestDto
@@ -79,7 +79,7 @@ export class UsersController {
 
     @Delete('avatar')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: UserWrapperResponseDto })
+    @ApiOkResponse({ type: UserMeWrapperResponseDto })
     async deleteAvatar(@CurrentUser() user: JwtPayload) {
         return await this.usersService.deleteAvatar(user.id);
     }

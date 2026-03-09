@@ -9,6 +9,7 @@ import { SpecializationsModule } from '@specializations/specializations.module';
 import { Photo } from './photo.entity';
 import { PhotosController } from './photos.controller';
 import { PhotosService } from './photos.service';
+import { UsersModule } from '@users/users.module';
 
 @Module({
     imports: [
@@ -16,7 +17,8 @@ import { PhotosService } from './photos.service';
         SpecializationsModule,
         AlbumsModule,
         LocationsModule,
-        S3Module
+        S3Module,
+        UsersModule
     ],
     controllers: [PhotosController],
     providers: [PhotosService],

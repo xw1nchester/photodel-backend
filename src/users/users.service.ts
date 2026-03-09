@@ -55,7 +55,7 @@ export class UsersService {
         });
     }
 
-    createUserDto(user: User) {
+    createUserMeDto(user: User) {
         return {
             id: user.id,
             email: user.email,
@@ -69,6 +69,16 @@ export class UsersService {
             isPro: user.isPro,
             createdAt: user.createdAt,
             roles: user.roles.map(r => r.name)
+        };
+    }
+
+    createUserBasicDto(user: User) {
+        return {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatarUrl: user.avatar ? this.s3Service.getUrl(user.avatar) : null,
+            isPro: user.isPro
         };
     }
 
@@ -86,9 +96,9 @@ export class UsersService {
         return await repo.save(user);
     }
 
-    async getUserDtoById(id: number) {
+    async getUserMeDtoById(id: number) {
         const user = await this.findById(id);
-        return { user: this.createUserDto(user) };
+        return { user: this.createUserMeDto(user) };
     }
 
     async verifyById(id: number, manager?: EntityManager) {
@@ -296,7 +306,7 @@ export class UsersService {
             await this.s3Service.deleteFile(user.avatar);
         }
 
-        return await this.getUserDtoById(userId);
+        return await this.getUserMeDtoById(userId);
     }
 
     async deleteAvatar(userId: number) {
@@ -308,7 +318,7 @@ export class UsersService {
             await this.s3Service.deleteFile(user.avatar);
         }
 
-        return await this.getUserDtoById(userId);
+        return await this.getUserMeDtoById(userId);
     }
 
     async updatePassword(
@@ -329,7 +339,7 @@ export class UsersService {
             { firstName: dto.firstName, lastName: dto.lastName }
         );
 
-        return await this.getUserDtoById(userId);
+        return await this.getUserMeDtoById(userId);
     }
 
     async findNearbyUsers(lat: number, lng: number) {

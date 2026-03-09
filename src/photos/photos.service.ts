@@ -12,6 +12,7 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
+import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class PhotosService {
@@ -22,7 +23,8 @@ export class PhotosService {
         private readonly specializationsService: SpecializationsService,
         private readonly albumService: AlbumsService,
         private readonly locationsService: LocationsService,
-        private readonly s3Service: S3Service
+        private readonly s3Service: S3Service,
+        private readonly usersService: UsersService
     ) {}
 
     getPhotoDto(photo: Photo) {
@@ -41,11 +43,11 @@ export class PhotosService {
             flash: photo.flash,
             isForSale: photo.isForSale,
             isPublished: photo.isPublished,
-            // userId: photo.userId,
             specializations: photo.specializations,
             albums: photo.albums,
             createdAt: photo.createdAt,
-            updatedAt: photo.updatedAt
+            updatedAt: photo.updatedAt,
+            user: this.usersService.createUserBasicDto(photo.user)
         };
     }
 
@@ -88,7 +90,9 @@ export class PhotosService {
                 albums
             });
 
-            return { photo: this.getPhotoDto(createdPhoto) };
+            const photo = await this.getDtoById(createdPhoto.id, manager);
+
+            return { photo };
         });
     }
 
@@ -98,7 +102,8 @@ export class PhotosService {
             relations: {
                 location: true,
                 specializations: true,
-                albums: true
+                albums: true,
+                user: true
             },
             order: { createdAt: 'DESC' },
             skip: (page - 1) * limit,
@@ -120,7 +125,8 @@ export class PhotosService {
             relations: {
                 location: true,
                 specializations: true,
-                albums: true
+                albums: true,
+                user: true
             }
         });
 

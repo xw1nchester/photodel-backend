@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { LocationDto } from '@locations/dto/location.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
+import { UserBasicDto } from '@users/dto/user-response.dto';
 
 export class PhotoResponseDto {
     @ApiProperty({ example: 1 })
@@ -12,10 +13,11 @@ export class PhotoResponseDto {
     imageKey: string;
 
     @ApiProperty({
-        example: 'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
+        example:
+            'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
     })
     imageUrl: string;
-    
+
     @ApiProperty({ example: 'Моя фотография' })
     name: string;
 
@@ -63,6 +65,9 @@ export class PhotoResponseDto {
 
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
     updatedAt: string;
+
+    @ApiProperty({ type: UserBasicDto })
+    user: UserBasicDto;
 }
 
 export class PhotoWrapperResponseDto {
