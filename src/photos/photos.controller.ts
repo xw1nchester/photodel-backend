@@ -11,12 +11,16 @@ import {
     HttpCode,
     HttpStatus
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
+import {
+    ApiBearerAuth,
+    ApiExtraModels,
+    ApiOkResponse,
+    getSchemaPath
+} from '@nestjs/swagger';
 
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
-import { PaginationResponseDtoFactory } from '@shared/dto/pagination-response.factory';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
@@ -25,6 +29,7 @@ import {
     PhotoWrapperResponseDto
 } from './dto/photo-response.dto';
 import { PhotosService } from './photos.service';
+import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
 @Controller('photos')
 export class PhotosController {
@@ -42,7 +47,22 @@ export class PhotosController {
 
     @Get('my')
     @ApiBearerAuth()
-    @ApiOkResponse({ type: PaginationResponseDtoFactory(PhotoResponseDto) })
+    @ApiExtraModels(PaginationResponseDto, PhotoResponseDto)
+    @ApiOkResponse({
+        schema: {
+            allOf: [
+                {
+                    properties: {
+                        data: {
+                            type: 'array',
+                            items: { $ref: getSchemaPath(PhotoResponseDto) }
+                        }
+                    }
+                },
+                { $ref: getSchemaPath(PaginationResponseDto) }
+            ]
+        }
+    })
     async findAllMy(
         @CurrentUser() user: JwtPayload,
         @Query() pagination: PaginationQueryDto
