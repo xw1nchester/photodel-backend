@@ -18,10 +18,10 @@ export class TemporaryLocation {
     @Column({ name: 'profile_id' })
     profileId: number;
 
-    @Column({ type: 'date' })
+    @Column({ name: 'start_date', type: 'date' })
     startDate: Date;
 
-    @Column({ type: 'date' })
+    @Column({ name: 'end_date', type: 'date' })
     endDate: Date;
 
     @ManyToOne(() => Location, { cascade: true, onDelete: 'CASCADE' })

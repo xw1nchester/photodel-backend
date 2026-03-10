@@ -46,8 +46,8 @@ export class User {
     @Column({ name: 'is_pro', default: false })
     isPro: boolean;
 
-    @Column({ nullable: true })
-    avatar: string;
+    @Column({ name: 'avatar_key', nullable: true })
+    avatarKey: string;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;

@@ -1,19 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+    forwardRef,
+    Inject,
+    Injectable,
+    NotFoundException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, EntityManager } from 'typeorm';
+import { Repository, In, EntityManager, DataSource } from 'typeorm';
 
+import { PhotosService } from '@photos/photos.service';
 import { S3Service } from '@s3/s3.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 
 import { Album } from './album.entity';
-import { AlbumRequestDto } from './dto/album-request.dto';
+import {
+    AlbumCreateRequestDto,
+    AlbumRequestDto
+} from './dto/album-request.dto';
 
 @Injectable()
 export class AlbumsService {
     constructor(
         @InjectRepository(Album)
         private readonly albumRepository: Repository<Album>,
+        private readonly dataSource: DataSource,
+        @Inject(forwardRef(() => PhotosService))
+        private readonly photosService: PhotosService,
         private readonly s3Service: S3Service
     ) {}
 
@@ -22,24 +34,40 @@ export class AlbumsService {
             id: album.id,
             title: album.title,
             description: album.description,
-            imageKey: album.image,
-            imageUrl: album.image ? this.s3Service.getUrl(album.image) : null,
+            imageKey: album.imageKey,
+            imageUrl: album.imageKey
+                ? this.s3Service.getUrl(album.imageKey)
+                : null,
             isPublished: album.isPublished,
-            photosCount: album.photosCount || 0,
+            photosCount: album.photosCount,
             createdAt: album.createdAt,
             updatedAt: album.updatedAt
         };
     }
 
-    async create(userId: number, dto: AlbumRequestDto) {
-        const createdAlbum = await this.albumRepository.save({
-            title: dto.title,
-            description: dto.description,
-            image: dto.image,
-            userId
-        });
+    async create(userId: number, dto: AlbumCreateRequestDto) {
+        return await this.dataSource.transaction(async manager => {
+            const albumsRepo = manager.getRepository(Album);
 
-        return { album: this.createDto(createdAlbum) };
+            const photos =
+                await this.photosService.findAndValidateByIdsAndUserId(
+                    dto.photoIds,
+                    userId,
+                    manager
+                );
+
+            const createdAlbum = await albumsRepo.save({
+                title: dto.title,
+                description: dto.description,
+                image: dto.image,
+                userId,
+                photos
+            });
+
+            createdAlbum.photosCount = photos.length;
+
+            return { album: this.createDto(createdAlbum) };
+        });
     }
 
     async findAllByUserId(
@@ -98,7 +126,7 @@ export class AlbumsService {
 
         album.title = dto.title;
         album.description = dto.description;
-        album.image = dto.image;
+        album.imageKey = dto.image;
         album.isPublished = dto.isPublished;
 
         await this.albumRepository.save(album);
@@ -142,5 +170,42 @@ export class AlbumsService {
         await this.albumRepository.delete({
             id: In(ids)
         });
+    }
+
+    async addPhotos(userId: number, albumId: number, photoIds: number[]) {
+        await this.findByIdAndUserId(albumId, userId);
+
+        await this.photosService.findAndValidateByIdsAndUserId(
+            photoIds,
+            userId
+        );
+
+        await this.dataSource
+            .createQueryBuilder()
+            .insert()
+            .into('photos_albums')
+            .values(
+                photoIds.map(photoId => ({
+                    album_id: albumId,
+                    photo_id: photoId
+                }))
+            )
+            .orIgnore() // игнорировать уже существующие записи
+            .execute();
+    }
+
+    async removePhotos(userId: number, albumId: number, photoIds: number[]) {
+        await this.findByIdAndUserId(albumId, userId);
+
+        await this.photosService.findAndValidateByIdsAndUserId(
+            photoIds,
+            userId
+        );
+
+        await this.dataSource
+            .createQueryBuilder()
+            .relation(Album, 'photos')
+            .of(albumId)
+            .remove(photoIds);
     }
 }

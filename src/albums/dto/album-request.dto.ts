@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class AlbumRequestDto {
     @ApiProperty({ example: 'Мой альбом' })
@@ -22,4 +22,10 @@ export class AlbumRequestDto {
     @ApiProperty({ example: true })
     @IsBoolean()
     isPublished: boolean;
+}
+
+export class AlbumCreateRequestDto extends AlbumRequestDto {
+    @ApiProperty({ example: [1, 2] })
+    @IsArray()
+    photoIds: number[];
 }

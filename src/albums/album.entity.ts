@@ -23,8 +23,8 @@ export class Album {
     @Column({ nullable: true })
     description: string;
 
-    @Column({ nullable: true })
-    image: string;
+    @Column({ name: 'image_key', nullable: true })
+    imageKey: string;
 
     @Column({ name: 'is_published', default: false })
     isPublished: boolean;

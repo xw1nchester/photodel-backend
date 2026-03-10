@@ -18,7 +18,7 @@ import {
     getSchemaPath
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '@auth/decorators';
+import { CurrentUser, Public } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
@@ -63,11 +63,11 @@ export class PhotosController {
             ]
         }
     })
-    async findAllMy(
+    async findMy(
         @CurrentUser() user: JwtPayload,
         @Query() query: PhotoQueryDto
     ) {
-        return await this.photoService.findAllByUserId({
+        return await this.photoService.findByUserId({
             userId: user.id,
             page: query.page,
             limit: query.limit,
@@ -75,11 +75,19 @@ export class PhotosController {
         });
     }
 
-    @Get(':id')
+    @Get('my/:id')
     @ApiBearerAuth()
     @ApiOkResponse({ type: PhotoWrapperResponseDto })
     async getDtoById(@Param('id', ParseIntPipe) id: number) {
-        return await this.photoService.getDtoById(id);
+        return await this.photoService.getDtoById({ id });
+    }
+
+    @Public()
+    @Get(':id')
+    @ApiBearerAuth()
+    @ApiOkResponse({ type: PhotoWrapperResponseDto })
+    async getPublicDtoById(@Param('id', ParseIntPipe) id: number) {
+        return await this.photoService.getDtoById({ id, isPublished: true });
     }
 
     @Patch(':id')
@@ -112,6 +120,4 @@ export class PhotosController {
     ) {
         await this.photoService.bulkRemove(user.id, ids);
     }
-
-    // TODO: запросы публичных фотографий/фотографий пользователя
 }

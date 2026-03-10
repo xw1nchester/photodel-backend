@@ -36,17 +36,17 @@ export class PhotosService {
             id: photo.user.id,
             firstName: photo.user.firstName,
             lastName: photo.user.lastName,
-            avatarKey: photo.user.avatar,
-            avatarUrl: photo.user.avatar
-                ? this.s3Service.getUrl(photo.user.avatar)
+            avatarKey: photo.user.avatarKey,
+            avatarUrl: photo.user.avatarKey
+                ? this.s3Service.getUrl(photo.user.avatarKey)
                 : null,
             isPro: photo.user.isPro
         };
 
         return {
             id: photo.id,
-            imageKey: photo.image,
-            imageUrl: this.s3Service.getUrl(photo.image),
+            imageKey: photo.imageKey,
+            imageUrl: this.s3Service.getUrl(photo.imageKey),
             name: photo.name,
             description: photo.description,
             location: this.locationsService.getDto(photo.location),
@@ -106,13 +106,16 @@ export class PhotosService {
                 albums
             });
 
-            const photo = await this.getDtoById(createdPhoto.id, manager);
+            const photo = await this.getDtoById({
+                id: createdPhoto.id,
+                manager
+            });
 
             return { photo };
         });
     }
 
-    async findAllByUserId({
+    async findByUserId({
         userId,
         page,
         limit,
@@ -154,13 +157,26 @@ export class PhotosService {
         return new PaginationDto(photosDtos, total, page, limit);
     }
 
-    async getDtoById(id: number, manager?: EntityManager) {
+    async getDtoById({
+        id,
+        isPublished,
+        manager
+    }: {
+        id: number;
+        isPublished?: boolean;
+        manager?: EntityManager;
+    }) {
         const repo = manager
             ? manager.getRepository(Photo)
             : this.photoRepository;
 
+        const where: any = { id };
+        if (isPublished != undefined) {
+            where.isPublished = isPublished;
+        }
+
         const photo = await repo.findOne({
-            where: { id },
+            where,
             relations: {
                 location: true,
                 specializations: true,
@@ -200,7 +216,7 @@ export class PhotosService {
 
             const photo = await this.findByIdAndUserId(id, userId);
 
-            photo.image = dto.image;
+            photo.imageKey = dto.image;
             photo.name = dto.name;
             photo.description = dto.description;
             photo.camera = dto.camera;
@@ -250,7 +266,7 @@ export class PhotosService {
 
             await photosRepo.save(photo);
 
-            return await this.getDtoById(id, manager);
+            return await this.getDtoById({ id, manager });
         });
     }
 

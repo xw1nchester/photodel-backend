@@ -20,8 +20,8 @@ export class Photo {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
-    image: string;
+    @Column({ name: 'image_key' })
+    imageKey: string;
 
     @Column()
     name: string;
@@ -34,6 +34,7 @@ export class Photo {
         nullable: true,
         onDelete: 'SET NULL'
     })
+    @JoinColumn({ name: 'location_id' })
     location: Location;
 
     @Column({ nullable: true })

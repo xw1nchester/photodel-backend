@@ -160,7 +160,7 @@ export class UsersController {
         @Param('id', ParseIntPipe) userId: number,
         @Query() query: PhotoQueryDto
     ) {
-        return await this.photosService.findAllByUserId({
+        return await this.photosService.findByUserId({
             userId,
             page: query.page,
             limit: query.limit,

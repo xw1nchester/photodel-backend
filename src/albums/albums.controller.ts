@@ -25,7 +25,10 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
 import { AlbumsService } from './albums.service';
-import { AlbumRequestDto } from './dto/album-request.dto';
+import {
+    AlbumCreateRequestDto,
+    AlbumRequestDto
+} from './dto/album-request.dto';
 import {
     AlbumResponseDto,
     AlbumWrapperResponseDto
@@ -40,7 +43,7 @@ export class AlbumsController {
     @ApiOkResponse({ type: AlbumWrapperResponseDto })
     async create(
         @CurrentUser() user: JwtPayload,
-        @Body() dto: AlbumRequestDto
+        @Body() dto: AlbumCreateRequestDto
     ) {
         return await this.albumService.create(user.id, dto);
     }
@@ -108,5 +111,25 @@ export class AlbumsController {
         await this.albumService.bulkRemove(user.id, ids);
     }
 
-    // TODO: запросы публичных альбомов/альбома пользователя
+    @Post(':id/photos')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiBearerAuth()
+    async addPhotosToAlbum(
+        @CurrentUser() user: JwtPayload,
+        @Param('id', ParseIntPipe) albumId: number,
+        @Body() { ids }: IdsRequestDto
+    ) {
+        await this.albumService.addPhotos(user.id, albumId, ids);
+    }
+
+    @Post(':id/photos/bulk-delete')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiBearerAuth()
+    async removePhotosFromAlbum(
+        @CurrentUser() user: JwtPayload,
+        @Param('id', ParseIntPipe) albumId: number,
+        @Body() { ids }: IdsRequestDto
+    ) {
+        await this.albumService.removePhotos(user.id, albumId, ids);
+    }
 }

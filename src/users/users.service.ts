@@ -61,8 +61,10 @@ export class UsersService {
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
-            avatarKey: user.avatar,
-            avatarUrl: user.avatar ? this.s3Service.getUrl(user.avatar) : null,
+            avatarKey: user.avatarKey,
+            avatarUrl: user.avatarKey
+                ? this.s3Service.getUrl(user.avatarKey)
+                : null,
             isAdult: user.isAdult,
             isProfessional: user.isProfessional,
             isVerified: user.isVerified,
@@ -157,7 +159,7 @@ export class UsersService {
         const {
             firstName,
             lastName,
-            avatar,
+            avatarKey: avatar,
             isProfessional,
             isPro,
             createdAt
@@ -301,10 +303,13 @@ export class UsersService {
     async updateAvatar(userId: number, avatar: string) {
         const user = await this.findById(userId);
 
-        await this.usersRepository.update({ id: userId }, { avatar });
+        await this.usersRepository.update(
+            { id: userId },
+            { avatarKey: avatar }
+        );
 
-        if (user.avatar && avatar != user.avatar) {
-            await this.s3Service.deleteFile(user.avatar);
+        if (user.avatarKey && avatar != user.avatarKey) {
+            await this.s3Service.deleteFile(user.avatarKey);
         }
 
         return await this.getUserMeDtoById(userId);
@@ -313,10 +318,10 @@ export class UsersService {
     async deleteAvatar(userId: number) {
         const user = await this.findById(userId);
 
-        await this.usersRepository.update({ id: userId }, { avatar: null });
+        await this.usersRepository.update({ id: userId }, { avatarKey: null });
 
-        if (user.avatar) {
-            await this.s3Service.deleteFile(user.avatar);
+        if (user.avatarKey) {
+            await this.s3Service.deleteFile(user.avatarKey);
         }
 
         return await this.getUserMeDtoById(userId);
