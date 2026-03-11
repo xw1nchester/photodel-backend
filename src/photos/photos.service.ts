@@ -31,6 +31,8 @@ export class PhotosService {
     ) {}
 
     createDto(photo: Photo) {
+        const albums = photo.albums.map(a => this.albumService.createDto(a));
+        
         // чтобы модуль фото не зависел от модуля юзеров
         const user = {
             id: photo.user.id,
@@ -59,7 +61,7 @@ export class PhotosService {
             isForSale: photo.isForSale,
             isPublished: photo.isPublished,
             specializations: photo.specializations,
-            albums: photo.albums,
+            albums,
             createdAt: photo.createdAt,
             updatedAt: photo.updatedAt,
             user
@@ -89,7 +91,7 @@ export class PhotosService {
                 );
 
             const createdPhoto = await photosRepo.save({
-                image: dto.image,
+                imageKey: dto.image,
                 name: dto.name,
                 description: dto.description,
                 location,
@@ -106,12 +108,10 @@ export class PhotosService {
                 albums
             });
 
-            const photo = await this.getDtoById({
+            return await this.getDtoById({
                 id: createdPhoto.id,
                 manager
             });
-
-            return { photo };
         });
     }
 

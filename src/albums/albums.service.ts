@@ -39,7 +39,7 @@ export class AlbumsService {
                 ? this.s3Service.getUrl(album.imageKey)
                 : null,
             isPublished: album.isPublished,
-            photosCount: album.photosCount,
+            photosCount: album.photosCount || 0,
             createdAt: album.createdAt,
             updatedAt: album.updatedAt
         };
@@ -59,7 +59,8 @@ export class AlbumsService {
             const createdAlbum = await albumsRepo.save({
                 title: dto.title,
                 description: dto.description,
-                image: dto.image,
+                imageKey: dto.image,
+                isPublished: dto.isPublished,
                 userId,
                 photos
             });
