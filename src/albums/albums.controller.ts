@@ -73,6 +73,7 @@ export class AlbumsController {
         return await this.albumService.findAllByUserId(user.id, pagination);
     }
 
+    // TODO: сделать по аналогии с фото, публичный запрос альбома по id
     @Get(':id')
     @ApiBearerAuth()
     @ApiOkResponse({ type: AlbumWrapperResponseDto })

@@ -169,8 +169,8 @@ export class UsersService {
 
         const location = this.locationsService.getDto(profile.location);
 
-        const temporaryLocation = this.getActiveTemporaryLocation(
-            profile.temporaryLocations
+        const activeTemporaryLocation = this.locationsService.getDto(
+            this.getActiveTemporaryLocation(profile.temporaryLocations)
         );
 
         const socials = profile.socials.map(s => ({
@@ -195,7 +195,7 @@ export class UsersService {
             isPro,
             createdAt,
             location,
-            temporaryLocation,
+            activeTemporaryLocation,
             socials,
             temporaryLocations
         };
