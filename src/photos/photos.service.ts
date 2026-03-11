@@ -234,10 +234,7 @@ export class PhotosService {
                 );
                 if (photo.location) {
                     photo.location.coordinates = createdLocation.coordinates;
-                    photo.location.country = dto.location.country;
-                    photo.location.city = dto.location.city;
-                    photo.location.street = dto.location.street;
-                    photo.location.houseNumber = dto.location.houseNumber;
+                    photo.location.address = dto.location.address;
                 } else {
                     photo.location = createdLocation;
                 }

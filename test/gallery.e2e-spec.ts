@@ -317,10 +317,7 @@ describe('Albums & Photos (e2e)', () => {
                     location: {
                         latitude: 55.7558,
                         longitude: 37.6173,
-                        country: 'Russia',
-                        city: 'Moscow',
-                        street: 'Tverskaya Street',
-                        houseNumber: '1'
+                        address: 'Russia, Moscow, Tverskaya Street 1'
                     },
                     camera: 'Canon EOS 5D Mark IV',
                     aperture: 'f/2.8',

@@ -152,7 +152,19 @@ export class UsersService {
             return start <= now && now <= end;
         });
 
-        return active?.location ?? null;
+        return active ?? null;
+    }
+
+    getTemporaryLocationDto(location: TemporaryLocation) {
+        return location
+            ? {
+                  id: location.id,
+                  startDate: location.startDate,
+                  endDate: location.endDate,
+                  location: this.locationsService.getDto(location.location),
+                  comment: location.comment
+              }
+            : null;
     }
 
     createProfileDto(profile: Profile) {
@@ -169,7 +181,7 @@ export class UsersService {
 
         const location = this.locationsService.getDto(profile.location);
 
-        const activeTemporaryLocation = this.locationsService.getDto(
+        const activeTemporaryLocation = this.getTemporaryLocationDto(
             this.getActiveTemporaryLocation(profile.temporaryLocations)
         );
 
@@ -178,13 +190,9 @@ export class UsersService {
             value: s.value
         }));
 
-        const temporaryLocations = profile.temporaryLocations.map(loc => ({
-            id: loc.id,
-            startDate: loc.startDate,
-            endDate: loc.endDate,
-            location: this.locationsService.getDto(loc.location),
-            comment: loc.comment
-        }));
+        const temporaryLocations = profile.temporaryLocations.map(loc =>
+            this.getTemporaryLocationDto(loc)
+        );
 
         return {
             ...profile,
@@ -231,10 +239,7 @@ export class UsersService {
                 );
                 if (profile.location) {
                     profile.location.coordinates = createdLocation.coordinates;
-                    profile.location.country = dto.location.country;
-                    profile.location.city = dto.location.city;
-                    profile.location.street = dto.location.street;
-                    profile.location.houseNumber = dto.location.houseNumber;
+                    profile.location.address = dto.location.address;
                 } else {
                     profile.location = createdLocation;
                 }

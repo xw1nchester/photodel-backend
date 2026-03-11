@@ -18,10 +18,7 @@ export class LocationsService {
                   id: location.id,
                   latitude: location.coordinates.coordinates[1],
                   longitude: location.coordinates.coordinates[0],
-                  country: location.country,
-                  city: location.city,
-                  street: location.street,
-                  houseNumber: location.houseNumber
+                  address: location.address,
               }
             : null;
     }
@@ -34,17 +31,12 @@ export class LocationsService {
 
         return this.locationsRepository.create({
             coordinates,
-            country: dto.country,
-            city: dto.city,
-            street: dto.street,
-            houseNumber: dto.houseNumber
+            address: dto.address,
         });
     }
 
     async deleteByIds(ids: number[], manager?: EntityManager) {
         if (ids.length == 0) return;
-
-        console.log(`Удаление локаций с id: ${ids}`);
 
         const repo = manager
             ? manager.getRepository(Location)

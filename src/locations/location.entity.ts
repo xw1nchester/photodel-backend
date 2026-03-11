@@ -13,14 +13,5 @@ export class Location {
     coordinates: Point;
 
     @Column({ nullable: true })
-    country: string;
-
-    @Column({ nullable: true })
-    city: string;
-
-    @Column({ nullable: true })
-    street: string;
-
-    @Column({ name: 'house_number', nullable: true })
-    houseNumber: string;
+    address: string;
 }

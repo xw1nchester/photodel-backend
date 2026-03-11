@@ -35,29 +35,5 @@ export class LocationDto {
     })
     @IsOptional()
     @IsString()
-    country?: string;
-
-    @ApiProperty({
-        example: 'Moscow',
-        required: false
-    })
-    @IsOptional()
-    @IsString()
-    city?: string;
-
-    @ApiProperty({
-        example: 'Tverskaya Street',
-        required: false
-    })
-    @IsOptional()
-    @IsString()
-    street?: string;
-
-    @ApiProperty({
-        example: '1',
-        required: false
-    })
-    @IsOptional()
-    @IsString()
-    houseNumber?: string;
+    address?: string;
 }
