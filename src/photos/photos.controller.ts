@@ -47,7 +47,7 @@ export class PhotosController {
         return await this.photoService.create(user.id, dto);
     }
 
-    @Get('my')
+    @Get()
     @ApiBearerAuth()
     @ApiExtraModels(PaginationResponseDto, PhotoResponseDto)
     @ApiOkResponse({

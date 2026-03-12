@@ -80,10 +80,18 @@ export class AlbumsService {
         const query = this.albumRepository
             .createQueryBuilder('album')
             .where('album.userId = :userId', { userId })
-            .loadRelationCountAndMap('album.photosCount', 'album.photos')
+            .loadRelationCountAndMap(
+                'album.photosCount',
+                'album.photos',
+                'albumPhotos',
+                qb =>
+                    qb.where('albumPhotos.isPublished = :isPublished', {
+                        isPublished: true
+                    })
+            )
             .orderBy('album.createdAt', 'DESC');
 
-        if (typeof isPublished === 'boolean') {
+        if (isPublished != undefined) {
             query.andWhere('album.isPublished = :isPublished', { isPublished });
         }
 

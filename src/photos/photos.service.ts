@@ -134,7 +134,12 @@ export class PhotosService {
             .createQueryBuilder('photo')
             .leftJoinAndSelect('photo.location', 'location')
             .leftJoinAndSelect('photo.specializations', 'specialization')
-            .leftJoinAndSelect('photo.albums', 'album')
+            .leftJoinAndSelect(
+                'photo.albums',
+                'album',
+                'album.isPublished = :isPublished',
+                { isPublished: true }
+            )
             .leftJoinAndSelect('photo.user', 'user')
             .where('user.id = :userId', { userId })
             .orderBy('photo.createdAt', 'DESC')
@@ -175,7 +180,12 @@ export class PhotosService {
         const query = repo
             .createQueryBuilder('photo')
             .where('photo.id = :id', { id })
-            .leftJoinAndSelect('photo.albums', 'album')
+            .leftJoinAndSelect(
+                'photo.albums',
+                'album',
+                'album.isPublished = :isPublished',
+                { isPublished: true }
+            )
             .leftJoinAndSelect('photo.location', 'location')
             .leftJoinAndSelect('photo.specializations', 'specializations')
             .leftJoinAndSelect('photo.user', 'user')
@@ -188,29 +198,19 @@ export class PhotosService {
                         isPublished: true
                     })
             );
-
         if (user) {
             query.andWhere(
                 new Brackets(qb => {
                     qb.where('photo.userId = :userId', {
                         userId: user.id
-                    }).orWhere(
-                        new Brackets(qb2 => {
-                            qb2.where('photo.isPublished = :isPublished', {
-                                isPublished: true
-                            }).andWhere('album.isPublished = :albumPublished', {
-                                albumPublished: true
-                            });
-                        })
-                    );
+                    }).orWhere('photo.isPublished = :isPublished', {
+                        isPublished: true
+                    });
                 })
             );
         } else {
             query.andWhere('photo.isPublished = :isPublished', {
                 isPublished: true
-            });
-            query.andWhere('album.isPublished = :albumPublished', {
-                albumPublished: true
             });
         }
 
