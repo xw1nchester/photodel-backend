@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, EntityManager, DataSource, Brackets } from 'typeorm';
 
+import { JwtPayload } from '@auth/interfaces';
 import { PhotosService } from '@photos/photos.service';
 import { S3Service } from '@s3/s3.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
@@ -17,7 +18,6 @@ import {
     AlbumCreateRequestDto,
     AlbumRequestDto
 } from './dto/album-request.dto';
-import { JwtPayload } from '@auth/interfaces';
 
 @Injectable()
 export class AlbumsService {

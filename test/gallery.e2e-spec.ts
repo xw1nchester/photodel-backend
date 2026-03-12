@@ -9,8 +9,8 @@ import {
     PostgreSqlContainer
 } from '@testcontainers/postgresql';
 import fastifyCookie from 'fastify-cookie';
-import { DataSource } from 'typeorm';
 import * as request from 'supertest';
+import { DataSource } from 'typeorm';
 
 import { MailService } from '@mail/mail.service';
 import { S3Service } from '@s3/s3.service';
@@ -410,7 +410,7 @@ describe('Albums & Photos (e2e)', () => {
                     .set('Authorization', `Bearer ${accessToken}`)
                     .send(createPhotoDto)
                     .expect(201);
-                    
+
                 expect(res.body.photo.albums.length).toBe(albumIds.length);
             });
         });
@@ -722,7 +722,7 @@ describe('Albums & Photos (e2e)', () => {
                     albumIds: []
                 })
                 .expect(201);
-            
+
             photoId = photoRes.body.photo.id;
 
             // Add photo to album first

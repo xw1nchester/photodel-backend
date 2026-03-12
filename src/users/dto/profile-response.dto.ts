@@ -58,6 +58,12 @@ export class ProfileResponseDto {
     @ApiProperty({ example: false })
     isPro: boolean;
 
+    @ApiProperty({ example: false })
+    isFavorite: boolean;
+
+    @ApiProperty({ example: 1 })
+    favoriteId: boolean;
+
     @ApiProperty({ example: '2026-02-15T15:31:31.992Z' })
     createdAt: string;
 

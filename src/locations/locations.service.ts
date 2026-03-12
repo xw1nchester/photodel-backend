@@ -18,7 +18,7 @@ export class LocationsService {
                   id: location.id,
                   latitude: location.coordinates.coordinates[1],
                   longitude: location.coordinates.coordinates[0],
-                  address: location.address,
+                  address: location.address
               }
             : null;
     }
@@ -31,7 +31,7 @@ export class LocationsService {
 
         return this.locationsRepository.create({
             coordinates,
-            address: dto.address,
+            address: dto.address
         });
     }
 

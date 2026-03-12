@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { AlbumsService } from '@albums/albums.service';
+import { JwtPayload } from '@auth/interfaces';
 import { Location } from '@locations/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { S3Service } from '@s3/s3.service';
@@ -16,7 +17,6 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
-import { JwtPayload } from '@auth/interfaces';
 
 @Injectable()
 export class PhotosService {
@@ -198,6 +198,7 @@ export class PhotosService {
                         isPublished: true
                     })
             );
+
         if (user) {
             query.andWhere(
                 new Brackets(qb => {

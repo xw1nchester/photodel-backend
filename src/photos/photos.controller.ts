@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 
 import { CurrentUser, Public } from '@auth/decorators';
+import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 import { JwtPayload } from '@auth/interfaces';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
@@ -31,7 +32,6 @@ import {
     PhotoWrapperResponseDto
 } from './dto/photo-response.dto';
 import { PhotosService } from './photos.service';
-import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 
 @Controller('photos')
 export class PhotosController {

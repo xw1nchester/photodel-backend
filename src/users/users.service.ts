@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Logger } from 'testcontainers/build/common';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 
+import { FavoriteEntityType } from '@favorites/enums';
+import { Favorite } from '@favorites/favorite.entity';
 import { LocationsService } from '@locations/locations.service';
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { S3Service } from '@s3/s3.service';
@@ -30,6 +33,8 @@ export class UsersService {
         private readonly socialsService: SocialsService,
         private readonly locationsService: LocationsService
     ) {}
+
+    private readonly logger = new Logger(UsersService.name);
 
     async findById(id: number) {
         const user = await this.usersRepository.findOne({
@@ -112,32 +117,65 @@ export class UsersService {
         return await repo.update({ id }, { isVerified: true });
     }
 
-    async findProfileByUserId(id: number, manager?: EntityManager) {
+    // TODO: считать расстояние
+    async findProfileByUserId({
+        targetUserId,
+        requesterUserId,
+        manager
+    }: {
+        targetUserId: number;
+        requesterUserId?: number;
+        manager?: EntityManager;
+    }) {
         const repo = manager
             ? manager.getRepository(Profile)
             : this.profilesRepository;
 
-        const profile = await repo.findOne({
-            where: { user: { id } },
-            relations: {
-                user: true,
-                location: true,
-                proCategories: true,
-                specializations: true,
-                socials: {
-                    social: true
-                },
-                temporaryLocations: {
-                    location: true
-                }
-            }
-        });
+        const qb = repo
+            .createQueryBuilder('profile')
+            .innerJoinAndSelect('profile.user', 'user')
+            .leftJoinAndSelect('profile.location', 'location')
+            .leftJoinAndSelect('profile.proCategories', 'proCategories')
+            .leftJoinAndSelect('profile.specializations', 'specializations')
+            .leftJoinAndSelect('profile.socials', 'profileSocial')
+            .leftJoinAndSelect('profileSocial.social', 'social')
+            .leftJoinAndSelect(
+                'profile.temporaryLocations',
+                'temporaryLocation'
+            )
+            .leftJoinAndSelect('temporaryLocation.location', 'tempLocation')
+            .where('user.id = :id', { id: targetUserId });
+
+        if (requesterUserId !== undefined) {
+            qb.addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = user.id')
+                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.userId = :requesterUserId');
+            }, 'favoriteId')
+                .setParameter('type', FavoriteEntityType.USER)
+                .setParameter('requesterUserId', requesterUserId);
+        }
+
+        this.logger.debug(
+            `Fetching profile ${JSON.stringify({ targetUserId, requesterUserId })}`
+        );
+
+        const result = await qb.getRawAndEntities();
+
+        const profile = result.entities[0];
 
         if (!profile) {
             throw new NotFoundException('Профиль не найден');
         }
 
-        return profile;
+        return {
+            ...profile,
+            isFavorite: !!result.raw[0].favoriteId,
+            favoriteId: result.raw[0].favoriteId
+        };
     }
 
     private getActiveTemporaryLocation(
@@ -209,8 +247,20 @@ export class UsersService {
         };
     }
 
-    async getProfileDtoByUserId(userId: number, manager?: EntityManager) {
-        const profile = await this.findProfileByUserId(userId, manager);
+    async getProfileDtoByUserId({
+        targetUserId,
+        requesterUserId,
+        manager
+    }: {
+        targetUserId: number;
+        requesterUserId?: number;
+        manager?: EntityManager;
+    }) {
+        const profile = await this.findProfileByUserId({
+            targetUserId,
+            requesterUserId,
+            manager
+        });
         return { profile: this.createProfileDto(profile) };
     }
 
@@ -221,7 +271,10 @@ export class UsersService {
             const temporaryLocationsRepo =
                 manager.getRepository(TemporaryLocation);
 
-            const profile = await this.findProfileByUserId(userId, manager);
+            const profile = await this.findProfileByUserId({
+                targetUserId: userId,
+                manager
+            });
 
             profile.status = dto.status;
             profile.price = dto.price;
@@ -301,7 +354,10 @@ export class UsersService {
 
             await profilesRepo.save(profile);
 
-            return await this.getProfileDtoByUserId(userId, manager);
+            return await this.getProfileDtoByUserId({
+                targetUserId: userId,
+                manager
+            });
         });
     }
 

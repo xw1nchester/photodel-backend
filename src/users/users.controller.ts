@@ -7,7 +7,8 @@ import {
     Query,
     Param,
     ParseFloatPipe,
-    ParseIntPipe
+    ParseIntPipe,
+    UseGuards
 } from '@nestjs/common';
 import {
     ApiBearerAuth,
@@ -20,6 +21,7 @@ import {
 import { AlbumsService } from '@albums/albums.service';
 import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser, Public } from '@auth/decorators';
+import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 import { JwtPayload } from '@auth/interfaces';
 import { PhotoQueryDto } from '@photos/dto/photo-query.dto';
 import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
@@ -54,14 +56,23 @@ export class UsersController {
     @ApiBearerAuth()
     @ApiOkResponse({ type: ProfileWrapperResponseDto })
     async getProfileDtoByUserId(@CurrentUser() user: JwtPayload) {
-        return await this.usersService.getProfileDtoByUserId(user.id);
+        return await this.usersService.getProfileDtoByUserId({
+            targetUserId: user.id
+        });
     }
 
     @Public()
+    @UseGuards(OptionalJwtAuthGuard)
     @Get(':id/profile')
     @ApiOkResponse({ type: ProfileWrapperResponseDto })
-    async getProfileDtoById(@Param('id', ParseIntPipe) id: number) {
-        return await this.usersService.getProfileDtoByUserId(id);
+    async getProfileDtoById(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload
+    ) {
+        return await this.usersService.getProfileDtoByUserId({
+            targetUserId: id,
+            requesterUserId: user?.id
+        });
     }
 
     @Patch('profile')

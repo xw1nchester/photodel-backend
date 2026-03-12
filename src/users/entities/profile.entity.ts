@@ -71,4 +71,6 @@ export class Profile {
         }
     )
     temporaryLocations: TemporaryLocation[];
+
+    // isFavorite: boolean;
 }
