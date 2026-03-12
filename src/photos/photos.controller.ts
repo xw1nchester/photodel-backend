@@ -9,7 +9,8 @@ import {
     ParseIntPipe,
     Query,
     HttpCode,
-    HttpStatus
+    HttpStatus,
+    UseGuards
 } from '@nestjs/common';
 import {
     ApiBearerAuth,
@@ -30,6 +31,7 @@ import {
     PhotoWrapperResponseDto
 } from './dto/photo-response.dto';
 import { PhotosService } from './photos.service';
+import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 
 @Controller('photos')
 export class PhotosController {
@@ -75,19 +77,16 @@ export class PhotosController {
         });
     }
 
-    @Get('my/:id')
-    @ApiBearerAuth()
-    @ApiOkResponse({ type: PhotoWrapperResponseDto })
-    async getDtoById(@Param('id', ParseIntPipe) id: number) {
-        return await this.photoService.getDtoById({ id });
-    }
-
     @Public()
+    @UseGuards(OptionalJwtAuthGuard)
     @Get(':id')
     @ApiBearerAuth()
     @ApiOkResponse({ type: PhotoWrapperResponseDto })
-    async getPublicDtoById(@Param('id', ParseIntPipe) id: number) {
-        return await this.photoService.getDtoById({ id, isPublished: true });
+    async getPublicDtoById(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload
+    ) {
+        return await this.photoService.getDtoById({ id, user });
     }
 
     @Patch(':id')

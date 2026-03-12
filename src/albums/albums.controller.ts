@@ -9,7 +9,8 @@ import {
     ParseIntPipe,
     Query,
     HttpCode,
-    HttpStatus
+    HttpStatus,
+    UseGuards
 } from '@nestjs/common';
 import {
     ApiBearerAuth,
@@ -18,7 +19,7 @@ import {
     getSchemaPath
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '@auth/decorators';
+import { CurrentUser, Public } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
@@ -33,6 +34,7 @@ import {
     AlbumResponseDto,
     AlbumWrapperResponseDto
 } from './dto/album-response.dto';
+import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 
 @Controller('albums')
 export class AlbumsController {
@@ -73,12 +75,16 @@ export class AlbumsController {
         return await this.albumService.findAllByUserId(user.id, pagination);
     }
 
-    // TODO: сделать по аналогии с фото, публичный запрос альбома по id
+    @Public()
+    @UseGuards(OptionalJwtAuthGuard)
     @Get(':id')
     @ApiBearerAuth()
     @ApiOkResponse({ type: AlbumWrapperResponseDto })
-    async getDtoById(@Param('id', ParseIntPipe) id: number) {
-        return await this.albumService.getDtoById(id);
+    async getDtoById(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload
+    ) {
+        return await this.albumService.getDtoById({ id, user });
     }
 
     @Patch(':id')

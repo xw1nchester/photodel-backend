@@ -5,7 +5,7 @@ import {
     NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, EntityManager, DataSource } from 'typeorm';
+import { Repository, In, EntityManager, DataSource, Brackets } from 'typeorm';
 
 import { PhotosService } from '@photos/photos.service';
 import { S3Service } from '@s3/s3.service';
@@ -17,6 +17,7 @@ import {
     AlbumCreateRequestDto,
     AlbumRequestDto
 } from './dto/album-request.dto';
+import { JwtPayload } from '@auth/interfaces';
 
 @Injectable()
 export class AlbumsService {
@@ -96,12 +97,43 @@ export class AlbumsService {
         return new PaginationDto(albumsDtos, total, page, limit);
     }
 
-    async getDtoById(id: number) {
-        const album = await this.albumRepository
+    async getDtoById({
+        id,
+        user
+    }: {
+        id: number;
+        user: Partial<JwtPayload> | null;
+    }) {
+        const qb = this.albumRepository
             .createQueryBuilder('album')
             .where('album.id = :id', { id })
-            .loadRelationCountAndMap('album.photosCount', 'album.photos')
-            .getOne();
+            .loadRelationCountAndMap(
+                'album.photosCount',
+                'album.photos',
+                'albumPhotos',
+                qb =>
+                    qb.where('albumPhotos.isPublished = :isPublished', {
+                        isPublished: true
+                    })
+            );
+
+        if (user) {
+            qb.andWhere(
+                new Brackets(qb => {
+                    qb.where('album.userId = :userId', {
+                        userId: user.id
+                    }).orWhere('album.isPublished = :isPublished', {
+                        isPublished: true
+                    });
+                })
+            );
+        } else {
+            qb.andWhere('album.isPublished = :isPublished', {
+                isPublished: true
+            });
+        }
+
+        const album = await qb.getOne();
 
         if (!album) {
             throw new NotFoundException('Альбом с не найден');
@@ -132,7 +164,7 @@ export class AlbumsService {
 
         await this.albumRepository.save(album);
 
-        return await this.getDtoById(id);
+        return await this.getDtoById({ id, user: { id: album.userId } });
     }
 
     async remove(id: number, userId: number) {

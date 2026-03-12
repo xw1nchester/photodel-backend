@@ -5,7 +5,7 @@ import {
     NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { AlbumsService } from '@albums/albums.service';
 import { Location } from '@locations/location.entity';
@@ -16,6 +16,7 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
+import { JwtPayload } from '@auth/interfaces';
 
 @Injectable()
 export class PhotosService {
@@ -32,7 +33,7 @@ export class PhotosService {
 
     createDto(photo: Photo) {
         const albums = photo.albums.map(a => this.albumService.createDto(a));
-        
+
         // чтобы модуль фото не зависел от модуля юзеров
         const user = {
             id: photo.user.id,
@@ -110,6 +111,7 @@ export class PhotosService {
 
             return await this.getDtoById({
                 id: createdPhoto.id,
+                user: { id: userId },
                 manager
             });
         });
@@ -159,31 +161,60 @@ export class PhotosService {
 
     async getDtoById({
         id,
-        isPublished,
+        user,
         manager
     }: {
         id: number;
-        isPublished?: boolean;
+        user: Partial<JwtPayload> | null;
         manager?: EntityManager;
     }) {
         const repo = manager
             ? manager.getRepository(Photo)
             : this.photoRepository;
 
-        const where: any = { id };
-        if (isPublished != undefined) {
-            where.isPublished = isPublished;
+        const query = repo
+            .createQueryBuilder('photo')
+            .where('photo.id = :id', { id })
+            .leftJoinAndSelect('photo.albums', 'album')
+            .leftJoinAndSelect('photo.location', 'location')
+            .leftJoinAndSelect('photo.specializations', 'specializations')
+            .leftJoinAndSelect('photo.user', 'user')
+            .loadRelationCountAndMap(
+                'album.photosCount',
+                'album.photos',
+                'albumPhotos',
+                qb =>
+                    qb.where('albumPhotos.isPublished = :isPublished', {
+                        isPublished: true
+                    })
+            );
+
+        if (user) {
+            query.andWhere(
+                new Brackets(qb => {
+                    qb.where('photo.userId = :userId', {
+                        userId: user.id
+                    }).orWhere(
+                        new Brackets(qb2 => {
+                            qb2.where('photo.isPublished = :isPublished', {
+                                isPublished: true
+                            }).andWhere('album.isPublished = :albumPublished', {
+                                albumPublished: true
+                            });
+                        })
+                    );
+                })
+            );
+        } else {
+            query.andWhere('photo.isPublished = :isPublished', {
+                isPublished: true
+            });
+            query.andWhere('album.isPublished = :albumPublished', {
+                albumPublished: true
+            });
         }
 
-        const photo = await repo.findOne({
-            where,
-            relations: {
-                location: true,
-                specializations: true,
-                albums: true,
-                user: true
-            }
-        });
+        const photo = await query.getOne();
 
         if (!photo) {
             throw new NotFoundException('Фотография не найдена');
@@ -263,7 +294,7 @@ export class PhotosService {
 
             await photosRepo.save(photo);
 
-            return await this.getDtoById({ id, manager });
+            return await this.getDtoById({ id, user: { id: userId }, manager });
         });
     }
 
