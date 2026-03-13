@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { LocationDto } from '@locations/dto/location.dto';
 import { ProCategoryDto } from '@pro-categories/dto/pro-categories-response.dto';
+import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 
 export class SocialResponseDto {
@@ -58,11 +59,8 @@ export class ProfileResponseDto {
     @ApiProperty({ example: false })
     isPro: boolean;
 
-    @ApiProperty({ example: false })
-    isFavorite: boolean;
-
-    @ApiProperty({ example: 1 })
-    favoriteId: boolean;
+    @ApiProperty({ type: FavoritesResponseDto })
+    favorites: FavoritesResponseDto;
 
     @ApiProperty({ example: '2026-02-15T15:31:31.992Z' })
     createdAt: string;

@@ -57,7 +57,8 @@ export class UsersController {
     @ApiOkResponse({ type: ProfileWrapperResponseDto })
     async getProfileDtoByUserId(@CurrentUser() user: JwtPayload) {
         return await this.usersService.getProfileDtoByUserId({
-            targetUserId: user.id
+            targetUserId: user.id,
+            requesterUserId: user.id
         });
     }
 
@@ -125,6 +126,7 @@ export class UsersController {
     }
 
     @Public()
+    @UseGuards(OptionalJwtAuthGuard)
     @Get(':id/albums')
     @ApiExtraModels(PaginationResponseDto, AlbumResponseDto)
     @ApiOkResponse({
@@ -144,12 +146,19 @@ export class UsersController {
     })
     async getUserAlbums(
         @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload,
         @Query() pagination: PaginationQueryDto
     ) {
-        return await this.albumsService.findAllByUserId(id, pagination, true);
+        return await this.albumsService.findByUserId({
+            targetUserId: id,
+            requesterUserId: user?.id,
+            pagination,
+            isPublished: true
+        });
     }
 
     @Public()
+    @UseGuards(OptionalJwtAuthGuard)
     @Get(':id/photos')
     @ApiExtraModels(PaginationResponseDto, PhotoResponseDto)
     @ApiOkResponse({
@@ -169,12 +178,13 @@ export class UsersController {
     })
     async getUserPhotos(
         @Param('id', ParseIntPipe) userId: number,
+        @CurrentUser() user: JwtPayload,
         @Query() query: PhotoQueryDto
     ) {
         return await this.photosService.findByUserId({
-            userId,
-            page: query.page,
-            limit: query.limit,
+            targetUserId: userId,
+            requesterUserId: user?.id,
+            pagination: query,
             albumId: query.albumId,
             isPublished: true
         });

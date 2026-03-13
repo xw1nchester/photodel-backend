@@ -50,7 +50,7 @@ export class AlbumsController {
         return await this.albumService.create(user.id, dto);
     }
 
-    @Get('my')
+    @Get()
     @ApiBearerAuth()
     @ApiExtraModels(PaginationResponseDto, AlbumResponseDto)
     @ApiOkResponse({
@@ -68,11 +68,15 @@ export class AlbumsController {
             ]
         }
     })
-    async findAllMy(
+    async findMy(
         @CurrentUser() user: JwtPayload,
         @Query() pagination: PaginationQueryDto
     ) {
-        return await this.albumService.findAllByUserId(user.id, pagination);
+        return await this.albumService.findByUserId({
+            targetUserId: user.id,
+            requesterUserId: user.id,
+            pagination
+        });
     }
 
     @Public()
@@ -84,7 +88,10 @@ export class AlbumsController {
         @Param('id', ParseIntPipe) id: number,
         @CurrentUser() user: JwtPayload
     ) {
-        return await this.albumService.getDtoById({ id, user });
+        return await this.albumService.getDtoById({
+            id,
+            requesterUserId: user?.id
+        });
     }
 
     @Patch(':id')

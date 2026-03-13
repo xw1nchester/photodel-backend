@@ -7,13 +7,24 @@ import {
     Param,
     ParseIntPipe,
     HttpStatus,
-    HttpCode
+    HttpCode,
+    Query
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+    ApiBearerAuth,
+    ApiExtraModels,
+    ApiOkResponse,
+    ApiTags,
+    getSchemaPath
+} from '@nestjs/swagger';
 
+import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
+import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
+import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
+import { FavoriteQueryDto } from './dto/favorite-query.dto';
 import { FavoriteRequestDto } from './dto/favorite-request.dto';
 import { FavoritesService } from './favorites.service';
 
@@ -46,9 +57,31 @@ export class FavoritesController {
 
     @Get()
     @ApiBearerAuth()
-    @ApiOkResponse({ type: [Object] })
-    // TODO ?entity_type=...
-    async getFavorites(@CurrentUser() user: JwtPayload) {
-        return await this.favoritesService.getFavorites(user.id);
+    @ApiExtraModels(PaginationResponseDto, AlbumResponseDto, PhotoResponseDto)
+    @ApiOkResponse({
+        schema: {
+            allOf: [
+                {
+                    properties: {
+                        data: {
+                            type: 'array',
+                            items: {
+                                oneOf: [
+                                    { $ref: getSchemaPath(AlbumResponseDto) },
+                                    { $ref: getSchemaPath(PhotoResponseDto) }
+                                ]
+                            }
+                        }
+                    }
+                },
+                { $ref: getSchemaPath(PaginationResponseDto) }
+            ]
+        }
+    })
+    async getFavorites(
+        @CurrentUser() user: JwtPayload,
+        @Query() query: FavoriteQueryDto
+    ) {
+        return await this.favoritesService.getFavorites(user.id, query);
     }
 }

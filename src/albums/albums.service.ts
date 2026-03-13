@@ -7,7 +7,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, EntityManager, DataSource, Brackets } from 'typeorm';
 
-import { JwtPayload } from '@auth/interfaces';
+import { FavoriteEntityType } from '@favorites/enums';
+import { Favorite } from '@favorites/favorite.entity';
 import { PhotosService } from '@photos/photos.service';
 import { S3Service } from '@s3/s3.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
@@ -41,6 +42,11 @@ export class AlbumsService {
                 : null,
             isPublished: album.isPublished,
             photosCount: album.photosCount || 0,
+            favorites: {
+                isFavorite: album.isFavorite,
+                favoriteId: album.favoriteId,
+                count: album.favoritesCount
+            },
             createdAt: album.createdAt,
             updatedAt: album.updatedAt
         };
@@ -72,14 +78,22 @@ export class AlbumsService {
         });
     }
 
-    async findAllByUserId(
-        userId: number,
-        { page, limit }: PaginationQueryDto,
-        isPublished?: boolean
-    ) {
+    async findByUserId({
+        targetUserId,
+        requesterUserId,
+        pagination,
+        isPublished
+    }: {
+        targetUserId: number;
+        requesterUserId?: number;
+        pagination: PaginationQueryDto;
+        isPublished?: boolean;
+    }) {
+        const { page, limit } = pagination;
+
         const query = this.albumRepository
             .createQueryBuilder('album')
-            .where('album.userId = :userId', { userId })
+            .where('album.userId = :targetUserId', { targetUserId })
             .loadRelationCountAndMap(
                 'album.photosCount',
                 'album.photos',
@@ -89,28 +103,106 @@ export class AlbumsService {
                         isPublished: true
                     })
             )
-            .orderBy('album.createdAt', 'DESC');
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = album.id')
+                    .andWhere('favorite.entityType = :entityType');
+            }, 'favoritesCount')
+            .setParameter('entityType', FavoriteEntityType.ALBUM)
+            .orderBy('album.createdAt', 'DESC')
+            .skip((page - 1) * limit)
+            .take(limit);
 
-        if (isPublished != undefined) {
-            query.andWhere('album.isPublished = :isPublished', { isPublished });
+        if (requesterUserId != undefined) {
+            query
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Favorite, 'favorite')
+                        .where('favorite.entityId = album.id')
+                        .andWhere('favorite.entityType = :type')
+                        .andWhere('favorite.userId = :requesterUserId');
+                }, 'favoriteId')
+                .setParameter('type', FavoriteEntityType.ALBUM)
+                .setParameter('requesterUserId', requesterUserId);
         }
 
-        const [albums, total] = await query
-            .skip((page - 1) * limit)
-            .take(limit)
-            .getManyAndCount();
+        if (isPublished != undefined) {
+            query.andWhere('album.isPublished = :isPublished', {
+                isPublished: true
+            });
+        }
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const total = await query.getCount();
+
+        const albums = entities.map((album, index) => {
+            // TODO: сгруппировать в объект favorites
+            album.isFavorite = !!raw[index].favoriteId;
+            album.favoriteId = raw[index].favoriteId;
+            album.favoritesCount = Number(raw[index].favoritesCount);
+            return album;
+        });
 
         const albumsDtos = albums.map(album => this.createDto(album));
 
         return new PaginationDto(albumsDtos, total, page, limit);
     }
 
+    async findByIds(ids: number[], requesterUserId: number) {
+        const query = this.albumRepository
+            .createQueryBuilder('album')
+            .where('album.id IN (:...ids)', { ids })
+            .loadRelationCountAndMap(
+                'album.photosCount',
+                'album.photos',
+                'albumPhotos',
+                qb =>
+                    qb.where('albumPhotos.isPublished = :isPublished', {
+                        isPublished: true
+                    })
+            )
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = album.id')
+                    .andWhere('favorite.entityType = :type');
+            }, 'favoritesCount')
+            // как вариант вообще убрать, т.к. метод используется при запросе избранных
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = album.id')
+                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.userId = :requesterUserId');
+            }, 'favoriteId')
+            .setParameter('type', FavoriteEntityType.ALBUM)
+            .setParameter('requesterUserId', requesterUserId);
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const albums = entities.map((album, index) => {
+            // TODO: сгруппировать в объект favorites
+            album.isFavorite = !!raw[index].favoriteId;
+            album.favoriteId = raw[index].favoriteId;
+            album.favoritesCount = Number(raw[index].favoritesCount);
+            return album;
+        });
+
+        return albums.map(album => this.createDto(album));
+    }
+
     async getDtoById({
         id,
-        user
+        requesterUserId
     }: {
         id: number;
-        user: Partial<JwtPayload> | null;
+        requesterUserId: number;
     }) {
         const qb = this.albumRepository
             .createQueryBuilder('album')
@@ -123,29 +215,53 @@ export class AlbumsService {
                     qb.where('albumPhotos.isPublished = :isPublished', {
                         isPublished: true
                     })
-            );
+            )
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = album.id')
+                    .andWhere('favorite.entityType = :entityType');
+            }, 'favoritesCount')
+            .setParameter('entityType', FavoriteEntityType.ALBUM);
 
-        if (user) {
+        if (requesterUserId) {
             qb.andWhere(
                 new Brackets(qb => {
-                    qb.where('album.userId = :userId', {
-                        userId: user.id
+                    qb.where('album.userId = :requesterUserId', {
+                        requesterUserId
                     }).orWhere('album.isPublished = :isPublished', {
                         isPublished: true
                     });
                 })
-            );
+            )
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Favorite, 'favorite')
+                        .where('favorite.entityId = album.id')
+                        .andWhere('favorite.entityType = :type')
+                        .andWhere('favorite.userId = :requesterUserId');
+                }, 'favoriteId')
+                .setParameter('type', FavoriteEntityType.ALBUM)
+                .setParameter('requesterUserId', requesterUserId);
         } else {
             qb.andWhere('album.isPublished = :isPublished', {
                 isPublished: true
             });
         }
 
-        const album = await qb.getOne();
+        const result = await qb.getRawAndEntities();
+
+        const album = result.entities[0];
 
         if (!album) {
             throw new NotFoundException('Альбом с не найден');
         }
+
+        album.isFavorite = !!result.raw[0].favoriteId;
+        album.favoriteId = result.raw[0].favoriteId;
+        album.favoritesCount = Number(result.raw[0].favoritesCount);
 
         return { album: this.createDto(album) };
     }
@@ -172,7 +288,7 @@ export class AlbumsService {
 
         await this.albumRepository.save(album);
 
-        return await this.getDtoById({ id, user: { id: album.userId } });
+        return await this.getDtoById({ id, requesterUserId: album.userId });
     }
 
     async remove(id: number, userId: number) {
@@ -248,5 +364,10 @@ export class AlbumsService {
             .relation(Album, 'photos')
             .of(albumId)
             .remove(photoIds);
+    }
+
+    async exists(id: number) {
+        const count = await this.albumRepository.count({ where: { id } });
+        return count > 0;
     }
 }

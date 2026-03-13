@@ -8,10 +8,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { AlbumsService } from '@albums/albums.service';
-import { JwtPayload } from '@auth/interfaces';
+import { FavoriteEntityType } from '@favorites/enums';
+import { Favorite } from '@favorites/favorite.entity';
 import { Location } from '@locations/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { S3Service } from '@s3/s3.service';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { SpecializationsService } from '@specializations/specializations.service';
 
@@ -65,7 +67,12 @@ export class PhotosService {
             albums,
             createdAt: photo.createdAt,
             updatedAt: photo.updatedAt,
-            user
+            user,
+            favorites: {
+                isFavorite: photo.isFavorite,
+                favoriteId: photo.favoriteId,
+                count: photo.favoritesCount
+            }
         };
     }
 
@@ -111,25 +118,27 @@ export class PhotosService {
 
             return await this.getDtoById({
                 id: createdPhoto.id,
-                user: { id: userId },
+                requesterUserId: userId,
                 manager
             });
         });
     }
 
     async findByUserId({
-        userId,
-        page,
-        limit,
+        targetUserId,
+        requesterUserId,
+        pagination,
         albumId,
         isPublished
     }: {
-        userId: number;
-        page: number;
-        limit: number;
+        targetUserId: number;
+        requesterUserId?: number;
+        pagination: PaginationQueryDto;
         albumId?: number;
         isPublished?: boolean;
     }) {
+        const { page, limit } = pagination;
+
         const query = this.photoRepository
             .createQueryBuilder('photo')
             .leftJoinAndSelect('photo.location', 'location')
@@ -141,7 +150,15 @@ export class PhotosService {
                 { isPublished: true }
             )
             .leftJoinAndSelect('photo.user', 'user')
-            .where('user.id = :userId', { userId })
+            .where('user.id = :targetUserId', { targetUserId })
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = photo.id')
+                    .andWhere('favorite.entityType = :entityType');
+            }, 'favoritesCount')
+            .setParameter('entityType', FavoriteEntityType.PHOTO)
             .orderBy('photo.createdAt', 'DESC')
             .take(limit)
             .skip((page - 1) * limit);
@@ -149,28 +166,99 @@ export class PhotosService {
         if (albumId != undefined) {
             query.andWhere(
                 `(album.id = :albumId AND (album.userId = :userId OR album.isPublished = true))`,
-                { albumId, userId }
+                { albumId, userId: targetUserId }
             );
         }
 
-        if (isPublished != undefined) {
-            query.andWhere('photo.isPublished = :isPublished', { isPublished });
+        if (requesterUserId != undefined) {
+            query
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Favorite, 'favorite')
+                        .where('favorite.entityId = photo.id')
+                        .andWhere('favorite.entityType = :type')
+                        .andWhere('favorite.userId = :requesterUserId');
+                }, 'favoriteId')
+                .setParameter('type', FavoriteEntityType.PHOTO)
+                .setParameter('requesterUserId', requesterUserId);
         }
 
-        const [photos, total] = await query.getManyAndCount();
+        if (isPublished != undefined) {
+            query.andWhere('photo.isPublished = :isPublished', {
+                isPublished: true
+            });
+        }
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const total = await query.getCount();
+
+        const photos = entities.map((photo, index) => {
+            // TODO: сгруппировать в объект favorites
+            photo.isFavorite = !!raw[index].favoriteId;
+            photo.favoriteId = raw[index].favoriteId;
+            photo.favoritesCount = Number(raw[index].favoritesCount);
+            return photo;
+        });
 
         const photosDtos = photos.map(photo => this.createDto(photo));
 
         return new PaginationDto(photosDtos, total, page, limit);
     }
 
+    async findByIds(ids: number[], requesterUserId: number) {
+        const query = this.photoRepository
+            .createQueryBuilder('photo')
+            .where('photo.id IN (:...ids)', { ids })
+            .leftJoinAndSelect('photo.location', 'location')
+            .leftJoinAndSelect('photo.specializations', 'specialization')
+            .leftJoinAndSelect(
+                'photo.albums',
+                'album',
+                'album.isPublished = :isPublished',
+                { isPublished: true }
+            )
+            .leftJoinAndSelect('photo.user', 'user')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = photo.id')
+                    .andWhere('favorite.entityType = :type');
+            }, 'favoritesCount')
+            // как вариант вообще убрать, т.к. метод используется при запросе избранных
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = photo.id')
+                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.userId = :requesterUserId');
+            }, 'favoriteId')
+            .setParameter('type', FavoriteEntityType.PHOTO)
+            .setParameter('requesterUserId', requesterUserId);
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const photos = entities.map((photo, index) => {
+            // TODO: сгруппировать в объект favorites
+            photo.isFavorite = !!raw[index].favoriteId;
+            photo.favoriteId = raw[index].favoriteId;
+            photo.favoritesCount = Number(raw[index].favoritesCount);
+            return photo;
+        });
+
+        return photos.map(photo => this.createDto(photo));
+    }
+
     async getDtoById({
         id,
-        user,
+        requesterUserId,
         manager
     }: {
         id: number;
-        user: Partial<JwtPayload> | null;
+        requesterUserId: number;
         manager?: EntityManager;
     }) {
         const repo = manager
@@ -197,29 +285,54 @@ export class PhotosService {
                     qb.where('albumPhotos.isPublished = :isPublished', {
                         isPublished: true
                     })
-            );
+            )
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = photo.id')
+                    .andWhere('favorite.entityType = :entityType');
+            }, 'favoritesCount')
+            .setParameter('entityType', FavoriteEntityType.PHOTO);
 
-        if (user) {
-            query.andWhere(
-                new Brackets(qb => {
-                    qb.where('photo.userId = :userId', {
-                        userId: user.id
-                    }).orWhere('photo.isPublished = :isPublished', {
-                        isPublished: true
-                    });
-                })
-            );
+        if (requesterUserId) {
+            query
+                .andWhere(
+                    new Brackets(qb => {
+                        qb.where('photo.userId = :requesterUserId', {
+                            requesterUserId
+                        }).orWhere('photo.isPublished = :isPublished', {
+                            isPublished: true
+                        });
+                    })
+                )
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Favorite, 'favorite')
+                        .where('favorite.entityId = photo.id')
+                        .andWhere('favorite.entityType = :type')
+                        .andWhere('favorite.userId = :requesterUserId');
+                }, 'favoriteId')
+                .setParameter('type', FavoriteEntityType.PHOTO)
+                .setParameter('requesterUserId', requesterUserId);
         } else {
             query.andWhere('photo.isPublished = :isPublished', {
                 isPublished: true
             });
         }
 
-        const photo = await query.getOne();
+        const result = await query.getRawAndEntities();
+
+        const photo = result.entities[0];
 
         if (!photo) {
             throw new NotFoundException('Фотография не найдена');
         }
+
+        photo.isFavorite = !!result.raw[0].favoriteId;
+        photo.favoriteId = result.raw[0].favoriteId;
+        photo.favoritesCount = Number(result.raw[0].favoritesCount);
 
         return { photo: this.createDto(photo) };
     }
@@ -295,7 +408,11 @@ export class PhotosService {
 
             await photosRepo.save(photo);
 
-            return await this.getDtoById({ id, user: { id: userId }, manager });
+            return await this.getDtoById({
+                id,
+                requesterUserId: userId,
+                manager
+            });
         });
     }
 

@@ -141,10 +141,19 @@ export class UsersService {
             .leftJoinAndSelect('profileSocial.social', 'social')
             .leftJoinAndSelect(
                 'profile.temporaryLocations',
-                'temporaryLocation'
+                'temporaryLocation',
+                "temporaryLocation.endDate > CURRENT_DATE - INTERVAL '1 day'"
             )
             .leftJoinAndSelect('temporaryLocation.location', 'tempLocation')
-            .where('user.id = :id', { id: targetUserId });
+            .where('user.id = :targetUserId', { targetUserId })
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = user.id')
+                    .andWhere('favorite.entityType = :entityType');
+            }, 'favoritesCount')
+            .setParameter('entityType', FavoriteEntityType.USER);
 
         if (requesterUserId !== undefined) {
             qb.addSelect(subQuery => {
@@ -173,8 +182,11 @@ export class UsersService {
 
         return {
             ...profile,
-            isFavorite: !!result.raw[0].favoriteId,
-            favoriteId: result.raw[0].favoriteId
+            favorites: {
+                isFavorite: !!result.raw[0].favoriteId,
+                favoriteId: result.raw[0].favoriteId,
+                count: Number(result.raw[0].favoritesCount)
+            }
         };
     }
 

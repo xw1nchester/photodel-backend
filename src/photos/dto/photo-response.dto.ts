@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { LocationDto } from '@locations/dto/location.dto';
+import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 import { UserBasicDto } from '@users/dto/user-response.dto';
 
@@ -68,6 +69,9 @@ export class PhotoResponseDto {
 
     @ApiProperty({ type: UserBasicDto })
     user: UserBasicDto;
+
+    @ApiProperty({ type: FavoritesResponseDto })
+    favorites: FavoritesResponseDto;
 }
 
 export class PhotoWrapperResponseDto {

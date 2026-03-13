@@ -45,5 +45,9 @@ export class Album {
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
+    // вычисляемые поля
     photosCount?: number;
+    isFavorite?: boolean;
+    favoriteId?: number;
+    favoritesCount?: number;
 }

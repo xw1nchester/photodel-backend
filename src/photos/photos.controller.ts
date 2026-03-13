@@ -70,9 +70,9 @@ export class PhotosController {
         @Query() query: PhotoQueryDto
     ) {
         return await this.photoService.findByUserId({
-            userId: user.id,
-            page: query.page,
-            limit: query.limit,
+            targetUserId: user.id,
+            requesterUserId: user.id,
+            pagination: query,
             albumId: query.albumId
         });
     }
@@ -86,7 +86,10 @@ export class PhotosController {
         @Param('id', ParseIntPipe) id: number,
         @CurrentUser() user: JwtPayload
     ) {
-        return await this.photoService.getDtoById({ id, user });
+        return await this.photoService.getDtoById({
+            id,
+            requesterUserId: user?.id
+        });
     }
 
     @Patch(':id')

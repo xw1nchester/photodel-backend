@@ -101,4 +101,9 @@ export class Photo {
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    // вычисляемые поля
+    isFavorite?: boolean;
+    favoriteId?: number;
+    favoritesCount?: number;
 }
