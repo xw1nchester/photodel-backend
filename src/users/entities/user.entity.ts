@@ -80,4 +80,10 @@ export class User {
         }
     })
     roles: Role[];
+
+    // вычисляемые поля
+    distance?: number | null;
+    isFavorite?: boolean;
+    favoriteId?: number;
+    favoritesCount?: number;
 }

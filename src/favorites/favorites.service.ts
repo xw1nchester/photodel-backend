@@ -37,7 +37,8 @@ export class FavoritesService {
     };
 
     private loaders = {
-        // FavoriteEntityType.USER
+        [FavoriteEntityType.USER]: (ids: number[], requesterUserId: number) =>
+            this.usersService.findByIds(ids, requesterUserId),
 
         [FavoriteEntityType.ALBUM]: (ids: number[], requesterUserId: number) =>
             this.albumsService.findByIds(ids, requesterUserId),
@@ -103,7 +104,8 @@ export class FavoritesService {
 
         const entities = await loader(ids, userId);
 
-        const map = new Map(entities.map(e => [e.id, e]));
+        // попробовать решить без костыля с as
+        const map = new Map(entities.map(e => [e.id, e]) as [number, any][]);
 
         const ordered = ids.map(id => map.get(id)).filter(Boolean);
 

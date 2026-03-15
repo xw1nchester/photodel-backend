@@ -1,6 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Logger } from 'testcontainers/build/common';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { FavoriteEntityType } from '@favorites/enums';
@@ -21,6 +20,8 @@ import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
+    private readonly logger = new Logger(UsersService.name);
+
     constructor(
         private readonly dataSource: DataSource,
         @InjectRepository(User)
@@ -33,8 +34,6 @@ export class UsersService {
         private readonly socialsService: SocialsService,
         private readonly locationsService: LocationsService
     ) {}
-
-    private readonly logger = new Logger(UsersService.name);
 
     async findById(id: number) {
         const user = await this.usersRepository.findOne({
@@ -421,6 +420,119 @@ export class UsersService {
         return await this.getUserMeDtoById(userId);
     }
 
+    createUserBasicDto(user: User) {
+        return {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatarKey: user.avatarKey,
+            avatarUrl: user.avatarKey
+                ? this.s3Service.getUrl(user.avatarKey)
+                : null,
+            isPro: user.isPro,
+            proCategories: user.profile.proCategories,
+            specializations: user.profile.specializations,
+            location: this.locationsService.getDto(user.profile.location),
+            distance: user['distance'],
+            favorites: {
+                isFavorite: user.isFavorite,
+                favoriteId: user.favoriteId,
+                count: user.favoritesCount
+            }
+        };
+    }
+
+    async findByIds(ids: number[], requesterUserId: number) {
+        const qb = this.usersRepository
+            .createQueryBuilder('user')
+            .where('user.id IN (:...ids)', { ids })
+            .leftJoinAndSelect('user.profile', 'profile')
+            .leftJoinAndSelect('profile.location', 'location')
+            .leftJoinAndSelect('profile.proCategories', 'proCategories')
+            .leftJoinAndSelect('profile.specializations', 'specializations')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = user.id')
+                    .andWhere('favorite.entityType = :type');
+            }, 'favoritesCount')
+            // как вариант вообще убрать, т.к. метод используется при запросе избранных
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = user.id')
+                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.userId = :requesterUserId');
+            }, 'favoriteId')
+            .setParameter('type', FavoriteEntityType.USER)
+            .setParameter('requesterUserId', requesterUserId);
+
+        const profile = await this.findProfileByUserId({
+            targetUserId: requesterUserId
+        });
+        const activeTemporaryLocation = this.getActiveTemporaryLocation(
+            profile.temporaryLocations
+        );
+        let latitude = profile?.location.coordinates.coordinates[1];
+        let longitude = profile?.location.coordinates.coordinates[0];
+
+        if (activeTemporaryLocation) {
+            latitude =
+                activeTemporaryLocation.location.coordinates.coordinates[1];
+            longitude =
+                activeTemporaryLocation.location.coordinates.coordinates[0];
+        }
+
+        // TODO: посмотреть что будет если не будет указана локация
+        // TODO: понять почему не считается корректно расстояние
+        if (latitude != null && longitude != null) {
+            qb.addSelect(
+                `
+                CASE
+                    WHEN location.coordinates IS NOT NULL
+                    THEN ST_Distance(
+                        location.coordinates::geography,
+                        ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography
+                    )
+                    ELSE NULL
+                END
+                `,
+                'distance'
+            ).setParameters({ longitude, latitude });
+        }
+
+        const { entities, raw } = await qb.getRawAndEntities();
+
+        const users = entities.map((user, index) => {
+            // console.log({
+            //     email: user.email,
+            //     latitude,
+            //     longitude,
+            //     location: user.profile.location,
+            //     coordinates: user.profile.location
+            //         ? {
+            //               lat: user.profile.location.coordinates.coordinates[1],
+            //               lon: user.profile.location.coordinates.coordinates[0]
+            //           }
+            //         : null,
+            //     raw: raw[index].distance
+            // });
+            user.distance =
+                typeof raw[index].distance == 'number'
+                    ? Number((raw[index].distance / 1000).toFixed(1))
+                    : null;
+            user.isFavorite = !!raw[index].favoriteId;
+            user.favoriteId = raw[index].favoriteId;
+            user.favoritesCount = Number(raw[index].favoritesCount);
+            return user;
+        });
+
+        return users.map(u => this.createUserBasicDto(u));
+    }
+
+    // tmp
     async findNearbyUsers(lat: number, lng: number) {
         const qb = this.usersRepository
             .createQueryBuilder('user')
