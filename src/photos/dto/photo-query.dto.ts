@@ -15,4 +15,15 @@ export class PhotoQueryDto extends PaginationQueryDto {
     @IsInt()
     @Expose({ name: 'album_id' })
     albumId?: number;
+
+    @ApiProperty({
+        name: 'excluded_album_id',
+        example: 1,
+        required: false
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Expose({ name: 'excluded_album_id' })
+    excludedAlbumId?: number;
 }

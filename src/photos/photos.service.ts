@@ -129,12 +129,14 @@ export class PhotosService {
         requesterUserId,
         pagination,
         albumId,
+        excludedAlbumId,
         isPublished
     }: {
         targetUserId: number;
         requesterUserId?: number;
         pagination: PaginationQueryDto;
         albumId?: number;
+        excludedAlbumId?: number;
         isPublished?: boolean;
     }) {
         const { page, limit } = pagination;
@@ -164,10 +166,42 @@ export class PhotosService {
             .skip((page - 1) * limit);
 
         if (albumId != undefined) {
-            query.andWhere(
-                `(album.id = :albumId AND (album.userId = :userId OR album.isPublished = true))`,
-                { albumId, userId: targetUserId }
-            );
+            query
+                .andWhere(qb => {
+                    const subQuery = qb
+                        .subQuery()
+                        .select('1')
+                        .from('photos_albums', 'pa')
+                        .innerJoin('albums', 'a', 'a.id = pa.album_id')
+                        .where('pa.photo_id = photo.id')
+                        .andWhere('pa.album_id = :albumId')
+                        .andWhere(
+                            '(a.user_id = :userId OR a.is_published = true)'
+                        )
+                        .getQuery();
+
+                    return `EXISTS ${subQuery}`;
+                })
+                .setParameters({
+                    albumId,
+                    userId: targetUserId
+                });
+        }
+
+        if (excludedAlbumId != undefined) {
+            query
+                .andWhere(qb => {
+                    const subQuery = qb
+                        .subQuery()
+                        .select('1')
+                        .from('photos_albums', 'pa')
+                        .where('pa.photo_id = photo.id')
+                        .andWhere('pa.album_id = :excludedAlbumId')
+                        .getQuery();
+
+                    return `NOT EXISTS ${subQuery}`;
+                })
+                .setParameter('excludedAlbumId', excludedAlbumId);
         }
 
         if (requesterUserId != undefined) {

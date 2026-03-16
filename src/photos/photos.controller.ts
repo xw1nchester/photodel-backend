@@ -73,7 +73,8 @@ export class PhotosController {
             targetUserId: user.id,
             requesterUserId: user.id,
             pagination: query,
-            albumId: query.albumId
+            albumId: query.albumId,
+            excludedAlbumId: query.excludedAlbumId
         });
     }
 
