@@ -140,8 +140,8 @@ export class UsersService {
             .leftJoinAndSelect('profileSocial.social', 'social')
             .leftJoinAndSelect(
                 'profile.temporaryLocations',
-                'temporaryLocation',
-                "temporaryLocation.endDate > CURRENT_DATE - INTERVAL '1 day'"
+                'temporaryLocation'
+                // "temporaryLocation.endDate > CURRENT_DATE - INTERVAL '1 day'"
             )
             .leftJoinAndSelect('temporaryLocation.location', 'tempLocation')
             .where('user.id = :targetUserId', { targetUserId })
@@ -239,9 +239,12 @@ export class UsersService {
             value: s.value
         }));
 
-        const temporaryLocations = profile.temporaryLocations.map(loc =>
-            this.getTemporaryLocationDto(loc)
-        );
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const temporaryLocations = profile.temporaryLocations
+            .filter(loc => new Date(loc.endDate) > today)
+            .map(loc => this.getTemporaryLocationDto(loc));
 
         return {
             ...profile,
@@ -443,6 +446,8 @@ export class UsersService {
     }
 
     async findByIds(ids: number[], requesterUserId: number) {
+        if (ids.length == 0) return [];
+
         const qb = this.usersRepository
             .createQueryBuilder('user')
             .where('user.id IN (:...ids)', { ids })
@@ -475,8 +480,13 @@ export class UsersService {
         const activeTemporaryLocation = this.getActiveTemporaryLocation(
             profile.temporaryLocations
         );
-        let latitude = profile?.location.coordinates.coordinates[1];
-        let longitude = profile?.location.coordinates.coordinates[0];
+        let latitude: number | null = null;
+        let longitude: number | null = null;
+
+        if (profile.location) {
+            latitude = profile.location.coordinates.coordinates[1];
+            longitude = profile.location.coordinates.coordinates[0];
+        }
 
         if (activeTemporaryLocation) {
             latitude =
@@ -485,19 +495,14 @@ export class UsersService {
                 activeTemporaryLocation.location.coordinates.coordinates[0];
         }
 
-        // TODO: посмотреть что будет если не будет указана локация
-        // TODO: понять почему не считается корректно расстояние
         if (latitude != null && longitude != null) {
+            // TODO: если активна временная локация, то нужно считать расстояние до неё
             qb.addSelect(
                 `
-                CASE
-                    WHEN location.coordinates IS NOT NULL
-                    THEN ST_Distance(
-                        location.coordinates::geography,
-                        ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography
-                    )
-                    ELSE NULL
-                END
+                ST_Distance(
+                    location.coordinates,
+                    ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
+                )
                 `,
                 'distance'
             ).setParameters({ longitude, latitude });
@@ -505,27 +510,25 @@ export class UsersService {
 
         const { entities, raw } = await qb.getRawAndEntities();
 
-        const users = entities.map((user, index) => {
-            // console.log({
-            //     email: user.email,
-            //     latitude,
-            //     longitude,
-            //     location: user.profile.location,
-            //     coordinates: user.profile.location
-            //         ? {
-            //               lat: user.profile.location.coordinates.coordinates[1],
-            //               lon: user.profile.location.coordinates.coordinates[0]
-            //           }
-            //         : null,
-            //     raw: raw[index].distance
-            // });
+        // доп костыль, т.к. из-за джоинов категорий/специализаций происходит некорректный маппинг
+        const rawMap = new Map();
+
+        for (const r of raw) {
+            rawMap.set(r.user_id, r);
+        }
+
+        const users = entities.map(user => {
+            const r = rawMap.get(user.id);
+
             user.distance =
-                typeof raw[index].distance == 'number'
-                    ? Number((raw[index].distance / 1000).toFixed(1))
+                typeof r?.distance === 'number'
+                    ? Number((r.distance / 1000).toFixed(1))
                     : null;
-            user.isFavorite = !!raw[index].favoriteId;
-            user.favoriteId = raw[index].favoriteId;
-            user.favoritesCount = Number(raw[index].favoritesCount);
+
+            user.isFavorite = !!r?.favoriteId;
+            user.favoriteId = r?.favoriteId;
+            user.favoritesCount = Number(r?.favoritesCount ?? 0);
+
             return user;
         });
 

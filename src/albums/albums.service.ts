@@ -140,7 +140,6 @@ export class AlbumsService {
         const total = await query.getCount();
 
         const albums = entities.map((album, index) => {
-            // TODO: сгруппировать в объект favorites
             album.isFavorite = !!raw[index].favoriteId;
             album.favoriteId = raw[index].favoriteId;
             album.favoritesCount = Number(raw[index].favoritesCount);
@@ -153,6 +152,8 @@ export class AlbumsService {
     }
 
     async findByIds(ids: number[], requesterUserId: number) {
+        if (ids.length == 0) return [];
+        
         const query = this.albumRepository
             .createQueryBuilder('album')
             .where('album.id IN (:...ids)', { ids })
@@ -187,7 +188,6 @@ export class AlbumsService {
         const { entities, raw } = await query.getRawAndEntities();
 
         const albums = entities.map((album, index) => {
-            // TODO: сгруппировать в объект favorites
             album.isFavorite = !!raw[index].favoriteId;
             album.favoriteId = raw[index].favoriteId;
             album.favoritesCount = Number(raw[index].favoritesCount);

@@ -194,11 +194,18 @@ export class PhotosService {
 
         const total = await query.getCount();
 
-        const photos = entities.map((photo, index) => {
-            // TODO: сгруппировать в объект favorites
-            photo.isFavorite = !!raw[index].favoriteId;
-            photo.favoriteId = raw[index].favoriteId;
-            photo.favoritesCount = Number(raw[index].favoritesCount);
+        // доп костыль, т.к. из-за джоинов категорий/специализаций происходит некорректный маппинг
+        const rawMap = new Map();
+
+        for (const r of raw) {
+            rawMap.set(r.photo_id, r);
+        }
+
+        const photos = entities.map(photo => {
+            const r = rawMap.get(photo.id);
+            photo.isFavorite = !!r.favoriteId;
+            photo.favoriteId = r.favoriteId;
+            photo.favoritesCount = Number(r.favoritesCount);
             return photo;
         });
 
@@ -208,6 +215,8 @@ export class PhotosService {
     }
 
     async findByIds(ids: number[], requesterUserId: number) {
+        if (ids.length == 0) return [];
+
         const query = this.photoRepository
             .createQueryBuilder('photo')
             .where('photo.id IN (:...ids)', { ids })
@@ -241,11 +250,18 @@ export class PhotosService {
 
         const { entities, raw } = await query.getRawAndEntities();
 
-        const photos = entities.map((photo, index) => {
-            // TODO: сгруппировать в объект favorites
-            photo.isFavorite = !!raw[index].favoriteId;
-            photo.favoriteId = raw[index].favoriteId;
-            photo.favoritesCount = Number(raw[index].favoritesCount);
+        // доп костыль, т.к. из-за джоинов категорий/специализаций происходит некорректный маппинг
+        const rawMap = new Map();
+
+        for (const r of raw) {
+            rawMap.set(r.photo_id, r);
+        }
+
+        const photos = entities.map(photo => {
+            const r = rawMap.get(photo.id);
+            photo.isFavorite = !!r.favoriteId;
+            photo.favoriteId = r.favoriteId;
+            photo.favoritesCount = Number(r.favoritesCount);
             return photo;
         });
 
