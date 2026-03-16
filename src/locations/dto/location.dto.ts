@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNumber, Min, Max, IsString, IsOptional } from 'class-validator';
 
+// TODO: разделить на request и response
 export class LocationDto {
     // поле исключительно для response
     @ApiProperty({ example: 1, required: false })
@@ -30,10 +31,26 @@ export class LocationDto {
     longitude: number;
 
     @ApiProperty({
-        example: 'Russia',
+        example: 'Лесозаготовительная база (ну или просто лесобаза)',
         required: false
     })
     @IsOptional()
     @IsString()
     address?: string;
+
+    @ApiProperty({
+        example: 'Раша',
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    country?: string;
+
+    @ApiProperty({
+        example: 'Калининград',
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    city?: string;
 }

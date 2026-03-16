@@ -3,13 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Point, Repository } from 'typeorm';
 
 import { CreateLocationDto } from './dto/create-location.dto';
-import { Location } from './location.entity';
+import { Location } from './entities/location.entity';
+import { Place } from './entities/place.entity';
 
 @Injectable()
 export class LocationsService {
     constructor(
         @InjectRepository(Location)
-        private readonly locationsRepository: Repository<Location>
+        private readonly locationsRepository: Repository<Location>,
+        @InjectRepository(Place)
+        private readonly placesRepository: Repository<Place>
     ) {}
 
     getDto(location: Location) {
@@ -18,20 +21,32 @@ export class LocationsService {
                   id: location.id,
                   latitude: location.coordinates.coordinates[1],
                   longitude: location.coordinates.coordinates[0],
-                  address: location.address
+                  country: location.place?.country || null,
+                  city: location.place?.city || null,
+                  address: location.address,
               }
             : null;
     }
 
-    create(dto: CreateLocationDto) {
+    async create(dto: CreateLocationDto) {
         const coordinates: Point = {
             type: 'Point',
             coordinates: [dto.longitude, dto.latitude]
         };
 
+        const nearestPlace = await this.placesRepository
+            .createQueryBuilder('place')
+            .orderBy(
+                'place.coordinates <-> ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)',
+                'ASC'
+            )
+            .setParameters({ lat: dto.latitude, lon: dto.longitude })
+            .getOne();
+
         return this.locationsRepository.create({
             coordinates,
-            address: dto.address
+            address: dto.address,
+            place: nearestPlace
         });
     }
 

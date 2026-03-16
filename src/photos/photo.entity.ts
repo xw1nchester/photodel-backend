@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 import { Album } from '@albums/album.entity';
-import { Location } from '@locations/location.entity';
+import { Location } from '@locations/entities/location.entity';
 import { Specialization } from '@specializations/specialization.entity';
 import { User } from '@users/entities/user.entity';
 

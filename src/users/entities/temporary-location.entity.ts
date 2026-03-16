@@ -6,7 +6,7 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 
-import { Location } from '@locations/location.entity';
+import { Location } from '@locations/entities/location.entity';
 
 import { Profile } from './profile.entity';
 

@@ -134,16 +134,14 @@ export class UsersService {
             .createQueryBuilder('profile')
             .innerJoinAndSelect('profile.user', 'user')
             .leftJoinAndSelect('profile.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('profile.proCategories', 'proCategories')
             .leftJoinAndSelect('profile.specializations', 'specializations')
             .leftJoinAndSelect('profile.socials', 'profileSocial')
             .leftJoinAndSelect('profileSocial.social', 'social')
-            .leftJoinAndSelect(
-                'profile.temporaryLocations',
-                'temporaryLocation'
-                // "temporaryLocation.endDate > CURRENT_DATE - INTERVAL '1 day'"
-            )
+            .leftJoinAndSelect('profile.temporaryLocations', 'temporaryLocation')
             .leftJoinAndSelect('temporaryLocation.location', 'tempLocation')
+            .leftJoinAndSelect('tempLocation.place', 'tempLocationPlace')
             .where('user.id = :targetUserId', { targetUserId })
             .addSelect(subQuery => {
                 return subQuery
@@ -301,11 +299,12 @@ export class UsersService {
             const locationIdsToDelete: number[] = [];
 
             if (dto.location) {
-                const createdLocation = this.locationsService.create(
+                const createdLocation = await this.locationsService.create(
                     dto.location
                 );
                 if (profile.location) {
                     profile.location.coordinates = createdLocation.coordinates;
+                    profile.location.place = createdLocation.place;
                     profile.location.address = dto.location.address;
                 } else {
                     profile.location = createdLocation;
@@ -356,14 +355,18 @@ export class UsersService {
                 manager
             );
 
-            profile.temporaryLocations = dto.temporaryLocations.map(locDto =>
-                temporaryLocationsRepo.create({
-                    profileId: profile.id,
-                    startDate: new Date(locDto.startDate),
-                    endDate: new Date(locDto.endDate),
-                    location: this.locationsService.create(locDto.location),
-                    comment: locDto.comment
-                })
+            profile.temporaryLocations = await Promise.all(
+                dto.temporaryLocations.map(async locDto =>
+                    temporaryLocationsRepo.create({
+                        profileId: profile.id,
+                        startDate: new Date(locDto.startDate),
+                        endDate: new Date(locDto.endDate),
+                        location: await this.locationsService.create(
+                            locDto.location
+                        ),
+                        comment: locDto.comment
+                    })
+                )
             );
 
             await profilesRepo.save(profile);

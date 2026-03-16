@@ -10,7 +10,7 @@ import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 import { AlbumsService } from '@albums/albums.service';
 import { FavoriteEntityType } from '@favorites/enums';
 import { Favorite } from '@favorites/favorite.entity';
-import { Location } from '@locations/location.entity';
+import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { S3Service } from '@s3/s3.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
@@ -82,7 +82,7 @@ export class PhotosService {
 
             let location: Location | null = null;
             if (dto.location) {
-                location = this.locationsService.create(dto.location);
+                location = await this.locationsService.create(dto.location);
             }
 
             const specializations =
@@ -291,6 +291,7 @@ export class PhotosService {
                 { isPublished: true }
             )
             .leftJoinAndSelect('photo.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('photo.specializations', 'specializations')
             .leftJoinAndSelect('photo.user', 'user')
             .loadRelationCountAndMap(
@@ -390,11 +391,12 @@ export class PhotosService {
             photo.isPublished = dto.isPublished;
 
             if (dto.location) {
-                const createdLocation = this.locationsService.create(
+                const createdLocation = await this.locationsService.create(
                     dto.location
                 );
                 if (photo.location) {
                     photo.location.coordinates = createdLocation.coordinates;
+                    photo.location.place = createdLocation.place;
                     photo.location.address = dto.location.address;
                 } else {
                     photo.location = createdLocation;

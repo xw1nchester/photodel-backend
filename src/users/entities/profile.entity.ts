@@ -9,7 +9,7 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 
-import { Location } from '@locations/location.entity';
+import { Location } from '@locations/entities/location.entity';
 import { ProCategory } from '@pro-categories/pro-category.entity';
 import { Specialization } from '@specializations/specialization.entity';
 
