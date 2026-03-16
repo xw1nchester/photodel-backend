@@ -23,7 +23,7 @@ export class LocationsService {
                   longitude: location.coordinates.coordinates[0],
                   country: location.place?.country || null,
                   city: location.place?.city || null,
-                  address: location.address,
+                  address: location.address
               }
             : null;
     }

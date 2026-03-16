@@ -8,7 +8,7 @@ import {
     ValidateNested
 } from 'class-validator';
 
-import { LocationDto } from '@locations/dto/location.dto';
+import { LocationRequestDto } from '@locations/dto/location-request.dto';
 import { NoDateOverlap } from '@users/validators/no-date-overlap.decorator';
 
 export class ProfileSocialDto {
@@ -28,10 +28,10 @@ export class TemporaryLocationDto {
     @IsDateString()
     endDate: string;
 
-    @ApiProperty({ type: LocationDto })
+    @ApiProperty({ type: LocationRequestDto })
     @ValidateNested()
-    @Type(() => LocationDto)
-    location: LocationDto;
+    @Type(() => LocationRequestDto)
+    location: LocationRequestDto;
 
     @ApiProperty({
         example: 'Отпуск в Италии',
@@ -85,11 +85,11 @@ export class ProfileRequestDto {
     @IsOptional()
     about: string;
 
-    @ApiProperty({ type: LocationDto })
+    @ApiProperty({ type: LocationRequestDto })
     @IsOptional()
     @ValidateNested()
-    @Type(() => LocationDto)
-    location: LocationDto;
+    @Type(() => LocationRequestDto)
+    location: LocationRequestDto;
 
     @ApiProperty({ example: [1, 2] })
     @IsArray()

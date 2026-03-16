@@ -6,6 +6,7 @@ import {
     OneToMany,
     Unique
 } from 'typeorm';
+
 import { Location } from './location.entity';
 
 @Entity('places')

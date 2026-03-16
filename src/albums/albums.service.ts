@@ -153,7 +153,7 @@ export class AlbumsService {
 
     async findByIds(ids: number[], requesterUserId: number) {
         if (ids.length == 0) return [];
-        
+
         const query = this.albumRepository
             .createQueryBuilder('album')
             .where('album.id IN (:...ids)', { ids })

@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { AlbumResponseDto } from '@albums/dto/album-response.dto';
-import { LocationDto } from '@locations/dto/location.dto';
+import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
-import { UserBasicDto } from '@users/dto/user-response.dto';
+import { UserShortResponseDto } from '@users/dto/user-response.dto';
 
 export class PhotoResponseDto {
     @ApiProperty({ example: 1 })
@@ -25,8 +25,8 @@ export class PhotoResponseDto {
     @ApiProperty({ example: 'Описание фотографии', nullable: true })
     description: string;
 
-    @ApiProperty({ type: LocationDto, nullable: true })
-    location: LocationDto;
+    @ApiProperty({ type: LocationResponseDto, nullable: true })
+    location: LocationResponseDto;
 
     @ApiProperty({ example: 'Canon EOS 5D Mark IV', nullable: true })
     camera: string;
@@ -67,8 +67,8 @@ export class PhotoResponseDto {
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
     updatedAt: string;
 
-    @ApiProperty({ type: UserBasicDto })
-    user: UserBasicDto;
+    @ApiProperty({ type: UserShortResponseDto })
+    user: UserShortResponseDto;
 
     @ApiProperty({ type: FavoritesResponseDto })
     favorites: FavoritesResponseDto;

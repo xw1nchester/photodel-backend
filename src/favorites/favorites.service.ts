@@ -4,7 +4,7 @@ import {
     NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { AlbumsService } from '@albums/albums.service';
 import { PhotosService } from '@photos/photos.service';
@@ -110,5 +110,26 @@ export class FavoritesService {
         const ordered = ids.map(id => map.get(id)).filter(Boolean);
 
         return new PaginationDto(ordered, total, page, limit);
+    }
+
+    async validateByIdsAndUserId(ids: number[], userId: number) {
+        ids = [...new Set(ids)];
+
+        const favorites = await this.favoriteRepository.find({
+            select: { id: true },
+            where: { id: In(ids), userId }
+        });
+
+        if (ids.length != favorites.length) {
+            throw new NotFoundException('Избранное не найдено');
+        }
+    }
+
+    async bulkRemove(userId: number, ids: number[]) {
+        await this.validateByIdsAndUserId(ids, userId);
+
+        await this.favoriteRepository.delete({
+            id: In(ids)
+        });
     }
 }

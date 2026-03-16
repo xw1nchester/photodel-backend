@@ -139,7 +139,10 @@ export class UsersService {
             .leftJoinAndSelect('profile.specializations', 'specializations')
             .leftJoinAndSelect('profile.socials', 'profileSocial')
             .leftJoinAndSelect('profileSocial.social', 'social')
-            .leftJoinAndSelect('profile.temporaryLocations', 'temporaryLocation')
+            .leftJoinAndSelect(
+                'profile.temporaryLocations',
+                'temporaryLocation'
+            )
             .leftJoinAndSelect('temporaryLocation.location', 'tempLocation')
             .leftJoinAndSelect('tempLocation.place', 'tempLocationPlace')
             .where('user.id = :targetUserId', { targetUserId })
@@ -456,6 +459,7 @@ export class UsersService {
             .where('user.id IN (:...ids)', { ids })
             .leftJoinAndSelect('user.profile', 'profile')
             .leftJoinAndSelect('profile.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('profile.proCategories', 'proCategories')
             .leftJoinAndSelect('profile.specializations', 'specializations')
             .addSelect(subQuery => {

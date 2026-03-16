@@ -9,7 +9,7 @@ import {
     ValidateNested
 } from 'class-validator';
 
-import { LocationDto } from '@locations/dto/location.dto';
+import { LocationRequestDto } from '@locations/dto/location-request.dto';
 
 export class PhotoRequestDto {
     @ApiProperty({ example: 'e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg' })
@@ -25,11 +25,11 @@ export class PhotoRequestDto {
     @IsOptional()
     description?: string;
 
-    @ApiProperty({ type: LocationDto, required: false })
+    @ApiProperty({ type: LocationRequestDto, required: false })
     @IsOptional()
     @ValidateNested()
-    @Type(() => LocationDto)
-    location?: LocationDto;
+    @Type(() => LocationRequestDto)
+    location?: LocationRequestDto;
 
     @ApiProperty({ example: 'Canon EOS 5D Mark IV', nullable: true })
     @IsString()

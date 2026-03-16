@@ -6,6 +6,7 @@ import {
     ManyToOne,
     JoinColumn
 } from 'typeorm';
+
 import { Place } from './place.entity';
 
 @Entity('locations')

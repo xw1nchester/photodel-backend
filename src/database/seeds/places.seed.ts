@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { Seeder } from 'typeorm-extension';
 import { Point } from 'typeorm';
+import { Seeder } from 'typeorm-extension';
 
 import { Place } from '@locations/entities/place.entity';
 

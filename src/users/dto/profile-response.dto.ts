@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { LocationDto } from '@locations/dto/location.dto';
+import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { ProCategoryDto } from '@pro-categories/dto/pro-categories-response.dto';
 import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
@@ -29,8 +29,8 @@ export class TemporaryLocationResponseDto {
     @ApiProperty({ example: '2024-08-31' })
     endDate: string;
 
-    @ApiProperty({ type: LocationDto })
-    location: LocationDto;
+    @ApiProperty({ type: LocationResponseDto })
+    location: LocationResponseDto;
 
     @ApiProperty({ example: 'Отпуск в Италии', nullable: true })
     comment: string | null;
@@ -92,11 +92,11 @@ export class ProfileResponseDto {
     })
     about: string | null;
 
-    @ApiProperty({ type: LocationDto })
-    location: LocationDto;
+    @ApiProperty({ type: LocationResponseDto })
+    location: LocationResponseDto;
 
-    @ApiProperty({ type: LocationDto, nullable: true })
-    activeTemporaryLocation: LocationDto | null;
+    @ApiProperty({ type: LocationResponseDto, nullable: true })
+    activeTemporaryLocation: LocationResponseDto | null;
 
     @ApiProperty({ type: [ProCategoryDto] })
     proCategories: ProCategoryDto[];
@@ -114,4 +114,42 @@ export class ProfileResponseDto {
 export class ProfileWrapperResponseDto {
     @ApiProperty({ type: ProfileResponseDto })
     profile: ProfileResponseDto;
+}
+
+export class ProfileBasicResponseDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 'Иван' })
+    firstName: string;
+
+    @ApiProperty({ example: 'Петров' })
+    lastName: string;
+
+    @ApiProperty({ example: 'e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg' })
+    avatarKey: string;
+
+    @ApiProperty({
+        example:
+            'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
+    })
+    avatarUrl: string;
+
+    @ApiProperty({ example: false })
+    isPro: boolean;
+
+    @ApiProperty({ type: [ProCategoryDto] })
+    proCategories: ProCategoryDto[];
+
+    @ApiProperty({ type: [SpecializationDto] })
+    specializations: SpecializationDto[];
+
+    @ApiProperty({ type: LocationResponseDto })
+    location: LocationResponseDto;
+
+    @ApiProperty({ example: 7.5 })
+    distance: number;
+
+    @ApiProperty({ type: FavoritesResponseDto })
+    favorites: FavoritesResponseDto;
 }

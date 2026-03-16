@@ -22,7 +22,9 @@ import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
+import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
+import { ProfileBasicResponseDto } from '@users/dto/profile-response.dto';
 
 import { FavoriteQueryDto } from './dto/favorite-query.dto';
 import { FavoriteRequestDto } from './dto/favorite-request.dto';
@@ -57,7 +59,12 @@ export class FavoritesController {
 
     @Get()
     @ApiBearerAuth()
-    @ApiExtraModels(PaginationResponseDto, AlbumResponseDto, PhotoResponseDto)
+    @ApiExtraModels(
+        PaginationResponseDto,
+        AlbumResponseDto,
+        PhotoResponseDto,
+        ProfileBasicResponseDto
+    )
     @ApiOkResponse({
         schema: {
             allOf: [
@@ -68,7 +75,12 @@ export class FavoritesController {
                             items: {
                                 oneOf: [
                                     { $ref: getSchemaPath(AlbumResponseDto) },
-                                    { $ref: getSchemaPath(PhotoResponseDto) }
+                                    { $ref: getSchemaPath(PhotoResponseDto) },
+                                    {
+                                        $ref: getSchemaPath(
+                                            ProfileBasicResponseDto
+                                        )
+                                    }
                                 ]
                             }
                         }
@@ -83,5 +95,15 @@ export class FavoritesController {
         @Query() query: FavoriteQueryDto
     ) {
         return await this.favoritesService.getFavorites(user.id, query);
+    }
+
+    @Post('bulk-delete')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiBearerAuth()
+    async bulkRemove(
+        @CurrentUser() user: JwtPayload,
+        @Body() { ids }: IdsRequestDto
+    ) {
+        await this.favoritesService.bulkRemove(user.id, ids);
     }
 }

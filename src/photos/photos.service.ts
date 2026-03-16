@@ -144,6 +144,7 @@ export class PhotosService {
         const query = this.photoRepository
             .createQueryBuilder('photo')
             .leftJoinAndSelect('photo.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('photo.specializations', 'specialization')
             .leftJoinAndSelect(
                 'photo.albums',
@@ -255,6 +256,7 @@ export class PhotosService {
             .createQueryBuilder('photo')
             .where('photo.id IN (:...ids)', { ids })
             .leftJoinAndSelect('photo.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('photo.specializations', 'specialization')
             .leftJoinAndSelect(
                 'photo.albums',

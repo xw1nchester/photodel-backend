@@ -48,7 +48,7 @@ export class UserMeWrapperResponseDto {
     user: UserMeResponseDto;
 }
 
-export class UserBasicDto {
+export class UserShortResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
 
@@ -70,5 +70,3 @@ export class UserBasicDto {
     @ApiProperty({ example: false })
     isPro: boolean;
 }
-
-// нужно будет отдельное dto на основе UserBasicDto c distance, categories, specializations
