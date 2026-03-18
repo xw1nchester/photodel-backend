@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
     IsInt,
@@ -11,7 +10,9 @@ import {
     Min
 } from 'class-validator';
 
-export class UsersSearchQueryDto extends PaginationQueryDto {
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+
+export class UserQueryDto extends PaginationQueryDto {
     @ApiProperty({
         example: 55.7558,
         minimum: -90,

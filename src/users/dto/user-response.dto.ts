@@ -1,5 +1,6 @@
-import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
+
+import { LocationResponseDto } from '@locations/dto/location-response.dto';
 
 export class UserMeResponseDto {
     @ApiProperty({ example: 1 })

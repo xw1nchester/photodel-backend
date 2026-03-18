@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Point, Repository } from 'typeorm';
+import { EntityManager, ILike, Point, Repository } from 'typeorm';
+
+import { PaginationDto } from '@shared/dto/pagination.dto';
 
 import { CreateLocationDto } from './dto/create-location.dto';
+import { PlaceQueryDto } from './dto/place-query.dto';
 import { Location } from './entities/location.entity';
 import { Place } from './entities/place.entity';
 
@@ -19,8 +22,8 @@ export class LocationsService {
         return place
             ? {
                   id: place.id,
-                //   latitude: place.coordinates.coordinates[1],
-                //   longitude: place.coordinates.coordinates[0],
+                  latitude: place.coordinates.coordinates[1],
+                  longitude: place.coordinates.coordinates[0],
                   country: place.country,
                   city: place.city
               }
@@ -69,5 +72,25 @@ export class LocationsService {
             : this.locationsRepository;
 
         await repo.delete(ids);
+    }
+
+    async findPlaces({ page, limit, search }: PlaceQueryDto) {
+        let where = {};
+
+        if (search) {
+            where = {
+                city: ILike(`%${search}%`)
+            };
+        }
+
+        const [enitities, count] = await this.placesRepository.findAndCount({
+            where,
+            take: limit,
+            skip: (page - 1) * limit
+        });
+
+        const places = enitities.map(e => this.getPlaceDto(e));
+
+        return new PaginationDto(places, count, page, limit);
     }
 }

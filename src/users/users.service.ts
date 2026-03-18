@@ -7,18 +7,19 @@ import { Favorite } from '@favorites/favorite.entity';
 import { LocationsService } from '@locations/locations.service';
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { S3Service } from '@s3/s3.service';
+import { PaginationDto } from '@shared/dto/pagination.dto';
 import { SocialsService } from '@socials/socials.service';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { CreateUserDto } from './dto/create-user.dto';
+import { MapQueryDto } from './dto/map-query.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
 import { UpdateNameRequestDto } from './dto/update-name-request.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
-import { UsersSearchQueryDto } from './dto/users-search-query.dto';
-import { PaginationDto } from '@shared/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -94,7 +95,14 @@ export class UsersService {
 
         return await repo.findOne({
             where: { email },
-            relations: { roles: true }
+            relations: {
+                roles: true,
+                profile: {
+                    location: {
+                        place: true
+                    }
+                }
+            }
         });
     }
 
@@ -588,7 +596,7 @@ export class UsersService {
             search,
             proCategoryId,
             specializationId
-        }: UsersSearchQueryDto,
+        }: UserQueryDto,
         requesterUserId?: number
     ) {
         const qb = this.usersRepository
@@ -700,6 +708,54 @@ export class UsersService {
         const dtos = users.map(u => this.createUserBasicDto(u));
 
         return new PaginationDto(dtos, total, page, limit);
+    }
+
+    async findMapMarkers({ placeId }: MapQueryDto) {
+        const qb = this.profilesRepository
+            .createQueryBuilder('profile')
+            .leftJoin('profile.user', 'user')
+            .leftJoin('profile.location', 'location')
+            .leftJoin('location.place', 'locationPlace')
+            .select([
+                'user.id',
+                'location.id',
+                'location.coordinates',
+                'location.address',
+                'locationPlace.id',
+                'locationPlace.coordinates',
+                'locationPlace.country',
+                'locationPlace.city'
+            ]);
+
+        if (placeId != undefined) {
+            qb.andWhere('locationPlace.id = :placeId', { placeId });
+        }
+
+        const result = await qb.getRawMany();
+
+        // костыльно, но запрашиваются только необходимые поля
+        const data = result.map(item => ({
+            userId: item.user_id,
+            location: {
+                id: item.location_id,
+                latitude: item.location_coordinates.coordinates[1],
+                longitude: item.location_coordinates.coordinates[1],
+                address: item.location_address,
+                place: item.locationPlace_id
+                    ? {
+                          id: item.locationPlace_id,
+                          latitude:
+                              item.locationPlace_coordinates.coordinates[1],
+                          longitude:
+                              item.locationPlace_coordinates.coordinates[1],
+                          country: item.locationPlace_country,
+                          city: item.locationPlace_city
+                      }
+                    : null
+            }
+        }));
+
+        return { data };
     }
 
     async exists(id: number) {

@@ -28,12 +28,17 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
 import { AvatarRequestDto } from './dto/avatar-request.dto';
+import { MapQueryDto } from './dto/map-query.dto';
+import { MapWrapperResponseDto } from './dto/map-response.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
-import { ProfileBasicResponseDto, ProfileWrapperResponseDto } from './dto/profile-response.dto';
+import {
+    ProfileBasicResponseDto,
+    ProfileWrapperResponseDto
+} from './dto/profile-response.dto';
 import { UpdateNameRequestDto } from './dto/update-name-request.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 import { UserMeWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
-import { UsersSearchQueryDto } from './dto/users-search-query.dto';
 
 @Controller('users')
 export class UsersController {
@@ -122,7 +127,9 @@ export class UsersController {
                     properties: {
                         data: {
                             type: 'array',
-                            items: { $ref: getSchemaPath(ProfileBasicResponseDto) }
+                            items: {
+                                $ref: getSchemaPath(ProfileBasicResponseDto)
+                            }
                         }
                     }
                 },
@@ -131,10 +138,17 @@ export class UsersController {
         }
     })
     async findProfessionals(
-        @Query() query: UsersSearchQueryDto,
-         @CurrentUser() user: JwtPayload
+        @Query() query: UserQueryDto,
+        @CurrentUser() user: JwtPayload
     ) {
         return await this.usersService.findProfessionals(query, user?.id);
+    }
+
+    @Public()
+    @Get('map')
+    @ApiOkResponse({ type: MapWrapperResponseDto })
+    async findMapMarkers(@Query() query: MapQueryDto) {
+        return await this.usersService.findMapMarkers(query);
     }
 
     @Public()
