@@ -17,6 +17,8 @@ import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
+import { UsersSearchQueryDto } from './dto/users-search-query.dto';
+import { PaginationDto } from '@shared/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -38,7 +40,44 @@ export class UsersService {
     async findById(id: number) {
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: { roles: true }
+            relations: {
+                roles: true,
+                profile: {
+                    location: {
+                        place: true
+                    }
+                }
+            },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                avatarKey: true,
+                isAdult: true,
+                isProfessional: true,
+                isVerified: true,
+                isPro: true,
+                createdAt: true,
+                roles: {
+                    id: true,
+                    name: true
+                },
+                profile: {
+                    id: true,
+                    location: {
+                        id: true,
+                        coordinates: true,
+                        address: true,
+                        place: {
+                            id: true,
+                            coordinates: true,
+                            country: true,
+                            city: true
+                        }
+                    }
+                }
+            }
         });
 
         if (!user) {
@@ -59,6 +98,7 @@ export class UsersService {
         });
     }
 
+    // TODO: учитывать временную локацию
     createUserMeDto(user: User) {
         return {
             id: user.id,
@@ -74,20 +114,10 @@ export class UsersService {
             isVerified: user.isVerified,
             isPro: user.isPro,
             createdAt: user.createdAt,
-            roles: user.roles.map(r => r.name)
+            roles: user.roles.map(r => r.name),
+            location: this.locationsService.getDto(user.profile.location)
         };
     }
-
-    // createUserBasicDto(user: User) {
-    //     return {
-    //         id: user.id,
-    //         firstName: user.firstName,
-    //         lastName: user.lastName,
-    //         avatarKey: user.avatar,
-    //         avatarUrl: user.avatar ? this.s3Service.getUrl(user.avatar) : null,
-    //         isPro: user.isPro
-    //     };
-    // }
 
     async createUser(dto: CreateUserDto, manager?: EntityManager) {
         const repo = manager
@@ -451,6 +481,30 @@ export class UsersService {
         };
     }
 
+    private transformUsersRawData(entities: User[], raw: any[]) {
+        // доп костыль, т.к. из-за джоинов категорий/специализаций происходит некорректный маппинг
+        const rawMap = new Map();
+
+        for (const r of raw) {
+            rawMap.set(r.user_id, r);
+        }
+
+        return entities.map(user => {
+            const r = rawMap.get(user.id);
+
+            user.distance =
+                typeof r?.distance === 'number'
+                    ? Number((r.distance / 1000).toFixed(1))
+                    : null;
+
+            user.isFavorite = !!r?.favoriteId;
+            user.favoriteId = r?.favoriteId;
+            user.favoritesCount = Number(r?.favoritesCount ?? 0);
+
+            return user;
+        });
+    }
+
     async findByIds(ids: number[], requesterUserId: number) {
         if (ids.length == 0) return [];
 
@@ -517,65 +571,135 @@ export class UsersService {
 
         const { entities, raw } = await qb.getRawAndEntities();
 
-        // доп костыль, т.к. из-за джоинов категорий/специализаций происходит некорректный маппинг
-        const rawMap = new Map();
-
-        for (const r of raw) {
-            rawMap.set(r.user_id, r);
-        }
-
-        const users = entities.map(user => {
-            const r = rawMap.get(user.id);
-
-            user.distance =
-                typeof r?.distance === 'number'
-                    ? Number((r.distance / 1000).toFixed(1))
-                    : null;
-
-            user.isFavorite = !!r?.favoriteId;
-            user.favoriteId = r?.favoriteId;
-            user.favoritesCount = Number(r?.favoritesCount ?? 0);
-
-            return user;
-        });
+        const users = this.transformUsersRawData(entities, raw);
 
         return users.map(u => this.createUserBasicDto(u));
     }
 
-    // tmp
-    async findNearbyUsers(lat: number, lng: number) {
+    async findProfessionals(
+        {
+            page,
+            limit,
+            latitude,
+            longitude,
+            order,
+            radius,
+            placeId,
+            search,
+            proCategoryId,
+            specializationId
+        }: UsersSearchQueryDto,
+        requesterUserId?: number
+    ) {
         const qb = this.usersRepository
             .createQueryBuilder('user')
-            .leftJoin('user.profile', 'profile')
-            .select([
-                'user.id AS id',
-                'user.firstName AS "firstName"',
-                'user.lastName AS "lastName"',
-                'user.avatar AS avatar'
-            ])
-            .addSelect(
+            .where('user.isProfessional = :isProfessional', {
+                isProfessional: true
+            })
+            .leftJoinAndSelect('user.profile', 'profile')
+            .leftJoinAndSelect('profile.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
+            .leftJoinAndSelect('profile.proCategories', 'proCategories')
+            .leftJoinAndSelect('profile.specializations', 'specializations')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = user.id')
+                    .andWhere('favorite.entityType = :type');
+            }, 'favoritesCount')
+            .setParameter('type', FavoriteEntityType.USER)
+            .take(limit)
+            .skip((page - 1) * limit);
+
+        if (requesterUserId != undefined) {
+            qb.addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = user.id')
+                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.userId = :requesterUserId');
+            }, 'favoriteId').setParameter('requesterUserId', requesterUserId);
+        }
+
+        if (latitude != undefined && longitude != undefined) {
+            // TODO: если активна временная локация, то нужно считать расстояние до неё
+            qb.addSelect(
                 `
                 ST_Distance(
-                    profile.coordinates,
-                    ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)
+                    location.coordinates,
+                    ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
                 )
                 `,
                 'distance'
-            )
-            .where('profile.coordinates IS NOT NULL')
-            .setParameters({ lat, lng });
+            ).setParameters({ longitude, latitude });
 
-        const result = await qb.orderBy('distance', 'ASC').getRawMany();
+            if (order == 'distance') {
+                qb.orderBy('distance', 'ASC');
+            }
 
-        const users = result.map(user => ({
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            avatar: user.avatar,
-            distance: Number((user.distance / 1000).toFixed(1))
-        }));
+            if (radius != undefined) {
+                qb.andWhere(
+                    `
+                        ST_Distance(
+                            location.coordinates,
+                            ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
+                        ) <= :radius
+                    `,
+                    { radius: radius * 1000 }
+                );
+            }
+        }
 
-        return { users };
+        if (placeId) {
+            qb.andWhere('locationPlace.id = :placeId', { placeId });
+        }
+
+        if (search) {
+            qb.andWhere(
+                `(user.firstName ILIKE :search OR user.lastName ILIKE :search)`,
+                { search: `%${search}%` }
+            );
+        }
+
+        if (proCategoryId != undefined) {
+            qb.andWhere(qb2 => {
+                const subQuery = qb2
+                    .subQuery()
+                    .select('1')
+                    .from('pro_categories_profiles', 'pcp')
+                    .where('pcp.profile_id = profile.id')
+                    .andWhere('pcp.pro_category_id = :proCategoryId')
+                    .getQuery();
+
+                return `EXISTS ${subQuery}`;
+            }).setParameter('proCategoryId', proCategoryId);
+        }
+
+        if (specializationId != undefined) {
+            qb.andWhere(qb2 => {
+                const subQuery = qb2
+                    .subQuery()
+                    .select('1')
+                    .from('specializations_profiles', 'sp')
+                    .where('sp.profile_id = profile.id')
+                    .andWhere('sp.specialization_id = :specializationId')
+                    .getQuery();
+
+                return `EXISTS ${subQuery}`;
+            }).setParameter('specializationId', specializationId);
+        }
+
+        const { entities, raw } = await qb.getRawAndEntities();
+
+        const total = await qb.getCount();
+
+        const users = this.transformUsersRawData(entities, raw);
+
+        const dtos = users.map(u => this.createUserBasicDto(u));
+
+        return new PaginationDto(dtos, total, page, limit);
     }
 
     async exists(id: number) {

@@ -6,7 +6,6 @@ import {
     Delete,
     Query,
     Param,
-    ParseFloatPipe,
     ParseIntPipe,
     UseGuards
 } from '@nestjs/common';
@@ -14,7 +13,6 @@ import {
     ApiBearerAuth,
     ApiExtraModels,
     ApiOkResponse,
-    ApiQuery,
     getSchemaPath
 } from '@nestjs/swagger';
 
@@ -30,12 +28,12 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
 import { AvatarRequestDto } from './dto/avatar-request.dto';
-import { NearbyUsersWrapperResponseDto } from './dto/nearby-user-response.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
-import { ProfileWrapperResponseDto } from './dto/profile-response.dto';
+import { ProfileBasicResponseDto, ProfileWrapperResponseDto } from './dto/profile-response.dto';
 import { UpdateNameRequestDto } from './dto/update-name-request.dto';
 import { UserMeWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
+import { UsersSearchQueryDto } from './dto/users-search-query.dto';
 
 @Controller('users')
 export class UsersController {
@@ -114,15 +112,29 @@ export class UsersController {
     }
 
     @Public()
-    @Get('nearby')
-    @ApiQuery({ name: 'latitude', example: 55.7558 })
-    @ApiQuery({ name: 'longitude', example: 37.6173 })
-    @ApiOkResponse({ type: NearbyUsersWrapperResponseDto })
-    async findNearbyUsers(
-        @Query('latitude', ParseFloatPipe) latitude: number,
-        @Query('longitude', ParseFloatPipe) longitude: number
+    @UseGuards(OptionalJwtAuthGuard)
+    @Get()
+    @ApiExtraModels(PaginationResponseDto, ProfileBasicResponseDto)
+    @ApiOkResponse({
+        schema: {
+            allOf: [
+                {
+                    properties: {
+                        data: {
+                            type: 'array',
+                            items: { $ref: getSchemaPath(ProfileBasicResponseDto) }
+                        }
+                    }
+                },
+                { $ref: getSchemaPath(PaginationResponseDto) }
+            ]
+        }
+    })
+    async findProfessionals(
+        @Query() query: UsersSearchQueryDto,
+         @CurrentUser() user: JwtPayload
     ) {
-        return await this.usersService.findNearbyUsers(latitude, longitude);
+        return await this.usersService.findProfessionals(query, user?.id);
     }
 
     @Public()

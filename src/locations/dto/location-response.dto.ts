@@ -1,5 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+class PlaceResponseDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({
+        example: 'Раша',
+        nullable: true
+    })
+    country: string;
+
+    @ApiProperty({
+        example: 'Калининград',
+        nullable: true
+    })
+    city: string;
+}
+
 export class LocationResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
@@ -24,15 +41,6 @@ export class LocationResponseDto {
     })
     address: string;
 
-    @ApiProperty({
-        example: 'Раша',
-        nullable: true
-    })
-    country: string;
-
-    @ApiProperty({
-        example: 'Калининград',
-        nullable: true
-    })
-    city: string;
+    @ApiProperty({ type: PlaceResponseDto })
+    place: PlaceResponseDto;
 }

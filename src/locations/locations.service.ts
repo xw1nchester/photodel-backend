@@ -15,14 +15,25 @@ export class LocationsService {
         private readonly placesRepository: Repository<Place>
     ) {}
 
+    private getPlaceDto(place: Place) {
+        return place
+            ? {
+                  id: place.id,
+                //   latitude: place.coordinates.coordinates[1],
+                //   longitude: place.coordinates.coordinates[0],
+                  country: place.country,
+                  city: place.city
+              }
+            : null;
+    }
+
     getDto(location: Location) {
         return location
             ? {
                   id: location.id,
                   latitude: location.coordinates.coordinates[1],
                   longitude: location.coordinates.coordinates[0],
-                  country: location.place?.country || null,
-                  city: location.place?.city || null,
+                  place: this.getPlaceDto(location.place),
                   address: location.address
               }
             : null;

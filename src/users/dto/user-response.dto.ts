@@ -1,3 +1,4 @@
+import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UserMeResponseDto {
@@ -41,6 +42,9 @@ export class UserMeResponseDto {
 
     @ApiProperty({ example: ['MODERATOR'] })
     roles: string[];
+
+    @ApiProperty({ type: LocationResponseDto })
+    location: LocationResponseDto;
 }
 
 export class UserMeWrapperResponseDto {
