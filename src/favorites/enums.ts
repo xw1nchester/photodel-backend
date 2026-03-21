@@ -1,5 +1,6 @@
 export enum FavoriteEntityType {
     USER = 'user',
     ALBUM = 'album',
-    PHOTO = 'photo'
+    PHOTO = 'photo',
+    PLACE = 'place'
 }

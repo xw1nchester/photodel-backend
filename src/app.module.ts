@@ -10,6 +10,7 @@ import { AlbumsModule } from './albums/albums.module';
 import { AppController } from './app.controller';
 import { FavoritesModule } from './favorites/favorites.module';
 import { FilesModule } from './files/files.module';
+import { FilmingLocationsModule } from './filming-locations/filming-locations.module';
 import { LocationsModule } from './locations/locations.module';
 import { PhotosModule } from './photos/photos.module';
 import { RolesModule } from './roles/roles.module';
@@ -26,7 +27,8 @@ import { RolesModule } from './roles/roles.module';
         LocationsModule,
         AlbumsModule,
         PhotosModule,
-        FavoritesModule
+        FavoritesModule,
+        FilmingLocationsModule
     ],
     controllers: [AppController],
     providers: [

@@ -7,13 +7,19 @@ import {
 } from '@nestjs/swagger';
 import { FastifyRequest } from 'fastify';
 
+import { CurrentUser } from '@auth/decorators';
+import { JwtPayload } from '@auth/interfaces';
 import { S3Service } from '@s3/s3.service';
 
 import { FilesResponseDto } from './dto/files-response.dto';
+import { FilesService } from './files.service';
 
 @Controller('files')
 export class FilesController {
-    constructor(private readonly s3Service: S3Service) {}
+    constructor(
+        private readonly filesService: FilesService,
+        private readonly s3Service: S3Service
+    ) {}
 
     @Post('upload')
     @ApiBearerAuth()
@@ -33,31 +39,16 @@ export class FilesController {
         }
     })
     @ApiOkResponse({ type: FilesResponseDto })
-    public async uploadFiles(@Req() request: FastifyRequest) {
+    public async uploadFiles(
+        @Req() request: FastifyRequest,
+        @CurrentUser() user: JwtPayload
+    ) {
         if (!request.isMultipart()) {
             return { message: 'Request is not multipart' };
         }
 
         const parts = request.files();
 
-        const uploadedFiles = [];
-        for await (const part of parts) {
-            const buffer = await part.toBuffer();
-
-            const { key, url } = await this.s3Service.uploadFile(
-                buffer,
-                part.mimetype
-            );
-
-            uploadedFiles.push({
-                filename: part.filename,
-                mimetype: part.mimetype,
-                size: buffer.length,
-                key,
-                url
-            });
-        }
-
-        return { files: uploadedFiles };
+        return await this.filesService.uploadFiles(parts, user.id);
     }
 }

@@ -348,7 +348,7 @@ export class PhotosService {
             }, 'favoritesCount')
             .setParameter('entityType', FavoriteEntityType.PHOTO);
 
-        if (requesterUserId) {
+        if (requesterUserId != undefined) {
             query
                 .andWhere(
                     new Brackets(qb => {

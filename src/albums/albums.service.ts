@@ -225,7 +225,7 @@ export class AlbumsService {
             }, 'favoritesCount')
             .setParameter('entityType', FavoriteEntityType.ALBUM);
 
-        if (requesterUserId) {
+        if (requesterUserId != undefined) {
             qb.andWhere(
                 new Brackets(qb => {
                     qb.where('album.userId = :requesterUserId', {

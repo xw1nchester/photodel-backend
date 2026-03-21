@@ -55,6 +55,8 @@
             "@shared/*": ["src/shared/*"],
             "@favorites": ["src/favorites"],
             "@favorites/*": ["src/favorites/*"],
+            "@filming-locations": ["src/filming-locations"],
+            "@filming-locations/*": ["src/filming-locations/*"],
         }
     }
 }

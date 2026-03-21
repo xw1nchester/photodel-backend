@@ -11,6 +11,8 @@ import {
 
 import { Album } from '@albums/album.entity';
 import { Code } from '@codes/code.entity';
+import { File } from '@files/file.entity';
+import { FilmingLocation } from '@filming-locations/filming-location.entity';
 import { Photo } from '@photos/photo.entity';
 import { Role } from '@roles/role.entity';
 import { Token } from '@tokens/token.entity';
@@ -80,6 +82,12 @@ export class User {
         }
     })
     roles: Role[];
+
+    @OneToMany(() => File, file => file.user)
+    files: File[];
+
+    @OneToMany(() => FilmingLocation, fl => fl.user)
+    filmingLocations: FilmingLocation[];
 
     // вычисляемые поля
     distance?: number | null;

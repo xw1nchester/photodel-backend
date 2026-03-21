@@ -1,11 +1,17 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { S3Module } from '@s3/s3.module';
 
+import { File } from './file.entity';
 import { FilesController } from './files.controller';
+import { FilesService } from './files.service';
 
+@Global()
 @Module({
-    imports: [S3Module],
-    controllers: [FilesController]
+    imports: [TypeOrmModule.forFeature([File]), S3Module],
+    controllers: [FilesController],
+    providers: [FilesService],
+    exports: [FilesService]
 })
 export class FilesModule {}

@@ -1,15 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class FileDto {
+export class FileDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
     @ApiProperty({
         example: 'photo.jpg'
     })
-    filename: string;
+    originalName: string;
 
     @ApiProperty({
         example: 'image/jpeg'
     })
-    mimetype: string;
+    mimeType: string;
 
     @ApiProperty({
         example: 245760
