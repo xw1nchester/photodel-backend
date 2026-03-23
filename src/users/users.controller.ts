@@ -40,6 +40,7 @@ import { UpdateNameRequestDto } from './dto/update-name-request.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UserMeWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
+import { FilmingLocationBasicResponseDto } from '@filming-locations/dto/filming-location-response.dto';
 
 @Controller('users')
 export class UsersController {
@@ -221,22 +222,22 @@ export class UsersController {
     @Public()
     @UseGuards(OptionalJwtAuthGuard)
     @Get(':id/filming-locations')
-    // @ApiExtraModels(PaginationResponseDto, AlbumResponseDto)
-    // @ApiOkResponse({
-    //     schema: {
-    //         allOf: [
-    //             {
-    //                 properties: {
-    //                     data: {
-    //                         type: 'array',
-    //                         items: { $ref: getSchemaPath(AlbumResponseDto) }
-    //                     }
-    //                 }
-    //             },
-    //             { $ref: getSchemaPath(PaginationResponseDto) }
-    //         ]
-    //     }
-    // })
+    @ApiExtraModels(PaginationResponseDto, FilmingLocationBasicResponseDto)
+    @ApiOkResponse({
+        schema: {
+            allOf: [
+                {
+                    properties: {
+                        data: {
+                            type: 'array',
+                            items: { $ref: getSchemaPath(FilmingLocationBasicResponseDto) }
+                        }
+                    }
+                },
+                { $ref: getSchemaPath(PaginationResponseDto) }
+            ]
+        }
+    })
     async getUserFilmingLocations(
         @Param('id', ParseIntPipe) id: number,
         @CurrentUser() user: JwtPayload,
