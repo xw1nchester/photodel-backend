@@ -83,7 +83,7 @@ export class PhotosController {
     @Get(':id')
     @ApiBearerAuth()
     @ApiOkResponse({ type: PhotoWrapperResponseDto })
-    async getPublicDtoById(
+    async getDtoById(
         @Param('id', ParseIntPipe) id: number,
         @CurrentUser() user: JwtPayload
     ) {

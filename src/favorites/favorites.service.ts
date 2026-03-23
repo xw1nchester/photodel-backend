@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
 import { AlbumsService } from '@albums/albums.service';
+import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
 import { PhotosService } from '@photos/photos.service';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { UsersService } from '@users/users.service';
@@ -23,7 +24,8 @@ export class FavoritesService {
         private readonly favoriteRepository: Repository<Favorite>,
         private readonly usersService: UsersService,
         private readonly albumsService: AlbumsService,
-        private readonly photosService: PhotosService
+        private readonly photosService: PhotosService,
+        private readonly filmingLocationsService: FilmingLocationsService
     ) {}
 
     private validators = {
@@ -33,7 +35,10 @@ export class FavoritesService {
             this.albumsService.exists(id),
 
         [FavoriteEntityType.PHOTO]: (id: number) =>
-            this.photosService.exists(id)
+            this.photosService.exists(id),
+
+        [FavoriteEntityType.PLACE]: (id: number) =>
+            this.filmingLocationsService.exists(id)
     };
 
     private loaders = {
@@ -44,7 +49,10 @@ export class FavoritesService {
             this.albumsService.findByIds(ids, requesterUserId),
 
         [FavoriteEntityType.PHOTO]: (ids: number[], requesterUserId: number) =>
-            this.photosService.findByIds(ids, requesterUserId)
+            this.photosService.findByIds(ids, requesterUserId),
+
+        [FavoriteEntityType.PLACE]: (ids: number[], requesterUserId: number) =>
+            this.filmingLocationsService.findByIds(ids, requesterUserId)
     };
 
     async addFavorite(userId: number, dto: FavoriteRequestDto) {

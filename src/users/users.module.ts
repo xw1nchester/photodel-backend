@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AlbumsModule } from '@albums/albums.module';
+import { FilmingLocationsModule } from '@filming-locations/filming-locations.module';
 import { LocationsModule } from '@locations/locations.module';
 import { PhotosModule } from '@photos/photos.module';
 import { ProCategoriesModule } from '@pro-categories/pro-categories.module';
@@ -30,7 +31,8 @@ import { UsersService } from './users.service';
         SocialsModule,
         LocationsModule,
         AlbumsModule,
-        PhotosModule
+        PhotosModule,
+        FilmingLocationsModule
     ],
     controllers: [UsersController],
     providers: [UsersService],

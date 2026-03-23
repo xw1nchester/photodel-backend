@@ -69,3 +69,20 @@ export class FilmingLocationWrapperResponseDto {
     @ApiProperty({ type: FilmingLocationResponseDto })
     filmingLocation: FilmingLocationResponseDto;
 }
+
+export class FilmingLocationBasicResponseDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ type: PhotoMinResponseDto })
+    preview: PhotoMinResponseDto;
+
+    @ApiProperty({ example: 'ВДНХ' })
+    name: string;
+
+    @ApiProperty({ type: LocationResponseDto })
+    location: LocationResponseDto;
+
+    @ApiProperty({ type: FavoritesResponseDto })
+    favorites: FavoritesResponseDto;
+}

@@ -21,6 +21,7 @@ import {
 import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
+import { FilmingLocationBasicResponseDto } from '@filming-locations/dto/filming-location-response.dto';
 import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
@@ -63,6 +64,7 @@ export class FavoritesController {
         PaginationResponseDto,
         AlbumResponseDto,
         PhotoResponseDto,
+        FilmingLocationBasicResponseDto,
         ProfileBasicResponseDto
     )
     @ApiOkResponse({
@@ -76,6 +78,11 @@ export class FavoritesController {
                                 oneOf: [
                                     { $ref: getSchemaPath(AlbumResponseDto) },
                                     { $ref: getSchemaPath(PhotoResponseDto) },
+                                    {
+                                        $ref: getSchemaPath(
+                                            FilmingLocationBasicResponseDto
+                                        )
+                                    },
                                     {
                                         $ref: getSchemaPath(
                                             ProfileBasicResponseDto

@@ -81,6 +81,13 @@ export class FilmingLocation {
     })
     files: File[];
 
+    @Column({ name: 'preview_file_id', nullable: true })
+    previewFileId: number;
+
+    @ManyToOne(() => File, { nullable: true, onDelete: 'SET NULL' })
+    @JoinColumn({ name: 'preview_file_id' })
+    previewFile: File;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

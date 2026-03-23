@@ -21,6 +21,7 @@ import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser, Public } from '@auth/decorators';
 import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 import { JwtPayload } from '@auth/interfaces';
+import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
 import { PhotoQueryDto } from '@photos/dto/photo-query.dto';
 import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
 import { PhotosService } from '@photos/photos.service';
@@ -45,7 +46,8 @@ export class UsersController {
     constructor(
         private readonly usersService: UsersService,
         private readonly albumsService: AlbumsService,
-        private readonly photosService: PhotosService
+        private readonly photosService: PhotosService,
+        private readonly filmingLocationsService: FilmingLocationsService
     ) {}
 
     @Get('me')
@@ -212,6 +214,38 @@ export class UsersController {
             requesterUserId: user?.id,
             pagination: query,
             albumId: query.albumId,
+            isPublished: true
+        });
+    }
+
+    @Public()
+    @UseGuards(OptionalJwtAuthGuard)
+    @Get(':id/filming-locations')
+    // @ApiExtraModels(PaginationResponseDto, AlbumResponseDto)
+    // @ApiOkResponse({
+    //     schema: {
+    //         allOf: [
+    //             {
+    //                 properties: {
+    //                     data: {
+    //                         type: 'array',
+    //                         items: { $ref: getSchemaPath(AlbumResponseDto) }
+    //                     }
+    //                 }
+    //             },
+    //             { $ref: getSchemaPath(PaginationResponseDto) }
+    //         ]
+    //     }
+    // })
+    async getUserFilmingLocations(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload,
+        @Query() pagination: PaginationQueryDto
+    ) {
+        return await this.filmingLocationsService.findByUserId({
+            targetUserId: id,
+            requesterUserId: user?.id,
+            pagination,
             isPublished: true
         });
     }

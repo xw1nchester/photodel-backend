@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, DataSource, EntityManager, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { FavoriteEntityType } from '@favorites/enums';
 import { Favorite } from '@favorites/favorite.entity';
 import { FilesService } from '@files/files.service';
 import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationDto } from '@shared/dto/pagination.dto';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { FilmingLocationRequestDto } from './dto/filming-location-request.dto';
@@ -143,6 +145,8 @@ export class FilmingLocationsService {
 
     async create(userId: number, dto: FilmingLocationRequestDto) {
         return await this.dataSource.transaction(async manager => {
+            const repo = manager.getRepository(FilmingLocation);
+
             const files = await this.filesService.findAndvalidateByIdsAndUserId(
                 dto.photoIds,
                 userId,
@@ -160,19 +164,19 @@ export class FilmingLocationsService {
                     manager
                 );
 
-            const createdFilmingLocation =
-                await this.filmingLocationRepository.save({
-                    name: dto.name,
-                    description: dto.description,
-                    camera: dto.camera,
-                    price: dto.price,
-                    conditions: dto.conditions,
-                    isPublished: dto.isPublished,
-                    files,
-                    location,
-                    specializations,
-                    userId
-                });
+            const createdFilmingLocation = await repo.save({
+                previewFileId: dto.photoIds[0],
+                name: dto.name,
+                description: dto.description,
+                camera: dto.camera,
+                price: dto.price,
+                conditions: dto.conditions,
+                isPublished: dto.isPublished,
+                files,
+                location,
+                specializations,
+                userId
+            });
 
             return await this.getDtoById({
                 id: createdFilmingLocation.id,
@@ -180,5 +184,252 @@ export class FilmingLocationsService {
                 manager
             });
         });
+    }
+
+    private transformRawData(entities: FilmingLocation[], raw: any[]) {
+        return entities.map((fl, index) => {
+            fl.isFavorite = !!raw[index].favoriteId;
+            fl.favoriteId = raw[index].favoriteId;
+            fl.favoritesCount = Number(raw[index].favoritesCount);
+            return fl;
+        });
+    }
+
+    createBasicDto(filmingLocation: FilmingLocation) {
+        return {
+            id: filmingLocation.id,
+            preview: filmingLocation.previewFile
+                ? {
+                      id: filmingLocation.previewFile.id,
+                      key: filmingLocation.previewFile.key,
+                      url: this.filesService.getUrl(
+                          filmingLocation.previewFile.key
+                      )
+                  }
+                : null,
+            name: filmingLocation.name,
+            location: this.locationsService.getDto(filmingLocation.location),
+            favorites: {
+                isFavorite: filmingLocation.isFavorite,
+                favoriteId: filmingLocation.favoriteId,
+                count: filmingLocation.favoritesCount
+            }
+        };
+    }
+
+    async findByUserId({
+        targetUserId,
+        requesterUserId,
+        pagination,
+        isPublished
+    }: {
+        targetUserId: number;
+        requesterUserId?: number;
+        pagination: PaginationQueryDto;
+        isPublished?: boolean;
+    }) {
+        const { page, limit } = pagination;
+
+        const query = this.filmingLocationRepository
+            .createQueryBuilder('filmingLocation')
+            .leftJoinAndSelect('filmingLocation.previewFile', 'previewFile')
+            .leftJoinAndSelect('filmingLocation.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
+            .leftJoinAndSelect('filmingLocation.user', 'user')
+            .where('user.id = :targetUserId', { targetUserId })
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = filmingLocation.id')
+                    .andWhere('favorite.entityType = :entityType');
+            }, 'favoritesCount')
+            .setParameter('entityType', FavoriteEntityType.PLACE)
+            .orderBy('filmingLocation.createdAt', 'DESC')
+            .take(limit)
+            .skip((page - 1) * limit);
+
+        if (requesterUserId != undefined) {
+            query
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Favorite, 'favorite')
+                        .where('favorite.entityId = filmingLocation.id')
+                        .andWhere('favorite.entityType = :entityType')
+                        .andWhere('favorite.userId = :requesterUserId');
+                }, 'favoriteId')
+                .setParameter('requesterUserId', requesterUserId);
+        }
+
+        if (isPublished != undefined) {
+            query.andWhere('filmingLocation.isPublished = :isPublished', {
+                isPublished: true
+            });
+        }
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const total = await query.getCount();
+
+        const filmingLocations = this.transformRawData(entities, raw);
+
+        const dtos = filmingLocations.map(fl => this.createBasicDto(fl));
+
+        return new PaginationDto(dtos, total, page, limit);
+    }
+
+    async findByIdAndUserId(id: number, userId: number) {
+        const filmingLocation = await this.filmingLocationRepository.findOne({
+            where: { id, userId },
+            relations: {
+                files: true,
+                location: true,
+                specializations: true,
+                user: true
+            }
+        });
+
+        if (!filmingLocation) {
+            throw new NotFoundException('Место для съемок не найдено');
+        }
+
+        return filmingLocation;
+    }
+
+    async update(id: number, userId: number, dto: FilmingLocationRequestDto) {
+        return await this.dataSource.transaction(async manager => {
+            const repo = manager.getRepository(FilmingLocation);
+
+            const filmingLocation = await this.findByIdAndUserId(id, userId);
+
+            filmingLocation.files =
+                await this.filesService.findAndvalidateByIdsAndUserId(
+                    dto.photoIds,
+                    userId,
+                    manager
+                );
+
+            filmingLocation.specializations =
+                await this.specializationsService.findAndValidateByIds(
+                    dto.specializationIds,
+                    manager
+                );
+
+            filmingLocation.previewFileId = dto.photoIds[0];
+            filmingLocation.name = dto.name;
+            filmingLocation.description = dto.description;
+            filmingLocation.camera = dto.camera;
+            filmingLocation.price = dto.price;
+            filmingLocation.conditions = dto.conditions;
+            filmingLocation.isPublished = dto.isPublished;
+
+            if (dto.location) {
+                const createdLocation = await this.locationsService.create(
+                    dto.location
+                );
+                if (filmingLocation.location) {
+                    filmingLocation.location.coordinates =
+                        createdLocation.coordinates;
+                    filmingLocation.location.place = createdLocation.place;
+                    filmingLocation.location.address = dto.location.address;
+                } else {
+                    filmingLocation.location = createdLocation;
+                }
+            } else {
+                if (filmingLocation.location) {
+                    await this.locationsService.deleteByIds(
+                        [filmingLocation.location.id],
+                        manager
+                    );
+                }
+                filmingLocation.location = null;
+            }
+
+            await repo.save(filmingLocation);
+
+            return await this.getDtoById({
+                id,
+                requesterUserId: userId,
+                manager
+            });
+        });
+    }
+
+    async remove(id: number, userId: number) {
+        const photo = await this.findByIdAndUserId(id, userId);
+
+        await this.filmingLocationRepository.remove(photo);
+
+        return { filmingLocation: this.createDto(photo) };
+    }
+
+    async validateByIdsAndUserId(
+        ids: number[],
+        userId: number,
+        manager?: EntityManager
+    ) {
+        const repo = manager
+            ? manager.getRepository(FilmingLocation)
+            : this.filmingLocationRepository;
+
+        ids = [...new Set(ids)];
+
+        const photos = await repo.find({
+            where: { id: In(ids), userId }
+        });
+
+        if (ids.length != photos.length) {
+            throw new NotFoundException('Фото не найдено');
+        }
+    }
+
+    async bulkRemove(userId: number, ids: number[]) {
+        await this.validateByIdsAndUserId(ids, userId);
+
+        await this.filmingLocationRepository.delete({
+            id: In(ids)
+        });
+    }
+
+    async findByIds(ids: number[], requesterUserId: number) {
+        if (ids.length == 0) return [];
+
+        const query = this.filmingLocationRepository
+            .createQueryBuilder('filmingLocation')
+            .leftJoinAndSelect('filmingLocation.previewFile', 'previewFile')
+            .leftJoinAndSelect('filmingLocation.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
+            .leftJoinAndSelect('filmingLocation.user', 'user')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = filmingLocation.id')
+                    .andWhere('favorite.entityType = :entityType');
+            }, 'favoritesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = filmingLocation.id')
+                    .andWhere('favorite.entityType = :entityType')
+                    .andWhere('favorite.userId = :requesterUserId');
+            }, 'favoriteId')
+            .setParameter('entityType', FavoriteEntityType.PLACE)
+            .setParameter('requesterUserId', requesterUserId);
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const filmingLocations = this.transformRawData(entities, raw);
+
+        return filmingLocations.map(fl => this.createBasicDto(fl));
+    }
+
+    async exists(id: number) {
+        const count = await this.filmingLocationRepository.count({
+            where: { id }
+        });
+        return count > 0;
     }
 }

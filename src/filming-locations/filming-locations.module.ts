@@ -15,6 +15,7 @@ import { FilmingLocationsService } from './filming-locations.service';
         LocationsModule
     ],
     controllers: [FilmingLocationsController],
-    providers: [FilmingLocationsService]
+    providers: [FilmingLocationsService],
+    exports: [FilmingLocationsService]
 })
 export class FilmingLocationsModule {}

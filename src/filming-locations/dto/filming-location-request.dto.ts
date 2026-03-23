@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+    ArrayMinSize,
     IsArray,
     IsBoolean,
     IsNumber,
@@ -14,6 +15,7 @@ import { LocationRequestDto } from '@locations/dto/location-request.dto';
 export class FilmingLocationRequestDto {
     @ApiProperty({ example: [1, 2, 3] })
     @IsArray()
+    @ArrayMinSize(1)
     photoIds: number[];
 
     @ApiProperty({ example: 'ВДНХ' })

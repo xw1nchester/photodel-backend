@@ -64,6 +64,7 @@ export class LocationsService {
         });
     }
 
+    // TODO: сделать параметр ids: number | number[]
     async deleteByIds(ids: number[], manager?: EntityManager) {
         if (ids.length == 0) return;
 
