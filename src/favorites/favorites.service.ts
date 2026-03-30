@@ -9,11 +9,11 @@ import { In, Repository } from 'typeorm';
 import { AlbumsService } from '@albums/albums.service';
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
 import { PhotosService } from '@photos/photos.service';
+import { EntityActionQueryDto } from '@shared/dto/entity-action-query.dto';
+import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { UsersService } from '@users/users.service';
 
-import { FavoriteQueryDto } from './dto/favorite-query.dto';
-import { FavoriteRequestDto } from './dto/favorite-request.dto';
 import { FavoriteEntityType } from './enums';
 import { Favorite } from './favorite.entity';
 
@@ -55,7 +55,7 @@ export class FavoritesService {
             this.filmingLocationsService.findByIds(ids, requesterUserId)
     };
 
-    async addFavorite(userId: number, dto: FavoriteRequestDto) {
+    async addFavorite(userId: number, dto: EntityActionRequestDto) {
         const validator = this.validators[dto.entityType];
         if (!validator)
             throw new BadRequestException('Некорректный тип сущности');
@@ -95,7 +95,7 @@ export class FavoritesService {
 
     async getFavorites(
         userId: number,
-        { type, limit, page }: FavoriteQueryDto
+        { type, limit, page }: EntityActionQueryDto
     ) {
         const loader = this.loaders[type];
         if (!loader) throw new BadRequestException('Некорректный тип сущности');

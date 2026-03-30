@@ -1,12 +1,11 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 
 import { Public } from '@auth/decorators';
 
 import { SpecializationsResponseDto } from './dto/specializations-response.dto';
 import { SpecializationsService } from './specializations.service';
 
-@ApiTags('Specializations')
 @Controller('specializations')
 export class SpecializationsController {
     constructor(

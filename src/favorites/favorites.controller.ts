@@ -14,7 +14,6 @@ import {
     ApiBearerAuth,
     ApiExtraModels,
     ApiOkResponse,
-    ApiTags,
     getSchemaPath
 } from '@nestjs/swagger';
 
@@ -23,15 +22,14 @@ import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 import { FilmingLocationBasicResponseDto } from '@filming-locations/dto/filming-location-response.dto';
 import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
+import { EntityActionQueryDto } from '@shared/dto/entity-action-query.dto';
+import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 import { ProfileBasicResponseDto } from '@users/dto/profile-response.dto';
 
-import { FavoriteQueryDto } from './dto/favorite-query.dto';
-import { FavoriteRequestDto } from './dto/favorite-request.dto';
 import { FavoritesService } from './favorites.service';
 
-@ApiTags('favorites')
 @Controller('favorites')
 export class FavoritesController {
     constructor(private readonly favoritesService: FavoritesService) {}
@@ -39,10 +37,9 @@ export class FavoritesController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiBearerAuth()
-    @ApiOkResponse({ type: Boolean })
     async addFavorite(
         @CurrentUser() user: JwtPayload,
-        @Body() dto: FavoriteRequestDto
+        @Body() dto: EntityActionRequestDto
     ) {
         await this.favoritesService.addFavorite(user.id, dto);
     }
@@ -50,7 +47,6 @@ export class FavoritesController {
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiBearerAuth()
-    @ApiOkResponse()
     async removeFavorite(
         @CurrentUser() user: JwtPayload,
         @Param('id', ParseIntPipe) id: number
@@ -99,7 +95,7 @@ export class FavoritesController {
     })
     async getFavorites(
         @CurrentUser() user: JwtPayload,
-        @Query() query: FavoriteQueryDto
+        @Query() query: EntityActionQueryDto
     ) {
         return await this.favoritesService.getFavorites(user.id, query);
     }

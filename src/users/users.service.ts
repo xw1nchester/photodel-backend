@@ -4,10 +4,12 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { FavoriteEntityType } from '@favorites/enums';
 import { Favorite } from '@favorites/favorite.entity';
+import { Like } from '@likes/like.entity';
 import { LocationsService } from '@locations/locations.service';
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
 import { S3Service } from '@s3/s3.service';
 import { PaginationDto } from '@shared/dto/pagination.dto';
+import { EntityType } from '@shared/enums/entity-type.enums';
 import { SocialsService } from '@socials/socials.service';
 import { SpecializationsService } from '@specializations/specializations.service';
 
@@ -189,9 +191,17 @@ export class UsersService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = user.id')
-                    .andWhere('favorite.entityType = :entityType');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
-            .setParameter('entityType', FavoriteEntityType.USER);
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = user.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
+            .setParameter('favoriteEntityType', FavoriteEntityType.USER)
+            .setParameter('likeEntityType', FavoriteEntityType.USER);
 
         if (requesterUserId !== undefined) {
             qb.addSelect(subQuery => {
@@ -199,10 +209,17 @@ export class UsersService {
                     .select('id')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = user.id')
-                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.entityType = :favoriteEntityType')
                     .andWhere('favorite.userId = :requesterUserId');
             }, 'favoriteId')
-                .setParameter('type', FavoriteEntityType.USER)
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Like, 'like')
+                        .where('like.entityId = user.id')
+                        .andWhere('like.entityType = :likeEntityType')
+                        .andWhere('like.userId = :requesterUserId');
+                }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
         }
 
@@ -224,6 +241,11 @@ export class UsersService {
                 isFavorite: !!result.raw[0].favoriteId,
                 favoriteId: result.raw[0].favoriteId,
                 count: Number(result.raw[0].favoritesCount)
+            },
+            likes: {
+                isLiked: !!result.raw[0].likeId,
+                likeId: result.raw[0].likeId,
+                count: Number(result.raw[0].likesCount)
             }
         };
     }
@@ -485,6 +507,11 @@ export class UsersService {
                 isFavorite: user.isFavorite,
                 favoriteId: user.favoriteId,
                 count: user.favoritesCount
+            },
+            likes: {
+                isLiked: user.isLiked,
+                likeId: user.likeId,
+                count: user.likesCount
             }
         };
     }
@@ -509,6 +536,10 @@ export class UsersService {
             user.favoriteId = r?.favoriteId;
             user.favoritesCount = Number(r?.favoritesCount ?? 0);
 
+            user.isLiked = !!r?.likeId;
+            user.likeId = r?.likeId;
+            user.likesCount = Number(r?.likesCount ?? 0);
+
             return user;
         });
     }
@@ -529,18 +560,33 @@ export class UsersService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = user.id')
-                    .andWhere('favorite.entityType = :type');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
-            // как вариант вообще убрать, т.к. метод используется при запросе избранных
             .addSelect(subQuery => {
                 return subQuery
                     .select('id')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = user.id')
-                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.entityType = :favoriteEntityType')
                     .andWhere('favorite.userId = :requesterUserId');
             }, 'favoriteId')
-            .setParameter('type', FavoriteEntityType.USER)
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = user.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Like, 'like')
+                    .where('like.entityId = user.id')
+                    .andWhere('like.entityType = :likeEntityType')
+                    .andWhere('like.userId = :requesterUserId');
+            }, 'likeId')
+            .setParameter('favoriteEntityType', EntityType.USER)
+            .setParameter('likeEntityType', EntityType.USER)
             .setParameter('requesterUserId', requesterUserId);
 
         const profile = await this.findProfileByUserId({
@@ -614,9 +660,17 @@ export class UsersService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = user.id')
-                    .andWhere('favorite.entityType = :type');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
-            .setParameter('type', FavoriteEntityType.USER)
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = user.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
+            .setParameter('favoriteEntityType', FavoriteEntityType.USER)
+            .setParameter('likeEntityType', FavoriteEntityType.USER)
             .take(limit)
             .skip((page - 1) * limit);
 
@@ -626,9 +680,18 @@ export class UsersService {
                     .select('id')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = user.id')
-                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.entityType = :favoriteEntityType')
                     .andWhere('favorite.userId = :requesterUserId');
-            }, 'favoriteId').setParameter('requesterUserId', requesterUserId);
+            }, 'favoriteId')
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Like, 'like')
+                        .where('like.entityId = user.id')
+                        .andWhere('like.entityType = :likeEntityType')
+                        .andWhere('like.userId = :requesterUserId');
+                }, 'likeId')
+                .setParameter('requesterUserId', requesterUserId);
         }
 
         if (latitude != undefined && longitude != undefined) {

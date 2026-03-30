@@ -57,6 +57,8 @@
             "@favorites/*": ["src/favorites/*"],
             "@filming-locations": ["src/filming-locations"],
             "@filming-locations/*": ["src/filming-locations/*"],
+            "@likes": ["src/likes"],
+            "@likes/*": ["src/likes/*"],
         }
     }
 }

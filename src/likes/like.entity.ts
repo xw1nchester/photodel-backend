@@ -11,9 +11,9 @@ import {
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { User } from '@users/entities/user.entity';
 
-@Entity('favorites')
-@Unique('favorites_unique', ['userId', 'entityType', 'entityId'])
-export class Favorite {
+@Entity('likes')
+@Unique('likes_unique', ['userId', 'entityType', 'entityId'])
+export class Like {
     @PrimaryGeneratedColumn()
     id: number;
 

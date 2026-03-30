@@ -8,13 +8,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { AlbumsService } from '@albums/albums.service';
-import { FavoriteEntityType } from '@favorites/enums';
 import { Favorite } from '@favorites/favorite.entity';
+import { Like } from '@likes/like.entity';
 import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { S3Service } from '@s3/s3.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
+import { EntityType } from '@shared/enums/entity-type.enums';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
@@ -72,6 +73,11 @@ export class PhotosService {
                 isFavorite: photo.isFavorite,
                 favoriteId: photo.favoriteId,
                 count: photo.favoritesCount
+            },
+            likes: {
+                isLiked: photo.isLiked,
+                likeId: photo.likeId,
+                count: photo.likesCount
             }
         };
     }
@@ -124,6 +130,27 @@ export class PhotosService {
         });
     }
 
+    private transformPhotosRawData(entities: Photo[], raw: any[]) {
+        const rawMap = new Map();
+
+        for (const r of raw) {
+            rawMap.set(r.photo_id, r);
+        }
+
+        return entities.map(photo => {
+            const r = rawMap.get(photo.id);
+            photo.isFavorite = !!r.favoriteId;
+            photo.favoriteId = r.favoriteId;
+            photo.favoritesCount = Number(r.favoritesCount);
+
+            photo.isLiked = !!r.likeId;
+            photo.likeId = r.likeId;
+            photo.likesCount = Number(r.likesCount);
+
+            return photo;
+        });
+    }
+
     async findByUserId({
         targetUserId,
         requesterUserId,
@@ -159,9 +186,17 @@ export class PhotosService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = photo.id')
-                    .andWhere('favorite.entityType = :entityType');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
-            .setParameter('entityType', FavoriteEntityType.PHOTO)
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = photo.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
+            .setParameter('favoriteEntityType', EntityType.PHOTO)
+            .setParameter('likeEntityType', EntityType.PHOTO)
             .orderBy('photo.createdAt', 'DESC')
             .take(limit)
             .skip((page - 1) * limit);
@@ -212,10 +247,17 @@ export class PhotosService {
                         .select('id')
                         .from(Favorite, 'favorite')
                         .where('favorite.entityId = photo.id')
-                        .andWhere('favorite.entityType = :type')
+                        .andWhere('favorite.entityType = :favoriteEntityType')
                         .andWhere('favorite.userId = :requesterUserId');
                 }, 'favoriteId')
-                .setParameter('type', FavoriteEntityType.PHOTO)
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Like, 'like')
+                        .where('like.entityId = photo.id')
+                        .andWhere('like.entityType = :likeEntityType')
+                        .andWhere('like.userId = :requesterUserId');
+                }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
         }
 
@@ -229,20 +271,7 @@ export class PhotosService {
 
         const total = await query.getCount();
 
-        // доп костыль, т.к. из-за джоинов категорий/специализаций происходит некорректный маппинг
-        const rawMap = new Map();
-
-        for (const r of raw) {
-            rawMap.set(r.photo_id, r);
-        }
-
-        const photos = entities.map(photo => {
-            const r = rawMap.get(photo.id);
-            photo.isFavorite = !!r.favoriteId;
-            photo.favoriteId = r.favoriteId;
-            photo.favoritesCount = Number(r.favoritesCount);
-            return photo;
-        });
+        const photos = this.transformPhotosRawData(entities, raw);
 
         const photosDtos = photos.map(photo => this.createDto(photo));
 
@@ -270,36 +299,38 @@ export class PhotosService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = photo.id')
-                    .andWhere('favorite.entityType = :type');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
-            // как вариант вообще убрать, т.к. метод используется при запросе избранных
             .addSelect(subQuery => {
                 return subQuery
                     .select('id')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = photo.id')
-                    .andWhere('favorite.entityType = :type')
+                    .andWhere('favorite.entityType = :favoriteEntityType')
                     .andWhere('favorite.userId = :requesterUserId');
             }, 'favoriteId')
-            .setParameter('type', FavoriteEntityType.PHOTO)
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = photo.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Like, 'like')
+                    .where('like.entityId = photo.id')
+                    .andWhere('like.entityType = :likeEntityType')
+                    .andWhere('like.userId = :requesterUserId');
+            }, 'likeId')
+            .setParameter('favoriteEntityType', EntityType.PHOTO)
+            .setParameter('likeEntityType', EntityType.PHOTO)
             .setParameter('requesterUserId', requesterUserId);
 
         const { entities, raw } = await query.getRawAndEntities();
 
-        // доп костыль, т.к. из-за джоинов категорий/специализаций происходит некорректный маппинг
-        const rawMap = new Map();
-
-        for (const r of raw) {
-            rawMap.set(r.photo_id, r);
-        }
-
-        const photos = entities.map(photo => {
-            const r = rawMap.get(photo.id);
-            photo.isFavorite = !!r.favoriteId;
-            photo.favoriteId = r.favoriteId;
-            photo.favoritesCount = Number(r.favoritesCount);
-            return photo;
-        });
+        const photos = this.transformPhotosRawData(entities, raw);
 
         return photos.map(photo => this.createDto(photo));
     }
@@ -344,9 +375,17 @@ export class PhotosService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = photo.id')
-                    .andWhere('favorite.entityType = :entityType');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
-            .setParameter('entityType', FavoriteEntityType.PHOTO);
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = photo.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
+            .setParameter('favoriteEntityType', EntityType.PHOTO)
+            .setParameter('likeEntityType', EntityType.PHOTO);
 
         if (requesterUserId != undefined) {
             query
@@ -364,10 +403,17 @@ export class PhotosService {
                         .select('id')
                         .from(Favorite, 'favorite')
                         .where('favorite.entityId = photo.id')
-                        .andWhere('favorite.entityType = :type')
+                        .andWhere('favorite.entityType = :favoriteEntityType')
                         .andWhere('favorite.userId = :requesterUserId');
                 }, 'favoriteId')
-                .setParameter('type', FavoriteEntityType.PHOTO)
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Like, 'like')
+                        .where('like.entityId = photo.id')
+                        .andWhere('like.entityType = :likeEntityType')
+                        .andWhere('like.userId = :requesterUserId');
+                }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
         } else {
             query.andWhere('photo.isPublished = :isPublished', {
@@ -375,17 +421,13 @@ export class PhotosService {
             });
         }
 
-        const result = await query.getRawAndEntities();
+        const { entities, raw } = await query.getRawAndEntities();
 
-        const photo = result.entities[0];
+        const photo = this.transformPhotosRawData(entities, raw)[0];
 
         if (!photo) {
             throw new NotFoundException('Фотография не найдена');
         }
-
-        photo.isFavorite = !!result.raw[0].favoriteId;
-        photo.favoriteId = result.raw[0].favoriteId;
-        photo.favoritesCount = Number(result.raw[0].favoritesCount);
 
         return { photo: this.createDto(photo) };
     }

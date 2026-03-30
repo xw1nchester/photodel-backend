@@ -5,10 +5,12 @@ import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 import { FavoriteEntityType } from '@favorites/enums';
 import { Favorite } from '@favorites/favorite.entity';
 import { FilesService } from '@files/files.service';
+import { Like } from '@likes/like.entity';
 import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
+import { EntityType } from '@shared/enums/entity-type.enums';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { FilmingLocationRequestDto } from './dto/filming-location-request.dto';
@@ -62,6 +64,11 @@ export class FilmingLocationsService {
                 isFavorite: filmingLocation.isFavorite,
                 favoriteId: filmingLocation.favoriteId,
                 count: filmingLocation.favoritesCount
+            },
+            likes: {
+                isLiked: filmingLocation.isLiked,
+                likeId: filmingLocation.likeId,
+                count: filmingLocation.likesCount
             }
         };
     }
@@ -95,9 +102,17 @@ export class FilmingLocationsService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = filmingLocation.id')
-                    .andWhere('favorite.entityType = :entityType');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
-            .setParameter('entityType', FavoriteEntityType.PLACE);
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = filmingLocation.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
+            .setParameter('favoriteEntityType', FavoriteEntityType.PLACE)
+            .setParameter('likeEntityType', FavoriteEntityType.PLACE);
 
         if (requesterUserId != undefined) {
             query
@@ -118,9 +133,17 @@ export class FilmingLocationsService {
                         .select('id')
                         .from(Favorite, 'favorite')
                         .where('favorite.entityId = filmingLocation.id')
-                        .andWhere('favorite.entityType = :entityType')
+                        .andWhere('favorite.entityType = :favoriteEntityType')
                         .andWhere('favorite.userId = :requesterUserId');
                 }, 'favoriteId')
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Like, 'like')
+                        .where('like.entityId = filmingLocation.id')
+                        .andWhere('like.entityType = :likeEntityType')
+                        .andWhere('like.userId = :requesterUserId');
+                }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
         } else {
             query.andWhere('filmingLocation.isPublished = :isPublished', {
@@ -128,17 +151,13 @@ export class FilmingLocationsService {
             });
         }
 
-        const result = await query.getRawAndEntities();
+        const { entities, raw } = await query.getRawAndEntities();
 
-        const filmingLocation = result.entities[0];
+        const filmingLocation = this.transformRawData(entities, raw)[0];
 
         if (!filmingLocation) {
             throw new NotFoundException('Место для съемок не найдена');
         }
-
-        filmingLocation.isFavorite = !!result.raw[0].favoriteId;
-        filmingLocation.favoriteId = result.raw[0].favoriteId;
-        filmingLocation.favoritesCount = Number(result.raw[0].favoritesCount);
 
         return { filmingLocation: this.createDto(filmingLocation) };
     }
@@ -191,6 +210,11 @@ export class FilmingLocationsService {
             fl.isFavorite = !!raw[index].favoriteId;
             fl.favoriteId = raw[index].favoriteId;
             fl.favoritesCount = Number(raw[index].favoritesCount);
+
+            fl.isLiked = !!raw[index].likeId;
+            fl.likeId = raw[index].likeId;
+            fl.likesCount = Number(raw[index].likesCount);
+
             return fl;
         });
     }
@@ -213,6 +237,11 @@ export class FilmingLocationsService {
                 isFavorite: filmingLocation.isFavorite,
                 favoriteId: filmingLocation.favoriteId,
                 count: filmingLocation.favoritesCount
+            },
+            likes: {
+                isLiked: filmingLocation.isLiked,
+                likeId: filmingLocation.likeId,
+                count: filmingLocation.likesCount
             }
         };
     }
@@ -242,9 +271,17 @@ export class FilmingLocationsService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = filmingLocation.id')
-                    .andWhere('favorite.entityType = :entityType');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
-            .setParameter('entityType', FavoriteEntityType.PLACE)
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = filmingLocation.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
+            .setParameter('favoriteEntityType', EntityType.PLACE)
+            .setParameter('likeEntityType', EntityType.PLACE)
             .orderBy('filmingLocation.createdAt', 'DESC')
             .take(limit)
             .skip((page - 1) * limit);
@@ -256,9 +293,17 @@ export class FilmingLocationsService {
                         .select('id')
                         .from(Favorite, 'favorite')
                         .where('favorite.entityId = filmingLocation.id')
-                        .andWhere('favorite.entityType = :entityType')
+                        .andWhere('favorite.entityType = :favoriteEntityType')
                         .andWhere('favorite.userId = :requesterUserId');
                 }, 'favoriteId')
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Like, 'like')
+                        .where('like.entityId = filmingLocation.id')
+                        .andWhere('like.entityType = :likeEntityType')
+                        .andWhere('like.userId = :requesterUserId');
+                }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
         }
 
@@ -406,17 +451,33 @@ export class FilmingLocationsService {
                     .select('COUNT(*)')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = filmingLocation.id')
-                    .andWhere('favorite.entityType = :entityType');
+                    .andWhere('favorite.entityType = :favoriteEntityType');
             }, 'favoritesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = filmingLocation.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likesCount')
             .addSelect(subQuery => {
                 return subQuery
                     .select('id')
                     .from(Favorite, 'favorite')
                     .where('favorite.entityId = filmingLocation.id')
-                    .andWhere('favorite.entityType = :entityType')
+                    .andWhere('favorite.entityType = :favoriteEntityType')
                     .andWhere('favorite.userId = :requesterUserId');
             }, 'favoriteId')
-            .setParameter('entityType', FavoriteEntityType.PLACE)
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Like, 'like')
+                    .where('like.entityId = filmingLocation.id')
+                    .andWhere('like.entityType = :likeEntityType')
+                    .andWhere('like.userId = :requesterUserId');
+            }, 'likeId')
+            .setParameter('favoriteEntityType', FavoriteEntityType.PLACE)
+            .setParameter('likeEntityType', EntityType.PLACE)
             .setParameter('requesterUserId', requesterUserId);
 
         const { entities, raw } = await query.getRawAndEntities();

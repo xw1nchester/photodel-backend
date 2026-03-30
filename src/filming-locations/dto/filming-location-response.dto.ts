@@ -4,6 +4,7 @@ import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
+import { LikesResponseDto } from '@shared/dto/likes-response.dto';
 
 export class PhotoMinResponseDto {
     @ApiProperty({ example: 1 })
@@ -63,6 +64,9 @@ export class FilmingLocationResponseDto {
 
     @ApiProperty({ type: FavoritesResponseDto })
     favorites: FavoritesResponseDto;
+
+    @ApiProperty({ type: LikesResponseDto })
+    likes: LikesResponseDto;
 }
 
 export class FilmingLocationWrapperResponseDto {
@@ -85,4 +89,7 @@ export class FilmingLocationBasicResponseDto {
 
     @ApiProperty({ type: FavoritesResponseDto })
     favorites: FavoritesResponseDto;
+
+    @ApiProperty({ type: LikesResponseDto })
+    likes: LikesResponseDto;
 }

@@ -106,4 +106,7 @@ export class Photo {
     isFavorite?: boolean;
     favoriteId?: number;
     favoritesCount?: number;
+    isLiked?: boolean;
+    likeId?: number;
+    likesCount?: number;
 }

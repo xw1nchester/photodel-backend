@@ -21,6 +21,7 @@ import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser, Public } from '@auth/decorators';
 import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 import { JwtPayload } from '@auth/interfaces';
+import { FilmingLocationBasicResponseDto } from '@filming-locations/dto/filming-location-response.dto';
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
 import { PhotoQueryDto } from '@photos/dto/photo-query.dto';
 import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
@@ -40,7 +41,6 @@ import { UpdateNameRequestDto } from './dto/update-name-request.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UserMeWrapperResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
-import { FilmingLocationBasicResponseDto } from '@filming-locations/dto/filming-location-response.dto';
 
 @Controller('users')
 export class UsersController {
@@ -230,7 +230,11 @@ export class UsersController {
                     properties: {
                         data: {
                             type: 'array',
-                            items: { $ref: getSchemaPath(FilmingLocationBasicResponseDto) }
+                            items: {
+                                $ref: getSchemaPath(
+                                    FilmingLocationBasicResponseDto
+                                )
+                            }
                         }
                     }
                 },
