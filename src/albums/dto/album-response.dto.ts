@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
-
 export class AlbumResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
@@ -26,9 +24,6 @@ export class AlbumResponseDto {
 
     @ApiProperty({ example: 1 })
     photosCount: number;
-
-    @ApiProperty({ type: FavoritesResponseDto })
-    favorites: FavoritesResponseDto;
 
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
     createdAt: string;

@@ -14,8 +14,8 @@ import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { UsersService } from '@users/users.service';
 
-import { FavoriteEntityType } from './enums';
 import { Favorite } from './favorite.entity';
+import { EntityType } from '@shared/enums/entity-type.enums';
 
 @Injectable()
 export class FavoritesService {
@@ -29,29 +29,23 @@ export class FavoritesService {
     ) {}
 
     private validators = {
-        [FavoriteEntityType.USER]: (id: number) => this.usersService.exists(id),
+        [EntityType.USER]: (id: number) => this.usersService.exists(id),
 
-        [FavoriteEntityType.ALBUM]: (id: number) =>
-            this.albumsService.exists(id),
-
-        [FavoriteEntityType.PHOTO]: (id: number) =>
+        [EntityType.PHOTO]: (id: number) =>
             this.photosService.exists(id),
 
-        [FavoriteEntityType.PLACE]: (id: number) =>
+        [EntityType.PLACE]: (id: number) =>
             this.filmingLocationsService.exists(id)
     };
 
     private loaders = {
-        [FavoriteEntityType.USER]: (ids: number[], requesterUserId: number) =>
+        [EntityType.USER]: (ids: number[], requesterUserId: number) =>
             this.usersService.findByIds(ids, requesterUserId),
 
-        [FavoriteEntityType.ALBUM]: (ids: number[], requesterUserId: number) =>
-            this.albumsService.findByIds(ids, requesterUserId),
-
-        [FavoriteEntityType.PHOTO]: (ids: number[], requesterUserId: number) =>
+        [EntityType.PHOTO]: (ids: number[], requesterUserId: number) =>
             this.photosService.findByIds(ids, requesterUserId),
 
-        [FavoriteEntityType.PLACE]: (ids: number[], requesterUserId: number) =>
+        [EntityType.PLACE]: (ids: number[], requesterUserId: number) =>
             this.filmingLocationsService.findByIds(ids, requesterUserId)
     };
 

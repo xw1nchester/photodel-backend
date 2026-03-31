@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
-import { FavoriteEntityType } from '@favorites/enums';
 import { Favorite } from '@favorites/favorite.entity';
 import { FilesService } from '@files/files.service';
 import { Like } from '@likes/like.entity';
@@ -111,8 +110,8 @@ export class FilmingLocationsService {
                     .where('like.entityId = filmingLocation.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
-            .setParameter('favoriteEntityType', FavoriteEntityType.PLACE)
-            .setParameter('likeEntityType', FavoriteEntityType.PLACE);
+            .setParameter('favoriteEntityType', EntityType.PLACE)
+            .setParameter('likeEntityType', EntityType.PLACE);
 
         if (requesterUserId != undefined) {
             query
@@ -476,7 +475,7 @@ export class FilmingLocationsService {
                     .andWhere('like.entityType = :likeEntityType')
                     .andWhere('like.userId = :requesterUserId');
             }, 'likeId')
-            .setParameter('favoriteEntityType', FavoriteEntityType.PLACE)
+            .setParameter('favoriteEntityType', EntityType.PLACE)
             .setParameter('likeEntityType', EntityType.PLACE)
             .setParameter('requesterUserId', requesterUserId);
 

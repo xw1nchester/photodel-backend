@@ -2,7 +2,6 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { FavoriteEntityType } from '@favorites/enums';
 import { Favorite } from '@favorites/favorite.entity';
 import { Like } from '@likes/like.entity';
 import { LocationsService } from '@locations/locations.service';
@@ -200,8 +199,8 @@ export class UsersService {
                     .where('like.entityId = user.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
-            .setParameter('favoriteEntityType', FavoriteEntityType.USER)
-            .setParameter('likeEntityType', FavoriteEntityType.USER);
+            .setParameter('favoriteEntityType', EntityType.USER)
+            .setParameter('likeEntityType', EntityType.USER);
 
         if (requesterUserId !== undefined) {
             qb.addSelect(subQuery => {
@@ -669,8 +668,8 @@ export class UsersService {
                     .where('like.entityId = user.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
-            .setParameter('favoriteEntityType', FavoriteEntityType.USER)
-            .setParameter('likeEntityType', FavoriteEntityType.USER)
+            .setParameter('favoriteEntityType', EntityType.USER)
+            .setParameter('likeEntityType', EntityType.USER)
             .take(limit)
             .skip((page - 1) * limit);
 
