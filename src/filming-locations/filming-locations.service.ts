@@ -20,7 +20,7 @@ export class FilmingLocationsService {
     constructor(
         private readonly dataSource: DataSource,
         @InjectRepository(FilmingLocation)
-        private readonly filmingLocationRepository: Repository<FilmingLocation>,
+        private readonly filmingLocationsRepository: Repository<FilmingLocation>,
         private readonly filesService: FilesService,
         private readonly locationsService: LocationsService,
         private readonly specializationsService: SpecializationsService
@@ -83,7 +83,7 @@ export class FilmingLocationsService {
     }) {
         const repo = manager
             ? manager.getRepository(FilmingLocation)
-            : this.filmingLocationRepository;
+            : this.filmingLocationsRepository;
 
         const query = repo
             .createQueryBuilder('filmingLocation')
@@ -258,7 +258,7 @@ export class FilmingLocationsService {
     }) {
         const { page, limit } = pagination;
 
-        const query = this.filmingLocationRepository
+        const query = this.filmingLocationsRepository
             .createQueryBuilder('filmingLocation')
             .leftJoinAndSelect('filmingLocation.previewFile', 'previewFile')
             .leftJoinAndSelect('filmingLocation.location', 'location')
@@ -324,7 +324,7 @@ export class FilmingLocationsService {
     }
 
     async findByIdAndUserId(id: number, userId: number) {
-        const filmingLocation = await this.filmingLocationRepository.findOne({
+        const filmingLocation = await this.filmingLocationsRepository.findOne({
             where: { id, userId },
             relations: {
                 files: true,
@@ -403,7 +403,7 @@ export class FilmingLocationsService {
     async remove(id: number, userId: number) {
         const photo = await this.findByIdAndUserId(id, userId);
 
-        await this.filmingLocationRepository.remove(photo);
+        await this.filmingLocationsRepository.remove(photo);
 
         return { filmingLocation: this.createDto(photo) };
     }
@@ -415,7 +415,7 @@ export class FilmingLocationsService {
     ) {
         const repo = manager
             ? manager.getRepository(FilmingLocation)
-            : this.filmingLocationRepository;
+            : this.filmingLocationsRepository;
 
         ids = [...new Set(ids)];
 
@@ -431,7 +431,7 @@ export class FilmingLocationsService {
     async bulkRemove(userId: number, ids: number[]) {
         await this.validateByIdsAndUserId(ids, userId);
 
-        await this.filmingLocationRepository.delete({
+        await this.filmingLocationsRepository.delete({
             id: In(ids)
         });
     }
@@ -439,7 +439,7 @@ export class FilmingLocationsService {
     async findByIds(ids: number[], requesterUserId: number) {
         if (ids.length == 0) return [];
 
-        const query = this.filmingLocationRepository
+        const query = this.filmingLocationsRepository
             .createQueryBuilder('filmingLocation')
             .leftJoinAndSelect('filmingLocation.previewFile', 'previewFile')
             .leftJoinAndSelect('filmingLocation.location', 'location')
@@ -487,7 +487,7 @@ export class FilmingLocationsService {
     }
 
     async exists(id: number) {
-        const count = await this.filmingLocationRepository.count({
+        const count = await this.filmingLocationsRepository.count({
             where: { id }
         });
         return count > 0;
