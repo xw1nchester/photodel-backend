@@ -64,4 +64,7 @@ export class Review {
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    // вычисляемые поля
+    entity: User ;
 }

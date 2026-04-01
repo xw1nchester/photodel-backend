@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { EntityType } from '@shared/enums/entity-type.enums';
 
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
 
@@ -22,7 +23,19 @@ export class ReviewResponseDto {
     id: number;
 
     @ApiProperty({
-        example: 'content'
+        enum: EntityType,
+        example: EntityType.PHOTO
+    })
+    entityType: EntityType;
+
+    @ApiProperty({ example: 1 })
+    entityId: number;
+
+    @ApiProperty({ type: UserShortResponseDto, nullable: true })
+    entity: UserShortResponseDto;
+
+    @ApiProperty({
+        example: 'Чудненько'
     })
     content?: string;
 

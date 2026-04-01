@@ -5,13 +5,16 @@ import {
     NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, Repository } from 'typeorm';
 import { Review } from './review.entity';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { UsersService } from '@users/users.service';
 import { PhotosService } from '@photos/photos.service';
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
 import { ReviewRequestDto } from './dto/review-request.dto';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { PaginationDto } from '@shared/dto/pagination.dto';
+import { User } from '@users/entities/user.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -49,7 +52,6 @@ export class ReviewsService {
         const photos = review.files.map(f => ({
             id: f.id,
             key: f.key,
-            // TODO: опеределиться, использовать метод filesService или s3 в таких случаях
             url: this.filesService.getUrl(f.key)
         }));
 
@@ -64,30 +66,83 @@ export class ReviewsService {
             isPro: review.user.isPro
         };
 
+        let entity = null;
+
+        if (review.entityType == EntityType.USER) {
+            entity = {
+                id: review.entity.id,
+                firstName: review.entity.firstName,
+                lastName: review.entity.lastName,
+                avatarKey: review.entity.avatarKey,
+                avatarUrl: review.entity.avatarKey
+                    ? this.filesService.getUrl(review.entity.avatarKey)
+                    : null,
+                isPro: review.entity.isPro
+            };
+        }
+
         return {
             id: review.id,
+            entityType: review.entityType,
+            entityId: review.entityId,
+            entity,
             content: review.content,
             rating: review.rating,
             isPublished: review.isPublished,
             photos,
             user,
             createdAt: review.createdAt,
-            updatedAt: review.updatedAt,
-        }
+            updatedAt: review.updatedAt
+        };
     }
 
-    async getDtoById({ id, manager }: { id: number; manager?: EntityManager }) {
+    async getDtoById({
+        id,
+        requesterUserId,
+        manager
+    }: {
+        id: number;
+        requesterUserId?: number;
+        manager?: EntityManager;
+    }) {
         const repo = manager
             ? manager.getRepository(Review)
             : this.reviewsRepository;
 
-        const review = await repo.findOne({
-            where: { id },
-            relations: {
-                user: true,
-                files: true
-            }
-        });
+        const query = repo
+            .createQueryBuilder('review')
+            .where('review.id = :id', { id })
+            .leftJoinAndSelect('review.user', 'user')
+            .leftJoinAndSelect('review.files', 'files')
+            .leftJoinAndMapOne(
+                'review.entity',
+                User,
+                'entity',
+                'review.entityType = :userEntityType AND review.entityId = entity.id',
+                { userEntityType: EntityType.USER }
+            );
+
+        if (requesterUserId != undefined) {
+            query.andWhere(
+                new Brackets(qb => {
+                    qb.where('review.userId = :requesterUserId', {
+                        requesterUserId
+                    }).orWhere('review.isPublished = :isPublished', {
+                        isPublished: true
+                    });
+                })
+            );
+        } else {
+            query.andWhere('review.isPublished = :isPublished', {
+                isPublished: true
+            });
+        }
+
+        const review = await query.getOne();
+
+        if (!review) {
+            throw new NotFoundException('Отзыв не найден');
+        }
 
         return { review: this.createDto(review) };
     }
@@ -122,8 +177,143 @@ export class ReviewsService {
 
             return await this.getDtoById({
                 id: createdReview.id,
+                requesterUserId: userId,
                 manager
             });
+        });
+    }
+
+    async findAll({
+        entityType,
+        pagination,
+        requesterUserId,
+        entityId,
+        my
+    }: {
+        entityType: EntityType;
+        pagination: PaginationQueryDto;
+        requesterUserId?: number;
+        entityId?: number;
+        my?: boolean;
+    }) {
+        const { page, limit } = pagination;
+
+        const query = this.reviewsRepository
+            .createQueryBuilder('review')
+            .where('review.entityType = :entityType', { entityType })
+            .leftJoinAndSelect('review.user', 'user')
+            .leftJoinAndSelect('review.files', 'files')
+            .leftJoinAndMapOne(
+                'review.entity',
+                User,
+                'entity',
+                'review.entityType = :userEntityType AND review.entityId = entity.id',
+                { userEntityType: EntityType.USER }
+            )
+            .orderBy('review.createdAt', 'DESC')
+            .take(limit)
+            .skip((page - 1) * limit);
+
+        if (requesterUserId != undefined) {
+            query.andWhere(
+                new Brackets(qb => {
+                    qb.where('review.userId = :requesterUserId', {
+                        requesterUserId
+                    }).orWhere('review.isPublished = :isPublished', {
+                        isPublished: true
+                    });
+                })
+            );
+        } else {
+            query.andWhere('review.isPublished = :isPublished', {
+                isPublished: true
+            });
+        }
+
+        if (my && requesterUserId != undefined) {
+            query.andWhere('review.userId = :requesterUserId', {
+                requesterUserId
+            });
+        }
+
+        if (entityId != undefined) {
+            query.andWhere('review.entityId = :entityId', { entityId });
+        }
+
+        const [reviews, total] = await query.getManyAndCount();
+
+        const dtos = reviews.map(r => this.createDto(r));
+
+        return new PaginationDto(dtos, total, page, limit);
+    }
+
+    async findByIdAndUserId(
+        id: number,
+        userId: number,
+        manager?: EntityManager
+    ) {
+        const repo = manager
+            ? manager.getRepository(Review)
+            : this.reviewsRepository;
+
+        const review = await repo.findOne({
+            where: { id, userId },
+            relations: { user: true, files: true }
+        });
+
+        if (!review) {
+            throw new NotFoundException('Отзыв не найден');
+        }
+
+        return review;
+    }
+
+    async update(id: number, userId: number, dto: ReviewRequestDto) {
+        return await this.dataSource.transaction(async manager => {
+            const repo = manager.getRepository(Review);
+
+            const validator = this.validators[dto.entityType];
+            if (!validator)
+                throw new BadRequestException('Некорректный тип сущности');
+
+            const exists = await validator(dto.entityId);
+            if (!exists) throw new NotFoundException('Сущность не найдена');
+
+            const review = await this.findByIdAndUserId(id, userId, manager);
+
+            review.files =
+                await this.filesService.findAndvalidateByIdsAndUserId(
+                    dto.photoIds,
+                    userId,
+                    manager
+                );
+
+            review.entityType = dto.entityType;
+            review.entityId = dto.entityId;
+            review.content = dto.content;
+            review.rating = dto.rating;
+            // TODO: в дальнейшем false
+            review.isPublished = true;
+
+            await repo.save(review);
+
+            return await this.getDtoById({
+                id,
+                requesterUserId: userId,
+                manager
+            });
+        });
+    }
+
+    async remove(id: number, userId: number) {
+        return await this.dataSource.transaction(async manager => {
+            const repo = manager.getRepository(Review);
+
+            const review = await this.findByIdAndUserId(id, userId, manager);
+
+            await repo.remove(review);
+
+            return { review: this.createDto(review) };
         });
     }
 }

@@ -155,7 +155,7 @@ export class FilmingLocationsService {
         const filmingLocation = this.transformRawData(entities, raw)[0];
 
         if (!filmingLocation) {
-            throw new NotFoundException('Место для съемок не найдена');
+            throw new NotFoundException('Место для съемок не найдено');
         }
 
         return { filmingLocation: this.createDto(filmingLocation) };
@@ -323,6 +323,7 @@ export class FilmingLocationsService {
         return new PaginationDto(dtos, total, page, limit);
     }
 
+    // нужен manager
     async findByIdAndUserId(id: number, userId: number) {
         const filmingLocation = await this.filmingLocationsRepository.findOne({
             where: { id, userId },
@@ -400,6 +401,7 @@ export class FilmingLocationsService {
         });
     }
 
+    // TODO: нужна транзакция
     async remove(id: number, userId: number) {
         const photo = await this.findByIdAndUserId(id, userId);
 
