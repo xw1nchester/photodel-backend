@@ -109,4 +109,5 @@ export class Photo {
     isLiked?: boolean;
     likeId?: number;
     likesCount?: number;
+    reviewsCount?: number;
 }

@@ -6,6 +6,7 @@ import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { LikesResponseDto } from '@shared/dto/likes-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
+import { ReviewsResponseDto } from '@shared/dto/reviews-response.dto';
 
 export class PhotoResponseDto {
     @ApiProperty({ example: 1 })
@@ -76,6 +77,9 @@ export class PhotoResponseDto {
 
     @ApiProperty({ type: LikesResponseDto })
     likes: LikesResponseDto;
+
+    @ApiProperty({ type: ReviewsResponseDto })
+    reviews: ReviewsResponseDto;
 }
 
 export class PhotoWrapperResponseDto {

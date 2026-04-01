@@ -101,4 +101,5 @@ export class FilmingLocation {
     isLiked?: boolean;
     likeId?: number;
     likesCount?: number;
+    reviewsCount?: number;
 }

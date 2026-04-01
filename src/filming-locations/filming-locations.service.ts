@@ -14,6 +14,7 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { FilmingLocationRequestDto } from './dto/filming-location-request.dto';
 import { FilmingLocation } from './filming-location.entity';
+import { Review } from '@reviews/review.entity';
 
 @Injectable()
 export class FilmingLocationsService {
@@ -68,6 +69,9 @@ export class FilmingLocationsService {
                 isLiked: filmingLocation.isLiked,
                 likeId: filmingLocation.likeId,
                 count: filmingLocation.likesCount
+            },
+            reviews: {
+                count: filmingLocation.reviewsCount
             }
         };
     }
@@ -110,8 +114,18 @@ export class FilmingLocationsService {
                     .where('like.entityId = filmingLocation.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = filmingLocation.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.PLACE)
-            .setParameter('likeEntityType', EntityType.PLACE);
+            .setParameter('likeEntityType', EntityType.PLACE)
+            .setParameter('reviewEntityType', EntityType.PLACE)
+            .setParameter('reviewIsPublished', true);
 
         if (requesterUserId != undefined) {
             query
@@ -213,6 +227,8 @@ export class FilmingLocationsService {
             fl.isLiked = !!raw[index].likeId;
             fl.likeId = raw[index].likeId;
             fl.likesCount = Number(raw[index].likesCount);
+            
+            fl.reviewsCount = Number(raw[index].reviewsCount);
 
             return fl;
         });
@@ -241,6 +257,9 @@ export class FilmingLocationsService {
                 isLiked: filmingLocation.isLiked,
                 likeId: filmingLocation.likeId,
                 count: filmingLocation.likesCount
+            },
+            reviews: {
+                count: filmingLocation.reviewsCount
             }
         };
     }
@@ -279,8 +298,18 @@ export class FilmingLocationsService {
                     .where('like.entityId = filmingLocation.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = filmingLocation.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.PLACE)
             .setParameter('likeEntityType', EntityType.PLACE)
+            .setParameter('reviewEntityType', EntityType.PLACE)
+            .setParameter('reviewIsPublished', true)
             .orderBy('filmingLocation.createdAt', 'DESC')
             .take(limit)
             .skip((page - 1) * limit);
@@ -477,8 +506,18 @@ export class FilmingLocationsService {
                     .andWhere('like.entityType = :likeEntityType')
                     .andWhere('like.userId = :requesterUserId');
             }, 'likeId')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = filmingLocation.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.PLACE)
             .setParameter('likeEntityType', EntityType.PLACE)
+            .setParameter('reviewEntityType', EntityType.PLACE)
+            .setParameter('reviewIsPublished', true)
             .setParameter('requesterUserId', requesterUserId);
 
         const { entities, raw } = await query.getRawAndEntities();

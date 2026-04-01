@@ -97,4 +97,5 @@ export class User {
     isLiked?: boolean;
     likeId?: number;
     likesCount?: number;
+    reviewsCount?: number;
 }

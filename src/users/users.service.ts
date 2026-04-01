@@ -21,6 +21,7 @@ import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
+import { Review } from '@reviews/review.entity';
 
 @Injectable()
 export class UsersService {
@@ -199,8 +200,18 @@ export class UsersService {
                     .where('like.entityId = user.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = user.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.USER)
-            .setParameter('likeEntityType', EntityType.USER);
+            .setParameter('likeEntityType', EntityType.USER)
+            .setParameter('reviewEntityType', EntityType.USER)
+            .setParameter('reviewIsPublished', true);
 
         if (requesterUserId !== undefined) {
             qb.addSelect(subQuery => {
@@ -245,6 +256,9 @@ export class UsersService {
                 isLiked: !!result.raw[0].likeId,
                 likeId: result.raw[0].likeId,
                 count: Number(result.raw[0].likesCount)
+            },
+            reviews: {
+                count: Number(result.raw[0].reviewsCount)
             }
         };
     }
@@ -511,6 +525,9 @@ export class UsersService {
                 isLiked: user.isLiked,
                 likeId: user.likeId,
                 count: user.likesCount
+            },
+            reviews: {
+                count: user.reviewsCount
             }
         };
     }
@@ -538,6 +555,8 @@ export class UsersService {
             user.isLiked = !!r?.likeId;
             user.likeId = r?.likeId;
             user.likesCount = Number(r?.likesCount ?? 0);
+            
+            user.reviewsCount = Number(r?.reviewsCount ?? 0);
 
             return user;
         });
@@ -584,8 +603,18 @@ export class UsersService {
                     .andWhere('like.entityType = :likeEntityType')
                     .andWhere('like.userId = :requesterUserId');
             }, 'likeId')
+            .addSelect(subQuery => {
+    return subQuery
+        .select('COUNT(*)')
+        .from(Review, 'review')
+        .where('review.entityId = user.id')
+        .andWhere('review.entityType = :reviewEntityType')
+        .andWhere('review.isPublished = :reviewIsPublished');
+}, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.USER)
             .setParameter('likeEntityType', EntityType.USER)
+            .setParameter('reviewEntityType', EntityType.USER)
+.setParameter('reviewIsPublished', true)
             .setParameter('requesterUserId', requesterUserId);
 
         const profile = await this.findProfileByUserId({
@@ -668,8 +697,18 @@ export class UsersService {
                     .where('like.entityId = user.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
+            .addSelect(subQuery => {
+    return subQuery
+        .select('COUNT(*)')
+        .from(Review, 'review')
+        .where('review.entityId = user.id')
+        .andWhere('review.entityType = :reviewEntityType')
+        .andWhere('review.isPublished = :reviewIsPublished');
+}, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.USER)
             .setParameter('likeEntityType', EntityType.USER)
+            .setParameter('reviewEntityType', EntityType.USER)
+.setParameter('reviewIsPublished', true)
             .take(limit)
             .skip((page - 1) * limit);
 

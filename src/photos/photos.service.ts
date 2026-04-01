@@ -20,6 +20,7 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
+import { Review } from '@reviews/review.entity';
 
 @Injectable()
 export class PhotosService {
@@ -78,6 +79,9 @@ export class PhotosService {
                 isLiked: photo.isLiked,
                 likeId: photo.likeId,
                 count: photo.likesCount
+            },
+            reviews: {
+                count: photo.reviewsCount
             }
         };
     }
@@ -147,6 +151,8 @@ export class PhotosService {
             photo.likeId = r.likeId;
             photo.likesCount = Number(r.likesCount);
 
+            photo.reviewsCount = Number(r.reviewsCount);
+
             return photo;
         });
     }
@@ -195,8 +201,18 @@ export class PhotosService {
                     .where('like.entityId = photo.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = photo.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.PHOTO)
             .setParameter('likeEntityType', EntityType.PHOTO)
+            .setParameter('reviewEntityType', EntityType.PHOTO)
+            .setParameter('reviewIsPublished', true)
             .orderBy('photo.createdAt', 'DESC')
             .take(limit)
             .skip((page - 1) * limit);
@@ -324,8 +340,18 @@ export class PhotosService {
                     .andWhere('like.entityType = :likeEntityType')
                     .andWhere('like.userId = :requesterUserId');
             }, 'likeId')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = photo.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.PHOTO)
             .setParameter('likeEntityType', EntityType.PHOTO)
+            .setParameter('reviewEntityType', EntityType.PHOTO)
+            .setParameter('reviewIsPublished', true)
             .setParameter('requesterUserId', requesterUserId);
 
         const { entities, raw } = await query.getRawAndEntities();
@@ -384,8 +410,18 @@ export class PhotosService {
                     .where('like.entityId = photo.id')
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = photo.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.PHOTO)
-            .setParameter('likeEntityType', EntityType.PHOTO);
+            .setParameter('likeEntityType', EntityType.PHOTO)
+            .setParameter('reviewEntityType', EntityType.PHOTO)
+            .setParameter('reviewIsPublished', true);
 
         if (requesterUserId != undefined) {
             query
