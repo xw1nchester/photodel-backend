@@ -10,8 +10,8 @@ import { AppController } from './app.controller';
 import { FavoritesModule } from './favorites/favorites.module';
 import { FilesModule } from './files/files.module';
 import { LikesModule } from './likes/likes.module';
-import { RolesModule } from './roles/roles.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
     imports: [

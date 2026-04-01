@@ -47,6 +47,8 @@ export class PhotosController {
         return await this.photoService.create(user.id, dto);
     }
 
+    @Public()
+    @UseGuards(OptionalJwtAuthGuard)
     @Get()
     @ApiBearerAuth()
     @ApiExtraModels(PaginationResponseDto, PhotoResponseDto)
@@ -65,16 +67,18 @@ export class PhotosController {
             ]
         }
     })
-    async findMy(
+    async findAll(
         @CurrentUser() user: JwtPayload,
         @Query() query: PhotoQueryDto
     ) {
-        return await this.photoService.findByUserId({
-            targetUserId: user.id,
-            requesterUserId: user.id,
+        return await this.photoService.findAll({
             pagination: query,
+            sort: query.sort,
+            requesterUserId: user?.id,
+            targetUserId: query.userId,
             albumId: query.albumId,
-            excludedAlbumId: query.excludedAlbumId
+            excludedAlbumId: query.excludedAlbumId,
+            my: query.my
         });
     }
 

@@ -28,6 +28,7 @@ import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
 import { PhotosService } from '@photos/photos.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
+import { SortOption } from '@shared/enums/sort-option.enum';
 
 import { AvatarRequestDto } from './dto/avatar-request.dto';
 import { MapQueryDto } from './dto/map-query.dto';
@@ -186,6 +187,7 @@ export class UsersController {
         });
     }
 
+    // TODOЖ remove
     @Public()
     @UseGuards(OptionalJwtAuthGuard)
     @Get(':id/photos')
@@ -210,15 +212,17 @@ export class UsersController {
         @CurrentUser() user: JwtPayload,
         @Query() query: PhotoQueryDto
     ) {
-        return await this.photosService.findByUserId({
+        return await this.photosService.findAll({
+            sort: SortOption.NEWEST,
             targetUserId: userId,
             requesterUserId: user?.id,
             pagination: query,
-            albumId: query.albumId,
-            isPublished: true
+            albumId: query.albumId
+            // isPublished: true
         });
     }
 
+    // TODO: remove
     @Public()
     @UseGuards(OptionalJwtAuthGuard)
     @Get(':id/filming-locations')
@@ -247,11 +251,12 @@ export class UsersController {
         @CurrentUser() user: JwtPayload,
         @Query() pagination: PaginationQueryDto
     ) {
-        return await this.filmingLocationsService.findByUserId({
+        return await this.filmingLocationsService.findAll({
+            sort: SortOption.NEWEST,
             targetUserId: id,
             requesterUserId: user?.id,
-            pagination,
-            isPublished: true
+            pagination
+            // isPublished: true
         });
     }
 }

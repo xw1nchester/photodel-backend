@@ -73,7 +73,7 @@ export class AlbumsService {
 
     async findByUserId({
         targetUserId,
-        requesterUserId,
+        // requesterUserId,
         pagination,
         isPublished
     }: {
@@ -144,8 +144,7 @@ export class AlbumsService {
                         isPublished: true
                     });
                 })
-            )
-                .setParameter('requesterUserId', requesterUserId);
+            ).setParameter('requesterUserId', requesterUserId);
         } else {
             qb.andWhere('album.isPublished = :isPublished', {
                 isPublished: true

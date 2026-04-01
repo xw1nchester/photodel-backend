@@ -10,23 +10,25 @@ import {
     Query,
     UseGuards
 } from '@nestjs/common';
-import { ReviewsService } from './reviews.service';
-import { CurrentUser, Public } from '@auth/decorators';
-import { JwtPayload } from '@auth/interfaces';
-import { ReviewRequestDto } from './dto/review-request.dto';
 import {
     ApiBearerAuth,
     ApiExtraModels,
     ApiOkResponse,
     getSchemaPath
 } from '@nestjs/swagger';
+
+import { CurrentUser, Public } from '@auth/decorators';
+import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
+import { JwtPayload } from '@auth/interfaces';
+import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
+
+import { ReviewQueryDto } from './dto/review-query.dto';
+import { ReviewRequestDto } from './dto/review-request.dto';
 import {
     ReviewResponseDto,
     ReviewWrapperResponseDto
 } from './dto/review-response.dto';
-import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
-import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
-import { ReviewQueryDto } from './dto/review-query.dto';
+import { ReviewsService } from './reviews.service';
 
 @Controller('reviews')
 export class ReviewsController {

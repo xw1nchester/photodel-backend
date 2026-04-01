@@ -10,9 +10,9 @@ import {
     UpdateDateColumn
 } from 'typeorm';
 
+import { File } from '@files/file.entity';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { User } from '@users/entities/user.entity';
-import { File } from '@files/file.entity';
 
 @Entity('reviews')
 export class Review {
@@ -66,5 +66,5 @@ export class Review {
     updatedAt: Date;
 
     // вычисляемые поля
-    entity: User ;
+    entity: User;
 }

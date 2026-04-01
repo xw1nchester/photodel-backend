@@ -7,14 +7,15 @@ import { FilesService } from '@files/files.service';
 import { Like } from '@likes/like.entity';
 import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
+import { Review } from '@reviews/review.entity';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
+import { SortOption } from '@shared/enums/sort-option.enum';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { FilmingLocationRequestDto } from './dto/filming-location-request.dto';
 import { FilmingLocation } from './filming-location.entity';
-import { Review } from '@reviews/review.entity';
 
 @Injectable()
 export class FilmingLocationsService {
@@ -113,7 +114,7 @@ export class FilmingLocationsService {
                     .from(Like, 'like')
                     .where('like.entityId = filmingLocation.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')
@@ -226,8 +227,8 @@ export class FilmingLocationsService {
 
             fl.isLiked = !!raw[index].likeId;
             fl.likeId = raw[index].likeId;
-            fl.likesCount = Number(raw[index].likesCount);
-            
+            fl.likesCount = Number(raw[index].likes_count);
+
             fl.reviewsCount = Number(raw[index].reviewsCount);
 
             return fl;
@@ -264,16 +265,18 @@ export class FilmingLocationsService {
         };
     }
 
-    async findByUserId({
-        targetUserId,
-        requesterUserId,
+    async findAll({
         pagination,
-        isPublished
+        sort,
+        requesterUserId,
+        targetUserId,
+        my
     }: {
-        targetUserId: number;
-        requesterUserId?: number;
         pagination: PaginationQueryDto;
-        isPublished?: boolean;
+        sort: SortOption;
+        requesterUserId?: number;
+        targetUserId?: number;
+        my?: boolean;
     }) {
         const { page, limit } = pagination;
 
@@ -283,7 +286,6 @@ export class FilmingLocationsService {
             .leftJoinAndSelect('filmingLocation.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('filmingLocation.user', 'user')
-            .where('user.id = :targetUserId', { targetUserId })
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')
@@ -297,7 +299,7 @@ export class FilmingLocationsService {
                     .from(Like, 'like')
                     .where('like.entityId = filmingLocation.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')
@@ -310,12 +312,39 @@ export class FilmingLocationsService {
             .setParameter('likeEntityType', EntityType.PLACE)
             .setParameter('reviewEntityType', EntityType.PLACE)
             .setParameter('reviewIsPublished', true)
-            .orderBy('filmingLocation.createdAt', 'DESC')
             .take(limit)
             .skip((page - 1) * limit);
 
+        switch (sort) {
+            case SortOption.NEWEST:
+                query.orderBy('filmingLocation.createdAt', 'DESC');
+                break;
+
+            case SortOption.POPULARITY:
+                query.orderBy(`likes_count`, 'DESC');
+                break;
+
+            // SortOption.DISTANCE
+
+            default:
+                query.orderBy('filmingLocation.createdAt', 'DESC');
+                break;
+        }
+
         if (requesterUserId != undefined) {
             query
+                .andWhere(
+                    new Brackets(qb => {
+                        qb.where('filmingLocation.userId = :requesterUserId', {
+                            requesterUserId
+                        }).orWhere(
+                            'filmingLocation.isPublished = :isPublished',
+                            {
+                                isPublished: true
+                            }
+                        );
+                    })
+                )
                 .addSelect(subQuery => {
                     return subQuery
                         .select('id')
@@ -333,11 +362,21 @@ export class FilmingLocationsService {
                         .andWhere('like.userId = :requesterUserId');
                 }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
-        }
-
-        if (isPublished != undefined) {
+        } else {
             query.andWhere('filmingLocation.isPublished = :isPublished', {
                 isPublished: true
+            });
+        }
+
+        if (my && requesterUserId != undefined) {
+            query.andWhere('filmingLocation.userId = :requesterUserId', {
+                requesterUserId
+            });
+        }
+
+        if (targetUserId != undefined) {
+            query.andWhere('filmingLocation.userId = :targetUserId', {
+                targetUserId
             });
         }
 
@@ -467,10 +506,18 @@ export class FilmingLocationsService {
         });
     }
 
-    async findByIds(ids: number[], requesterUserId: number) {
+    async findByIds(
+        ids: number[],
+        requesterUserId: number,
+        manager?: EntityManager
+    ) {
         if (ids.length == 0) return [];
 
-        const query = this.filmingLocationsRepository
+        const repo = manager
+            ? manager.getRepository(FilmingLocation)
+            : this.filmingLocationsRepository;
+
+        const query = repo
             .createQueryBuilder('filmingLocation')
             .leftJoinAndSelect('filmingLocation.previewFile', 'previewFile')
             .leftJoinAndSelect('filmingLocation.location', 'location')
@@ -489,7 +536,7 @@ export class FilmingLocationsService {
                     .from(Like, 'like')
                     .where('like.entityId = filmingLocation.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('id')

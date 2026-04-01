@@ -12,15 +12,16 @@ import { Favorite } from '@favorites/favorite.entity';
 import { Like } from '@likes/like.entity';
 import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
+import { Review } from '@reviews/review.entity';
 import { S3Service } from '@s3/s3.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
+import { SortOption } from '@shared/enums/sort-option.enum';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
-import { Review } from '@reviews/review.entity';
 
 @Injectable()
 export class PhotosService {
@@ -149,7 +150,7 @@ export class PhotosService {
 
             photo.isLiked = !!r.likeId;
             photo.likeId = r.likeId;
-            photo.likesCount = Number(r.likesCount);
+            photo.likesCount = Number(r.likes_count);
 
             photo.reviewsCount = Number(r.reviewsCount);
 
@@ -157,20 +158,22 @@ export class PhotosService {
         });
     }
 
-    async findByUserId({
-        targetUserId,
-        requesterUserId,
+    async findAll({
         pagination,
+        sort,
+        requesterUserId,
+        targetUserId,
         albumId,
         excludedAlbumId,
-        isPublished
+        my
     }: {
-        targetUserId: number;
-        requesterUserId?: number;
         pagination: PaginationQueryDto;
+        sort: SortOption;
+        requesterUserId?: number;
+        targetUserId?: number;
         albumId?: number;
         excludedAlbumId?: number;
-        isPublished?: boolean;
+        my?: boolean;
     }) {
         const { page, limit } = pagination;
 
@@ -182,11 +185,10 @@ export class PhotosService {
             .leftJoinAndSelect(
                 'photo.albums',
                 'album',
-                'album.isPublished = :isPublished',
-                { isPublished: true }
+                'album.isPublished = :albumIsPublished',
+                { albumIsPublished: true }
             )
             .leftJoinAndSelect('photo.user', 'user')
-            .where('user.id = :targetUserId', { targetUserId })
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')
@@ -200,7 +202,7 @@ export class PhotosService {
                     .from(Like, 'like')
                     .where('like.entityId = photo.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')
@@ -213,9 +215,24 @@ export class PhotosService {
             .setParameter('likeEntityType', EntityType.PHOTO)
             .setParameter('reviewEntityType', EntityType.PHOTO)
             .setParameter('reviewIsPublished', true)
-            .orderBy('photo.createdAt', 'DESC')
             .take(limit)
             .skip((page - 1) * limit);
+
+        switch (sort) {
+            case SortOption.NEWEST:
+                query.orderBy('photo.createdAt', 'DESC');
+                break;
+
+            case SortOption.POPULARITY:
+                query.orderBy(`likes_count`, 'DESC');
+                break;
+
+            // SortOption.DISTANCE
+
+            default:
+                query.orderBy('photo.createdAt', 'DESC');
+                break;
+        }
 
         if (albumId != undefined) {
             query
@@ -258,6 +275,15 @@ export class PhotosService {
 
         if (requesterUserId != undefined) {
             query
+                .andWhere(
+                    new Brackets(qb => {
+                        qb.where('photo.userId = :requesterUserId', {
+                            requesterUserId
+                        }).orWhere('photo.isPublished = :isPublished', {
+                            isPublished: true
+                        });
+                    })
+                )
                 .addSelect(subQuery => {
                     return subQuery
                         .select('id')
@@ -275,12 +301,20 @@ export class PhotosService {
                         .andWhere('like.userId = :requesterUserId');
                 }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
-        }
-
-        if (isPublished != undefined) {
+        } else {
             query.andWhere('photo.isPublished = :isPublished', {
                 isPublished: true
             });
+        }
+
+        if (my && requesterUserId != undefined) {
+            query.andWhere('photo.userId = :requesterUserId', {
+                requesterUserId
+            });
+        }
+
+        if (targetUserId != undefined) {
+            query.andWhere('photo.userId = :targetUserId', { targetUserId });
         }
 
         const { entities, raw } = await query.getRawAndEntities();
@@ -294,10 +328,18 @@ export class PhotosService {
         return new PaginationDto(photosDtos, total, page, limit);
     }
 
-    async findByIds(ids: number[], requesterUserId: number) {
+    async findByIds(
+        ids: number[],
+        requesterUserId: number,
+        manager?: EntityManager
+    ) {
         if (ids.length == 0) return [];
 
-        const query = this.photoRepository
+        const repo = manager
+            ? manager.getRepository(Photo)
+            : this.photoRepository;
+
+        const query = repo
             .createQueryBuilder('photo')
             .where('photo.id IN (:...ids)', { ids })
             .leftJoinAndSelect('photo.location', 'location')
@@ -331,7 +373,7 @@ export class PhotosService {
                     .from(Like, 'like')
                     .where('like.entityId = photo.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('id')
@@ -409,7 +451,7 @@ export class PhotosService {
                     .from(Like, 'like')
                     .where('like.entityId = photo.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')

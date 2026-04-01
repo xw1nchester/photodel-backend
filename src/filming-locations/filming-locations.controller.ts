@@ -23,9 +23,9 @@ import { CurrentUser, Public } from '@auth/decorators';
 import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 import { JwtPayload } from '@auth/interfaces';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
-import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
+import { FilmingLocationQueryDto } from './dto/filming-location-query.dtoy';
 import { FilmingLocationRequestDto } from './dto/filming-location-request.dto';
 import {
     FilmingLocationBasicResponseDto,
@@ -49,6 +49,8 @@ export class FilmingLocationsController {
         return await this.filmingLocationsService.create(user.id, dto);
     }
 
+    @Public()
+    @UseGuards(OptionalJwtAuthGuard)
     @Get()
     @ApiBearerAuth()
     @ApiExtraModels(PaginationResponseDto, FilmingLocationBasicResponseDto)
@@ -71,14 +73,16 @@ export class FilmingLocationsController {
             ]
         }
     })
-    async findMy(
+    async findAll(
         @CurrentUser() user: JwtPayload,
-        @Query() query: PaginationQueryDto
+        @Query() query: FilmingLocationQueryDto
     ) {
-        return await this.filmingLocationsService.findByUserId({
-            targetUserId: user.id,
-            requesterUserId: user.id,
-            pagination: query
+        return await this.filmingLocationsService.findAll({
+            pagination: query,
+            sort: query.sort,
+            requesterUserId: user?.id,
+            targetUserId: query.userId,
+            my: query.my
         });
     }
 

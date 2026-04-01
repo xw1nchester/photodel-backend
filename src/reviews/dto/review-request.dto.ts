@@ -1,6 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
+import {
+    IsArray,
+    IsNumber,
+    IsOptional,
+    IsString,
+    Max,
+    Min
+} from 'class-validator';
+
 import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
-import { IsArray, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class ReviewRequestDto extends EntityActionRequestDto {
     @ApiProperty({

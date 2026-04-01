@@ -12,10 +12,10 @@ import { PhotosService } from '@photos/photos.service';
 import { EntityActionQueryDto } from '@shared/dto/entity-action-query.dto';
 import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
+import { EntityType } from '@shared/enums/entity-type.enums';
 import { UsersService } from '@users/users.service';
 
 import { Favorite } from './favorite.entity';
-import { EntityType } from '@shared/enums/entity-type.enums';
 
 @Injectable()
 export class FavoritesService {
@@ -31,8 +31,7 @@ export class FavoritesService {
     private validators = {
         [EntityType.USER]: (id: number) => this.usersService.exists(id),
 
-        [EntityType.PHOTO]: (id: number) =>
-            this.photosService.exists(id),
+        [EntityType.PHOTO]: (id: number) => this.photosService.exists(id),
 
         [EntityType.PLACE]: (id: number) =>
             this.filmingLocationsService.exists(id)

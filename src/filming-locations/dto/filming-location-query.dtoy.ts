@@ -5,7 +5,7 @@ import { IsBoolean, IsEnum, IsInt, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { SortOption } from '@shared/enums/sort-option.enum';
 
-export class PhotoQueryDto extends PaginationQueryDto {
+export class FilmingLocationQueryDto extends PaginationQueryDto {
     @ApiProperty({
         enum: SortOption,
         example: SortOption.NEWEST
@@ -13,28 +13,6 @@ export class PhotoQueryDto extends PaginationQueryDto {
     @IsEnum(SortOption)
     @IsOptional()
     sort?: SortOption = SortOption.NEWEST;
-
-    @ApiProperty({
-        name: 'album_id',
-        example: 1,
-        required: false
-    })
-    @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Expose({ name: 'album_id' })
-    albumId?: number;
-
-    @ApiProperty({
-        name: 'excluded_album_id',
-        example: 1,
-        required: false
-    })
-    @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Expose({ name: 'excluded_album_id' })
-    excludedAlbumId?: number;
 
     @ApiProperty({
         name: 'user_id',

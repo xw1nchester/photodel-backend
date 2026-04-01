@@ -1,4 +1,3 @@
-import { FilesService } from '@files/files.service';
 import {
     BadRequestException,
     Injectable,
@@ -6,15 +5,18 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DataSource, EntityManager, Repository } from 'typeorm';
-import { Review } from './review.entity';
-import { EntityType } from '@shared/enums/entity-type.enums';
-import { UsersService } from '@users/users.service';
-import { PhotosService } from '@photos/photos.service';
+
+import { FilesService } from '@files/files.service';
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
-import { ReviewRequestDto } from './dto/review-request.dto';
+import { PhotosService } from '@photos/photos.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
+import { EntityType } from '@shared/enums/entity-type.enums';
 import { User } from '@users/entities/user.entity';
+import { UsersService } from '@users/users.service';
+
+import { ReviewRequestDto } from './dto/review-request.dto';
+import { Review } from './review.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -38,14 +40,28 @@ export class ReviewsService {
     };
 
     private loaders = {
-        [EntityType.USER]: (ids: number[], requesterUserId: number) =>
-            this.usersService.findByIds(ids, requesterUserId),
+        [EntityType.USER]: (
+            ids: number[],
+            requesterUserId: number,
+            manager?: EntityManager
+        ) => this.usersService.findByIds(ids, requesterUserId, manager),
 
-        [EntityType.PHOTO]: (ids: number[], requesterUserId: number) =>
-            this.photosService.findByIds(ids, requesterUserId),
+        [EntityType.PHOTO]: (
+            ids: number[],
+            requesterUserId: number,
+            manager?: EntityManager
+        ) => this.photosService.findByIds(ids, requesterUserId, manager),
 
-        [EntityType.PLACE]: (ids: number[], requesterUserId: number) =>
-            this.filmingLocationsService.findByIds(ids, requesterUserId)
+        [EntityType.PLACE]: (
+            ids: number[],
+            requesterUserId: number,
+            manager?: EntityManager
+        ) =>
+            this.filmingLocationsService.findByIds(
+                ids,
+                requesterUserId,
+                manager
+            )
     };
 
     createDto(review: Review) {

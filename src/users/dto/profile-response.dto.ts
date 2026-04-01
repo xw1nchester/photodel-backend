@@ -4,8 +4,8 @@ import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { ProCategoryDto } from '@pro-categories/dto/pro-categories-response.dto';
 import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { LikesResponseDto } from '@shared/dto/likes-response.dto';
-import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 import { ReviewsResponseDto } from '@shared/dto/reviews-response.dto';
+import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 
 export class SocialResponseDto {
     @ApiProperty({ example: 1 })

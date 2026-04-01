@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EntityType } from '@shared/enums/entity-type.enums';
 
+import { EntityType } from '@shared/enums/entity-type.enums';
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
 
 // TODO: вынести

@@ -6,6 +6,7 @@ import { Favorite } from '@favorites/favorite.entity';
 import { Like } from '@likes/like.entity';
 import { LocationsService } from '@locations/locations.service';
 import { ProCategoriesService } from '@pro-categories/pro-categories.service';
+import { Review } from '@reviews/review.entity';
 import { S3Service } from '@s3/s3.service';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
@@ -21,7 +22,6 @@ import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
-import { Review } from '@reviews/review.entity';
 
 @Injectable()
 export class UsersService {
@@ -555,17 +555,25 @@ export class UsersService {
             user.isLiked = !!r?.likeId;
             user.likeId = r?.likeId;
             user.likesCount = Number(r?.likesCount ?? 0);
-            
+
             user.reviewsCount = Number(r?.reviewsCount ?? 0);
 
             return user;
         });
     }
 
-    async findByIds(ids: number[], requesterUserId: number) {
+    async findByIds(
+        ids: number[],
+        requesterUserId: number,
+        manager?: EntityManager
+    ) {
         if (ids.length == 0) return [];
 
-        const qb = this.usersRepository
+        const repo = manager
+            ? manager.getRepository(User)
+            : this.usersRepository;
+
+        const qb = repo
             .createQueryBuilder('user')
             .where('user.id IN (:...ids)', { ids })
             .leftJoinAndSelect('user.profile', 'profile')
@@ -604,21 +612,22 @@ export class UsersService {
                     .andWhere('like.userId = :requesterUserId');
             }, 'likeId')
             .addSelect(subQuery => {
-    return subQuery
-        .select('COUNT(*)')
-        .from(Review, 'review')
-        .where('review.entityId = user.id')
-        .andWhere('review.entityType = :reviewEntityType')
-        .andWhere('review.isPublished = :reviewIsPublished');
-}, 'reviewsCount')
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = user.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.USER)
             .setParameter('likeEntityType', EntityType.USER)
             .setParameter('reviewEntityType', EntityType.USER)
-.setParameter('reviewIsPublished', true)
+            .setParameter('reviewIsPublished', true)
             .setParameter('requesterUserId', requesterUserId);
 
         const profile = await this.findProfileByUserId({
-            targetUserId: requesterUserId
+            targetUserId: requesterUserId,
+            manager
         });
         const activeTemporaryLocation = this.getActiveTemporaryLocation(
             profile.temporaryLocations
@@ -698,17 +707,17 @@ export class UsersService {
                     .andWhere('like.entityType = :likeEntityType');
             }, 'likesCount')
             .addSelect(subQuery => {
-    return subQuery
-        .select('COUNT(*)')
-        .from(Review, 'review')
-        .where('review.entityId = user.id')
-        .andWhere('review.entityType = :reviewEntityType')
-        .andWhere('review.isPublished = :reviewIsPublished');
-}, 'reviewsCount')
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = user.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
             .setParameter('favoriteEntityType', EntityType.USER)
             .setParameter('likeEntityType', EntityType.USER)
             .setParameter('reviewEntityType', EntityType.USER)
-.setParameter('reviewIsPublished', true)
+            .setParameter('reviewIsPublished', true)
             .take(limit)
             .skip((page - 1) * limit);
 
