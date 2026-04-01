@@ -8,7 +8,8 @@ import { SortOption } from '@shared/enums/sort-option.enum';
 export class PhotoQueryDto extends PaginationQueryDto {
     @ApiProperty({
         enum: SortOption,
-        example: SortOption.NEWEST
+        example: SortOption.NEWEST,
+        required: false
     })
     @IsEnum(SortOption)
     @IsOptional()
