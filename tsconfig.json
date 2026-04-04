@@ -61,6 +61,8 @@
             "@likes/*": ["src/likes/*"],
             "@reviews": ["src/reviews"],
             "@reviews/*": ["src/reviews/*"],
+            "@photo-sessions": ["src/photo-sessions"],
+            "@photo-sessions/*": ["src/photo-sessions/*"],
         }
     }
 }

@@ -36,6 +36,7 @@ export class FilmingLocationsService {
             url: this.filesService.getUrl(f.key)
         }));
 
+        // TODO: подумать, куда вынести
         const user = {
             id: filmingLocation.user.id,
             firstName: filmingLocation.user.firstName,

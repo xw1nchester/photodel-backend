@@ -12,6 +12,7 @@ import { FilesModule } from './files/files.module';
 import { LikesModule } from './likes/likes.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { RolesModule } from './roles/roles.module';
+import { PhotoSessionsModule } from './photo-sessions/photo-sessions.module';
 
 @Module({
     imports: [
@@ -24,7 +25,8 @@ import { RolesModule } from './roles/roles.module';
         FilesModule,
         FavoritesModule,
         LikesModule,
-        ReviewsModule
+        ReviewsModule,
+        PhotoSessionsModule
     ],
     controllers: [AppController],
     providers: [

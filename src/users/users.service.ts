@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { Favorite } from '@favorites/favorite.entity';
 import { Like } from '@likes/like.entity';
@@ -871,5 +871,23 @@ export class UsersService {
     async exists(id: number) {
         const count = await this.usersRepository.count({ where: { id } });
         return count > 0;
+    }
+
+    async findAndValidateByIds(ids: number[], manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(User)
+            : this.usersRepository;
+
+        ids = [...new Set(ids)];
+
+        const users = await repo.find({
+            where: { id: In(ids) }
+        });
+
+        if (ids.length != users.length) {
+            throw new NotFoundException('Пользователь не найдена');
+        }
+
+        return users;
     }
 }
