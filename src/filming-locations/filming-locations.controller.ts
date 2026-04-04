@@ -22,10 +22,10 @@ import {
 import { CurrentUser, Public } from '@auth/decorators';
 import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 import { JwtPayload } from '@auth/interfaces';
+import { FilterQueryDto } from '@shared/dto/filter-query.dto';
 import { IdsRequestDto } from '@shared/dto/ids-request.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
-import { FilmingLocationQueryDto } from './dto/filming-location-query.dtoy';
 import { FilmingLocationRequestDto } from './dto/filming-location-request.dto';
 import {
     FilmingLocationBasicResponseDto,
@@ -75,7 +75,7 @@ export class FilmingLocationsController {
     })
     async findAll(
         @CurrentUser() user: JwtPayload,
-        @Query() query: FilmingLocationQueryDto
+        @Query() query: FilterQueryDto
     ) {
         return await this.filmingLocationsService.findAll({
             pagination: query,

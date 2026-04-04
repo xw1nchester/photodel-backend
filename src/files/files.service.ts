@@ -82,4 +82,14 @@ export class FilesService {
     getUrl(key: string) {
         return this.s3Service.getUrl(key);
     }
+
+    createBasicDto(file: File) {
+        return file
+            ? {
+                  id: file.id,
+                  key: file.key,
+                  url: this.s3Service.getUrl(file.key)
+              }
+            : null;
+    }
 }

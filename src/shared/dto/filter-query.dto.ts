@@ -2,10 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsOptional } from 'class-validator';
 
-import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { SortOption } from '@shared/enums/sort-option.enum';
 
-export class FilmingLocationQueryDto extends PaginationQueryDto {
+import { PaginationQueryDto } from './pagination-query.dto';
+
+export class FilterQueryDto extends PaginationQueryDto {
     @ApiProperty({
         enum: SortOption,
         example: SortOption.NEWEST,

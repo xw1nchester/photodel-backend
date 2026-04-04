@@ -29,14 +29,10 @@ export class FilmingLocationsService {
     ) {}
 
     createDto(filmingLocation: FilmingLocation) {
-        const photos = filmingLocation.files.map(f => ({
-            id: f.id,
-            key: f.key,
-            // TODO: опеределиться, использовать метод filesService или s3 в таких случаях
-            url: this.filesService.getUrl(f.key)
-        }));
+        const photos = filmingLocation.files.map(f =>
+            this.filesService.createBasicDto(f)
+        );
 
-        // TODO: подумать, куда вынести
         const user = {
             id: filmingLocation.user.id,
             firstName: filmingLocation.user.firstName,
@@ -239,15 +235,9 @@ export class FilmingLocationsService {
     createBasicDto(filmingLocation: FilmingLocation) {
         return {
             id: filmingLocation.id,
-            preview: filmingLocation.previewFile
-                ? {
-                      id: filmingLocation.previewFile.id,
-                      key: filmingLocation.previewFile.key,
-                      url: this.filesService.getUrl(
-                          filmingLocation.previewFile.key
-                      )
-                  }
-                : null,
+            preview: this.filesService.createBasicDto(
+                filmingLocation.previewFile
+            ),
             name: filmingLocation.name,
             location: this.locationsService.getDto(filmingLocation.location),
             favorites: {
@@ -392,9 +382,16 @@ export class FilmingLocationsService {
         return new PaginationDto(dtos, total, page, limit);
     }
 
-    // нужен manager
-    async findByIdAndUserId(id: number, userId: number) {
-        const filmingLocation = await this.filmingLocationsRepository.findOne({
+    async findByIdAndUserId(
+        id: number,
+        userId: number,
+        manager?: EntityManager
+    ) {
+        const repo = manager
+            ? manager.getRepository(FilmingLocation)
+            : this.filmingLocationsRepository;
+
+        const filmingLocation = await repo.findOne({
             where: { id, userId },
             relations: {
                 files: true,
@@ -415,7 +412,11 @@ export class FilmingLocationsService {
         return await this.dataSource.transaction(async manager => {
             const repo = manager.getRepository(FilmingLocation);
 
-            const filmingLocation = await this.findByIdAndUserId(id, userId);
+            const filmingLocation = await this.findByIdAndUserId(
+                id,
+                userId,
+                manager
+            );
 
             filmingLocation.files =
                 await this.filesService.findAndvalidateByIdsAndUserId(
@@ -470,13 +471,20 @@ export class FilmingLocationsService {
         });
     }
 
-    // TODO: нужна транзакция
     async remove(id: number, userId: number) {
-        const photo = await this.findByIdAndUserId(id, userId);
+        return await this.dataSource.transaction(async manager => {
+            const repo = manager.getRepository(FilmingLocation);
 
-        await this.filmingLocationsRepository.remove(photo);
+            const filmingLocation = await this.findByIdAndUserId(
+                id,
+                userId,
+                manager
+            );
 
-        return { filmingLocation: this.createDto(photo) };
+            await repo.remove(filmingLocation);
+
+            return { filmingLocation: this.createDto(filmingLocation) };
+        });
     }
 
     async validateByIdsAndUserId(
@@ -490,20 +498,24 @@ export class FilmingLocationsService {
 
         ids = [...new Set(ids)];
 
-        const photos = await repo.find({
+        const filmingLocations = await repo.find({
             where: { id: In(ids), userId }
         });
 
-        if (ids.length != photos.length) {
-            throw new NotFoundException('Фото не найдено');
+        if (ids.length != filmingLocations.length) {
+            throw new NotFoundException('Место для съемок не найдено');
         }
     }
 
     async bulkRemove(userId: number, ids: number[]) {
-        await this.validateByIdsAndUserId(ids, userId);
+        await this.dataSource.transaction(async manager => {
+            const repo = manager.getRepository(FilmingLocation);
 
-        await this.filmingLocationsRepository.delete({
-            id: In(ids)
+            await this.validateByIdsAndUserId(ids, userId, manager);
+
+            await repo.delete({
+                id: In(ids)
+            });
         });
     }
 
@@ -520,6 +532,7 @@ export class FilmingLocationsService {
 
         const query = repo
             .createQueryBuilder('filmingLocation')
+            .where('filmingLocation.id IN (:...ids)', { ids })
             .leftJoinAndSelect('filmingLocation.previewFile', 'previewFile')
             .leftJoinAndSelect('filmingLocation.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')

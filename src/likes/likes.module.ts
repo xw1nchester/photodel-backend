@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { FilmingLocationsModule } from '@filming-locations/filming-locations.module';
+import { PhotoSessionsModule } from '@photo-sessions/photo-sessions.module';
 import { PhotosModule } from '@photos/photos.module';
 import { UsersModule } from '@users/users.module';
 
@@ -14,7 +15,8 @@ import { LikesService } from './likes.service';
         TypeOrmModule.forFeature([Like]),
         UsersModule,
         PhotosModule,
-        FilmingLocationsModule
+        FilmingLocationsModule,
+        PhotoSessionsModule
     ],
     controllers: [LikesController],
     providers: [LikesService]

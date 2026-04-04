@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AlbumsModule } from '@albums/albums.module';
 import { FilmingLocationsModule } from '@filming-locations/filming-locations.module';
+import { PhotoSessionsModule } from '@photo-sessions/photo-sessions.module';
 import { PhotosModule } from '@photos/photos.module';
 import { UsersModule } from '@users/users.module';
 
@@ -14,9 +14,9 @@ import { FavoritesService } from './favorites.service';
     imports: [
         TypeOrmModule.forFeature([Favorite]),
         UsersModule,
-        AlbumsModule,
         PhotosModule,
-        FilmingLocationsModule
+        FilmingLocationsModule,
+        PhotoSessionsModule
     ],
     controllers: [FavoritesController],
     providers: [FavoritesService]

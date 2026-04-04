@@ -8,6 +8,7 @@ import { Brackets, DataSource, EntityManager, Repository } from 'typeorm';
 
 import { FilesService } from '@files/files.service';
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
+import { PhotoSessionsService } from '@photo-sessions/photo-sessions.service';
 import { PhotosService } from '@photos/photos.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
@@ -27,7 +28,8 @@ export class ReviewsService {
         private readonly filesService: FilesService,
         private readonly usersService: UsersService,
         private readonly photosService: PhotosService,
-        private readonly filmingLocationsService: FilmingLocationsService
+        private readonly filmingLocationsService: FilmingLocationsService,
+        private readonly photoSessionsService: PhotoSessionsService
     ) {}
 
     private validators = {
@@ -36,32 +38,10 @@ export class ReviewsService {
         [EntityType.PHOTO]: (id: number) => this.photosService.exists(id),
 
         [EntityType.PLACE]: (id: number) =>
-            this.filmingLocationsService.exists(id)
-    };
+            this.filmingLocationsService.exists(id),
 
-    private loaders = {
-        [EntityType.USER]: (
-            ids: number[],
-            requesterUserId: number,
-            manager?: EntityManager
-        ) => this.usersService.findByIds(ids, requesterUserId, manager),
-
-        [EntityType.PHOTO]: (
-            ids: number[],
-            requesterUserId: number,
-            manager?: EntityManager
-        ) => this.photosService.findByIds(ids, requesterUserId, manager),
-
-        [EntityType.PLACE]: (
-            ids: number[],
-            requesterUserId: number,
-            manager?: EntityManager
-        ) =>
-            this.filmingLocationsService.findByIds(
-                ids,
-                requesterUserId,
-                manager
-            )
+        [EntityType.PHOTO_SESSION]: (id: number) =>
+            this.photoSessionsService.exists(id)
     };
 
     createDto(review: Review) {

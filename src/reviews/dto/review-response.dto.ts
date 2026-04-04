@@ -1,22 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { FileBasicResponseDto } from '@files/dto/files-response.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
-
-// TODO: вынести
-export class PhotoMinResponseDto {
-    @ApiProperty({ example: 1 })
-    id: number;
-
-    @ApiProperty({ example: 'e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg' })
-    key: string;
-
-    @ApiProperty({
-        example:
-            'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
-    })
-    url: string;
-}
 
 export class ReviewResponseDto {
     @ApiProperty({ example: 1 })
@@ -49,8 +35,8 @@ export class ReviewResponseDto {
     @ApiProperty({ example: true })
     isPublished: boolean;
 
-    @ApiProperty({ type: [PhotoMinResponseDto] })
-    photos: PhotoMinResponseDto[];
+    @ApiProperty({ type: [FileBasicResponseDto] })
+    photos: FileBasicResponseDto[];
 
     @ApiProperty({ type: UserShortResponseDto })
     user: UserShortResponseDto;

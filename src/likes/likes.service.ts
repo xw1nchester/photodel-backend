@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
+import { PhotoSessionsService } from '@photo-sessions/photo-sessions.service';
 import { PhotosService } from '@photos/photos.service';
 import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
@@ -21,7 +22,8 @@ export class LikesService {
         private readonly likesRepository: Repository<Like>,
         private readonly usersService: UsersService,
         private readonly photosService: PhotosService,
-        private readonly filmingLocationsService: FilmingLocationsService
+        private readonly filmingLocationsService: FilmingLocationsService,
+        private readonly photoSessionsService: PhotoSessionsService
     ) {}
 
     private validators = {
@@ -30,18 +32,10 @@ export class LikesService {
         [EntityType.PHOTO]: (id: number) => this.photosService.exists(id),
 
         [EntityType.PLACE]: (id: number) =>
-            this.filmingLocationsService.exists(id)
-    };
+            this.filmingLocationsService.exists(id),
 
-    private loaders = {
-        [EntityType.USER]: (ids: number[], requesterUserId: number) =>
-            this.usersService.findByIds(ids, requesterUserId),
-
-        [EntityType.PHOTO]: (ids: number[], requesterUserId: number) =>
-            this.photosService.findByIds(ids, requesterUserId),
-
-        [EntityType.PLACE]: (ids: number[], requesterUserId: number) =>
-            this.filmingLocationsService.findByIds(ids, requesterUserId)
+        [EntityType.PHOTO_SESSION]: (id: number) =>
+            this.photoSessionsService.exists(id)
     };
 
     async addLike(userId: number, dto: EntityActionRequestDto) {

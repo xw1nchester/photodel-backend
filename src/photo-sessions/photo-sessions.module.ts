@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { PhotoSessionsService } from './photo-sessions.service';
-import { PhotoSessionsController } from './photo-sessions.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PhotoSession } from './photo-session.entity';
+
 import { LocationsModule } from '@locations/locations.module';
 import { UsersModule } from '@users/users.module';
+
+import { PhotoSession } from './photo-session.entity';
+import { PhotoSessionsController } from './photo-sessions.controller';
+import { PhotoSessionsService } from './photo-sessions.service';
 
 @Module({
     imports: [
@@ -13,6 +15,7 @@ import { UsersModule } from '@users/users.module';
         UsersModule
     ],
     controllers: [PhotoSessionsController],
-    providers: [PhotoSessionsService]
+    providers: [PhotoSessionsService],
+    exports: [PhotoSessionsService]
 })
 export class PhotoSessionsModule {}

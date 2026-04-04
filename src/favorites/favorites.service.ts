@@ -6,8 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
-import { AlbumsService } from '@albums/albums.service';
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
+import { PhotoSessionsService } from '@photo-sessions/photo-sessions.service';
 import { PhotosService } from '@photos/photos.service';
 import { EntityActionQueryDto } from '@shared/dto/entity-action-query.dto';
 import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
@@ -23,9 +23,9 @@ export class FavoritesService {
         @InjectRepository(Favorite)
         private readonly favoriteRepository: Repository<Favorite>,
         private readonly usersService: UsersService,
-        private readonly albumsService: AlbumsService,
         private readonly photosService: PhotosService,
-        private readonly filmingLocationsService: FilmingLocationsService
+        private readonly filmingLocationsService: FilmingLocationsService,
+        private readonly photoSessionsService: PhotoSessionsService
     ) {}
 
     private validators = {
@@ -34,7 +34,10 @@ export class FavoritesService {
         [EntityType.PHOTO]: (id: number) => this.photosService.exists(id),
 
         [EntityType.PLACE]: (id: number) =>
-            this.filmingLocationsService.exists(id)
+            this.filmingLocationsService.exists(id),
+
+        [EntityType.PHOTO_SESSION]: (id: number) =>
+            this.photoSessionsService.exists(id)
     };
 
     private loaders = {
@@ -45,7 +48,10 @@ export class FavoritesService {
             this.photosService.findByIds(ids, requesterUserId),
 
         [EntityType.PLACE]: (ids: number[], requesterUserId: number) =>
-            this.filmingLocationsService.findByIds(ids, requesterUserId)
+            this.filmingLocationsService.findByIds(ids, requesterUserId),
+
+        [EntityType.PHOTO_SESSION]: (ids: number[], requesterUserId: number) =>
+            this.photoSessionsService.findByIds(ids, requesterUserId)
     };
 
     async addFavorite(userId: number, dto: EntityActionRequestDto) {

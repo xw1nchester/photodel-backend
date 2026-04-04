@@ -5,41 +5,41 @@ import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { LikesResponseDto } from '@shared/dto/likes-response.dto';
 import { ReviewsResponseDto } from '@shared/dto/reviews-response.dto';
-import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
 
-export class FilmingLocationResponseDto {
+export class PhotoSessionResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
 
     @ApiProperty({ type: [FileBasicResponseDto] })
     photos: FileBasicResponseDto[];
 
-    @ApiProperty({ example: 'ВДНХ' })
+    @ApiProperty({ example: 'Предсвадебная фотосессия Овечкиных' })
     name: string;
 
     @ApiProperty({
-        example: 'Большая территория, красивая архитектура.'
+        example: 'Вот и отгремела, пожалуй, самая ожидаемая и громкая свадьба',
+        nullable: true
     })
-    description: string;
+    description?: string;
 
     @ApiProperty({ type: LocationResponseDto })
     location: LocationResponseDto;
 
-    @ApiProperty({ example: 'Canon EOS 5D Mark IV', nullable: true })
-    camera: string;
+    @ApiProperty({ example: '2024-06-01' })
+    startDate: string;
 
-    @ApiProperty({ example: '5000', nullable: true })
-    price: string;
+    @ApiProperty({ example: '2024-08-31' })
+    endDate: string;
 
-    @ApiProperty({ example: 'По предоплате', nullable: true })
-    conditions: string;
+    @ApiProperty({ example: 'Свадебная' })
+    type: string;
 
     @ApiProperty({ example: true })
     isPublished: boolean;
 
-    @ApiProperty({ type: [SpecializationDto] })
-    specializations: SpecializationDto[];
+    @ApiProperty({ type: [UserShortResponseDto] })
+    team: number[];
 
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
     createdAt: string;
@@ -60,19 +60,19 @@ export class FilmingLocationResponseDto {
     reviews: ReviewsResponseDto;
 }
 
-export class FilmingLocationWrapperResponseDto {
-    @ApiProperty({ type: FilmingLocationResponseDto })
-    filmingLocation: FilmingLocationResponseDto;
+export class PhotoSessionWrapperResponseDto {
+    @ApiProperty({ type: PhotoSessionResponseDto })
+    photoSession: PhotoSessionResponseDto;
 }
 
-export class FilmingLocationBasicResponseDto {
+export class PhotoSessionBasicResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
 
     @ApiProperty({ type: FileBasicResponseDto })
     preview: FileBasicResponseDto;
 
-    @ApiProperty({ example: 'ВДНХ' })
+    @ApiProperty({ example: 'Предсвадебная фотосессия Овечкиных' })
     name: string;
 
     @ApiProperty({ type: LocationResponseDto })

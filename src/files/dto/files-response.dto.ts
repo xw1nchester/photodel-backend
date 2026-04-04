@@ -35,3 +35,17 @@ export class FilesResponseDto {
     @ApiProperty({ type: [FileDto] })
     files: FileDto[];
 }
+
+export class FileBasicResponseDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({ example: 'e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg' })
+    key: string;
+
+    @ApiProperty({
+        example:
+            'http://localhost:9000/uploads/e7cb06e8-1335-4b5c-bb46-0edfd4015aa1.jpeg'
+    })
+    url: string;
+}
