@@ -170,11 +170,6 @@ export class TeamsService {
         userId: number,
         memberIds: number[]
     ): Promise<boolean> {
-        console.log({
-            method: 'validateTeamMembers',
-            userId,
-            memberIds
-        });
         if (memberIds.length === 0) return;
 
         const count = await this.teamRequestsRepository.count({
