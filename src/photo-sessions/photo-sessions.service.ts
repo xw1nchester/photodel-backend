@@ -12,7 +12,7 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { SortOption } from '@shared/enums/sort-option.enum';
-import { UsersService } from '@users/users.service';
+import { TeamsService } from '@teams/teams.service';
 
 import { PhotoSessionRequestDto } from './dto/photo-session-request.dto';
 import { PhotoSession } from './photo-session.entity';
@@ -25,7 +25,7 @@ export class PhotoSessionsService {
         private readonly photoSessionsRepository: Repository<PhotoSession>,
         private readonly filesService: FilesService,
         private readonly locationsService: LocationsService,
-        private readonly usersService: UsersService
+        private readonly teamsService: TeamsService
     ) {}
 
     createDto(photoSession: PhotoSession) {
@@ -207,14 +207,7 @@ export class PhotoSessionsService {
                 manager
             );
 
-            if (!dto.team.includes(userId)) {
-                dto.team.unshift(userId);
-            }
-
-            const team = await this.usersService.findAndValidateByIds(
-                dto.team,
-                manager
-            );
+            await this.teamsService.validateTeamMembers(userId, dto.team);
 
             let location: Location | null = null;
             if (dto.location) {
@@ -230,7 +223,9 @@ export class PhotoSessionsService {
                 type: dto.type,
                 isPublished: dto.isPublished,
                 files,
-                team,
+                team: dto.team.map(m => ({
+                    id: m
+                })),
                 location,
                 userId
             });
@@ -435,14 +430,7 @@ export class PhotoSessionsService {
                     manager
                 );
 
-            if (!dto.team.includes(userId)) {
-                dto.team.unshift(userId);
-            }
-
-            photoSession.team = await this.usersService.findAndValidateByIds(
-                dto.team,
-                manager
-            );
+            await this.teamsService.validateTeamMembers(userId, dto.team);
 
             photoSession.previewFileId = dto.photoIds[0];
             photoSession.name = dto.name;
@@ -474,7 +462,12 @@ export class PhotoSessionsService {
                 photoSession.location = null;
             }
 
-            await repo.save(photoSession);
+            await repo.save({
+                ...photoSession,
+                team: dto.team.map(m => ({
+                    id: m
+                }))
+            });
 
             return await this.getDtoById({
                 id,

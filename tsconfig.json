@@ -63,6 +63,8 @@
             "@reviews/*": ["src/reviews/*"],
             "@photo-sessions": ["src/photo-sessions"],
             "@photo-sessions/*": ["src/photo-sessions/*"],
+            "@teams": ["src/teams"],
+            "@teams/*": ["src/teams/*"],
         }
     }
 }

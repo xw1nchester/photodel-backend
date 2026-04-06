@@ -515,7 +515,7 @@ export class UsersService {
             proCategories: user.profile.proCategories,
             specializations: user.profile.specializations,
             location: this.locationsService.getDto(user.profile.location),
-            distance: user['distance'],
+            distance: user.distance,
             favorites: {
                 isFavorite: user.isFavorite,
                 favoriteId: user.favoriteId,
