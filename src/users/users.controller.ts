@@ -31,6 +31,7 @@ import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 import { SortOption } from '@shared/enums/sort-option.enum';
 
 import { AvatarRequestDto } from './dto/avatar-request.dto';
+import { CoordinatedQueryDto } from './dto/coordinates-query.dto';
 import { MapQueryDto } from './dto/map-query.dto';
 import { MapWrapperResponseDto } from './dto/map-response.dto';
 import { ProfileRequestDto } from './dto/profile-request.dto';
@@ -75,11 +76,14 @@ export class UsersController {
     @ApiOkResponse({ type: ProfileWrapperResponseDto })
     async getProfileDtoById(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: JwtPayload
+        @CurrentUser() user: JwtPayload,
+        @Query() query: CoordinatedQueryDto
     ) {
         return await this.usersService.getProfileDtoByUserId({
             targetUserId: id,
-            requesterUserId: user?.id
+            requesterUserId: user?.id,
+            latitude: query.latitude,
+            longitude: query.longitude
         });
     }
 

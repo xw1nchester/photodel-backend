@@ -48,6 +48,11 @@ export class UsersService {
                 profile: {
                     location: {
                         place: true
+                    },
+                    temporaryLocations: {
+                        location: {
+                            place: true
+                        }
                     }
                 }
             },
@@ -108,8 +113,17 @@ export class UsersService {
         });
     }
 
-    // TODO: учитывать временную локацию
     createUserMeDto(user: User) {
+        let location = user.profile.location;
+
+        const activeTemporaryLocation = this.getActiveTemporaryLocation(
+            user.profile.temporaryLocations
+        );
+
+        if (activeTemporaryLocation) {
+            location = activeTemporaryLocation.location;
+        }
+
         return {
             id: user.id,
             email: user.email,
@@ -125,7 +139,7 @@ export class UsersService {
             isPro: user.isPro,
             createdAt: user.createdAt,
             roles: user.roles.map(r => r.name),
-            location: this.locationsService.getDto(user.profile.location)
+            location: this.locationsService.getDto(location)
         };
     }
 
@@ -156,23 +170,33 @@ export class UsersService {
         return await repo.update({ id }, { isVerified: true });
     }
 
-    // TODO: считать расстояние
     async findProfileByUserId({
         targetUserId,
         requesterUserId,
+        latitude,
+        longitude,
         manager
     }: {
         targetUserId: number;
         requesterUserId?: number;
+        latitude?: number;
+        longitude?: number;
         manager?: EntityManager;
     }) {
         const repo = manager
             ? manager.getRepository(Profile)
             : this.profilesRepository;
 
+        const today = new Date().toISOString().slice(0, 10);
+
         const qb = repo
             .createQueryBuilder('profile')
-            .innerJoinAndSelect('profile.user', 'user')
+            .innerJoinAndSelect(
+                'profile.user',
+                'user',
+                'user.id = :targetUserId',
+                { targetUserId }
+            )
             .leftJoinAndSelect('profile.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('profile.proCategories', 'proCategories')
@@ -185,7 +209,6 @@ export class UsersService {
             )
             .leftJoinAndSelect('temporaryLocation.location', 'tempLocation')
             .leftJoinAndSelect('tempLocation.place', 'tempLocationPlace')
-            .where('user.id = :targetUserId', { targetUserId })
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')
@@ -233,9 +256,26 @@ export class UsersService {
                 .setParameter('requesterUserId', requesterUserId);
         }
 
-        this.logger.debug(
-            `Fetching profile ${JSON.stringify({ targetUserId, requesterUserId })}`
-        );
+        if (latitude !== undefined && longitude !== undefined) {
+            qb.addSelect(
+                `
+                    ST_Distance(
+                        COALESCE(
+                            (SELECT tlLoc.coordinates
+                            FROM temporary_locations tl
+                            JOIN locations tlLoc ON tl.location_id = tlLoc.id
+                            WHERE tl.profile_id = profile.id
+                            AND tl.start_date <= :today
+                            AND tl.end_date >= :today
+                            LIMIT 1),
+                            location.coordinates
+                        ),
+                        ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
+                    )
+                `,
+                'distance'
+            ).setParameters({ latitude, longitude, today });
+        }
 
         const result = await qb.getRawAndEntities();
 
@@ -245,20 +285,26 @@ export class UsersService {
             throw new NotFoundException('Профиль не найден');
         }
 
+        const raw = result.raw[0];
+
         return {
             ...profile,
+            distance:
+                typeof raw?.distance === 'number'
+                    ? Number((raw.distance / 1000).toFixed(1))
+                    : null,
             favorites: {
-                isFavorite: !!result.raw[0].favoriteId,
-                favoriteId: result.raw[0].favoriteId,
-                count: Number(result.raw[0].favoritesCount)
+                isFavorite: !!raw.favoriteId,
+                favoriteId: raw.favoriteId,
+                count: Number(raw.favoritesCount)
             },
             likes: {
-                isLiked: !!result.raw[0].likeId,
-                likeId: result.raw[0].likeId,
-                count: Number(result.raw[0].likesCount)
+                isLiked: !!raw.likeId,
+                likeId: raw.likeId,
+                count: Number(raw.likesCount)
             },
             reviews: {
-                count: Number(result.raw[0].reviewsCount)
+                count: Number(raw.reviewsCount)
             }
         };
     }
@@ -338,15 +384,21 @@ export class UsersService {
     async getProfileDtoByUserId({
         targetUserId,
         requesterUserId,
+        latitude,
+        longitude,
         manager
     }: {
         targetUserId: number;
         requesterUserId?: number;
+        latitude?: number;
+        longitude?: number;
         manager?: EntityManager;
     }) {
         const profile = await this.findProfileByUserId({
             targetUserId,
             requesterUserId,
+            latitude,
+            longitude,
             manager
         });
         return { profile: this.createProfileDto(profile) };
@@ -573,12 +625,31 @@ export class UsersService {
             ? manager.getRepository(User)
             : this.usersRepository;
 
+        const today = new Date().toISOString().slice(0, 10);
+
         const qb = repo
             .createQueryBuilder('user')
             .where('user.id IN (:...ids)', { ids })
             .leftJoinAndSelect('user.profile', 'profile')
             .leftJoinAndSelect('profile.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')
+            .leftJoinAndSelect(
+                'profile.temporaryLocations',
+                'temporaryLocation',
+                `
+                temporaryLocation.startDate <= :today
+                AND temporaryLocation.endDate >= :today
+            `,
+                { today }
+            )
+            .leftJoinAndSelect(
+                'temporaryLocation.location',
+                'temporaryLocationLocation'
+            )
+            .leftJoinAndSelect(
+                'temporaryLocationLocation.place',
+                'temporaryLocationPlace'
+            )
             .leftJoinAndSelect('profile.proCategories', 'proCategories')
             .leftJoinAndSelect('profile.specializations', 'specializations')
             .addSelect(subQuery => {
@@ -647,12 +718,18 @@ export class UsersService {
                 activeTemporaryLocation.location.coordinates.coordinates[0];
         }
 
+        const effectiveCoordinates = `
+            COALESCE(
+                temporaryLocationLocation.coordinates,
+                location.coordinates
+            )
+        `;
+
         if (latitude != null && longitude != null) {
-            // TODO: если активна временная локация, то нужно считать расстояние до неё
             qb.addSelect(
                 `
                 ST_Distance(
-                    location.coordinates,
+                    ${effectiveCoordinates},
                     ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
                 )
                 `,
@@ -661,6 +738,14 @@ export class UsersService {
         }
 
         const { entities, raw } = await qb.getRawAndEntities();
+
+        for (const u of entities) {
+            const activeTemporaryLocation = u.profile?.temporaryLocations?.[0];
+
+            if (activeTemporaryLocation?.location) {
+                u.profile.location = activeTemporaryLocation.location;
+            }
+        }
 
         const users = this.transformUsersRawData(entities, raw);
 
@@ -682,6 +767,8 @@ export class UsersService {
         }: UserQueryDto,
         requesterUserId?: number
     ) {
+        const today = new Date().toISOString().slice(0, 10);
+
         const qb = this.usersRepository
             .createQueryBuilder('user')
             .where('user.isProfessional = :isProfessional', {
@@ -690,6 +777,23 @@ export class UsersService {
             .leftJoinAndSelect('user.profile', 'profile')
             .leftJoinAndSelect('profile.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')
+            .leftJoinAndSelect(
+                'profile.temporaryLocations',
+                'temporaryLocation',
+                `
+                temporaryLocation.startDate <= :today
+                AND temporaryLocation.endDate >= :today
+            `,
+                { today }
+            )
+            .leftJoinAndSelect(
+                'temporaryLocation.location',
+                'temporaryLocationLocation'
+            )
+            .leftJoinAndSelect(
+                'temporaryLocationLocation.place',
+                'temporaryLocationPlace'
+            )
             .leftJoinAndSelect('profile.proCategories', 'proCategories')
             .leftJoinAndSelect('profile.specializations', 'specializations')
             .addSelect(subQuery => {
@@ -741,12 +845,20 @@ export class UsersService {
                 .setParameter('requesterUserId', requesterUserId);
         }
 
+        // если есть активная временная локация — используем её,
+        // иначе обычную location
+        const effectiveCoordinates = `
+            COALESCE(
+                temporaryLocationLocation.coordinates,
+                location.coordinates
+            )
+        `;
+
         if (latitude != undefined && longitude != undefined) {
-            // TODO: если активна временная локация, то нужно считать расстояние до неё
             qb.addSelect(
                 `
                 ST_Distance(
-                    location.coordinates,
+                    ${effectiveCoordinates},
                     ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
                 )
                 `,
@@ -761,7 +873,7 @@ export class UsersService {
                 qb.andWhere(
                     `
                         ST_Distance(
-                            location.coordinates,
+                            ${effectiveCoordinates},
                             ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
                         ) <= :radius
                     `,
@@ -810,6 +922,19 @@ export class UsersService {
         }
 
         const { entities, raw } = await qb.getRawAndEntities();
+
+        for (const e of entities) {
+            console.log({
+                id: e.id,
+                temporaryLocation: e.profile.temporaryLocations
+            });
+
+            const activeTemporaryLocation = e.profile?.temporaryLocations?.[0];
+
+            if (activeTemporaryLocation?.location) {
+                e.profile.location = activeTemporaryLocation.location;
+            }
+        }
 
         const total = await qb.getCount();
 

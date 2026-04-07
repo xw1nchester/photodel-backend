@@ -454,7 +454,7 @@ export class FilmingLocationsService {
             } else {
                 if (filmingLocation.location) {
                     await this.locationsService.deleteByIds(
-                        [filmingLocation.location.id],
+                        filmingLocation.location.id,
                         manager
                     );
                 }

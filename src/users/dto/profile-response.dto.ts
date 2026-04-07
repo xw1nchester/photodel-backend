@@ -106,6 +106,9 @@ export class ProfileResponseDto {
     @ApiProperty({ type: LocationResponseDto, nullable: true })
     activeTemporaryLocation: LocationResponseDto | null;
 
+    @ApiProperty({ example: 7.5 })
+    distance: number;
+
     @ApiProperty({ type: [ProCategoryDto] })
     proCategories: ProCategoryDto[];
 

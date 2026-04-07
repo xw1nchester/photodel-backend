@@ -64,15 +64,16 @@ export class LocationsService {
         });
     }
 
-    // TODO: сделать параметр ids: number | number[]
-    async deleteByIds(ids: number[], manager?: EntityManager) {
-        if (ids.length == 0) return;
+    async deleteByIds(ids: number | number[], manager?: EntityManager) {
+        const idsArray = Array.isArray(ids) ? ids : [ids];
+
+        if (idsArray.length === 0) return;
 
         const repo = manager
             ? manager.getRepository(Location)
             : this.locationsRepository;
 
-        await repo.delete(ids);
+        await repo.delete(idsArray);
     }
 
     async findPlaces({ page, limit, search }: PlaceQueryDto) {

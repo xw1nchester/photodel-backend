@@ -560,7 +560,7 @@ export class PhotosService {
             } else {
                 if (photo.location) {
                     await this.locationsService.deleteByIds(
-                        [photo.location.id],
+                        photo.location.id,
                         manager
                     );
                 }

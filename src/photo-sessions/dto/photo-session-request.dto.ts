@@ -12,7 +12,6 @@ import {
 
 import { LocationRequestDto } from '@locations/dto/location-request.dto';
 
-// TODO: валидация дат по аналогии с временными локациями
 export class PhotoSessionRequestDto {
     @ApiProperty({ example: [1, 2, 3] })
     @IsArray()

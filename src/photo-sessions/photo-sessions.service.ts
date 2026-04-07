@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
@@ -198,6 +202,12 @@ export class PhotoSessionsService {
     }
 
     async create(userId: number, dto: PhotoSessionRequestDto) {
+        if (new Date(dto.startDate) > new Date(dto.endDate)) {
+            throw new BadRequestException(
+                'Дата начала должна быть раньше даты окончания'
+            );
+        }
+
         return await this.dataSource.transaction(async manager => {
             const repo = manager.getRepository(PhotoSession);
 
@@ -455,7 +465,7 @@ export class PhotoSessionsService {
             } else {
                 if (photoSession.location) {
                     await this.locationsService.deleteByIds(
-                        [photoSession.location.id],
+                        photoSession.location.id,
                         manager
                     );
                 }
