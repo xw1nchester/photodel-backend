@@ -6,6 +6,7 @@ import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { LikesResponseDto } from '@shared/dto/likes-response.dto';
 import { ReviewsResponseDto } from '@shared/dto/reviews-response.dto';
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
+import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
 
 export class PhotoSessionResponseDto {
     @ApiProperty({ example: 1 })
@@ -32,8 +33,8 @@ export class PhotoSessionResponseDto {
     @ApiProperty({ example: '2024-08-31' })
     endDate: string;
 
-    @ApiProperty({ example: 'Свадебная' })
-    type: string;
+    @ApiProperty({ type: SpecializationDto })
+    specialization: SpecializationDto;
 
     @ApiProperty({ example: true })
     isPublished: boolean;

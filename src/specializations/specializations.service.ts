@@ -42,4 +42,18 @@ export class SpecializationsService {
 
         return specializations;
     }
+
+    async findById(id: number, manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(Specialization)
+            : this.specializarionaRepository;
+
+        const specialization = await repo.findOneBy({ id });
+
+        if (!specialization) {
+            throw new NotFoundException('Специализация не найдена');
+        }
+
+        return specialization;
+    }
 }

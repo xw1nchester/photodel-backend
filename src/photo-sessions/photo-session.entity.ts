@@ -13,6 +13,7 @@ import {
 import { File } from '@files/file.entity';
 import { Location } from '@locations/entities/location.entity';
 import { User } from '@users/entities/user.entity';
+import { Specialization } from '@specializations/specialization.entity';
 
 @Entity('photo_sessions')
 export class PhotoSession {
@@ -39,8 +40,12 @@ export class PhotoSession {
     @Column({ name: 'end_date', type: 'date' })
     endDate: Date;
 
-    @Column()
-    type: string;
+    @Column({ name: 'specialization_id', nullable: true })
+    specializationId: number;
+
+    @ManyToOne(() => Specialization, { onDelete: 'SET NULL' })
+    @JoinColumn({ name: 'specialization_id' })
+    specialization: Specialization;
 
     @Column({ name: 'is_published', default: false })
     isPublished: boolean;

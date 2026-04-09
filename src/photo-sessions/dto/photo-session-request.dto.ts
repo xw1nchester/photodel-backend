@@ -5,6 +5,7 @@ import {
     IsArray,
     IsBoolean,
     IsDateString,
+    IsNumber,
     IsOptional,
     IsString,
     ValidateNested
@@ -44,9 +45,9 @@ export class PhotoSessionRequestDto {
     @IsDateString()
     endDate: string;
 
-    @ApiProperty({ example: 'Свадебная' })
-    @IsString()
-    type: string;
+    @ApiProperty({ example: 1 })
+    @IsNumber()
+    specializationId: number;
 
     @ApiProperty({ example: true })
     @IsBoolean()

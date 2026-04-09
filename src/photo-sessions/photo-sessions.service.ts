@@ -20,6 +20,7 @@ import { TeamsService } from '@teams/teams.service';
 
 import { PhotoSessionRequestDto } from './dto/photo-session-request.dto';
 import { PhotoSession } from './photo-session.entity';
+import { SpecializationsService } from '@specializations/specializations.service';
 
 @Injectable()
 export class PhotoSessionsService {
@@ -29,7 +30,8 @@ export class PhotoSessionsService {
         private readonly photoSessionsRepository: Repository<PhotoSession>,
         private readonly filesService: FilesService,
         private readonly locationsService: LocationsService,
-        private readonly teamsService: TeamsService
+        private readonly teamsService: TeamsService,
+        private readonly specializationsService: SpecializationsService
     ) {}
 
     createDto(photoSession: PhotoSession) {
@@ -68,7 +70,7 @@ export class PhotoSessionsService {
             location: this.locationsService.getDto(photoSession.location),
             startDate: photoSession.startDate,
             endDate: photoSession.endDate,
-            type: photoSession.type,
+            specialization: photoSession.specialization,
             isPublished: photoSession.isPublished,
             team,
             createdAt: photoSession.createdAt,
@@ -127,6 +129,7 @@ export class PhotoSessionsService {
             .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('photoSession.team', 'team')
             .leftJoinAndSelect('photoSession.user', 'user')
+            .leftJoinAndSelect('photoSession.specialization', 'specialization')
             .leftJoinAndSelect('team.profile', 'profile')
             .leftJoinAndSelect('profile.proCategories', 'proCategories')
             .addSelect(subQuery => {
@@ -211,6 +214,10 @@ export class PhotoSessionsService {
         return await this.dataSource.transaction(async manager => {
             const repo = manager.getRepository(PhotoSession);
 
+            const specialization = await this.specializationsService.findById(
+                dto.specializationId
+            );
+
             const files = await this.filesService.findAndvalidateByIdsAndUserId(
                 dto.photoIds,
                 userId,
@@ -230,7 +237,7 @@ export class PhotoSessionsService {
                 description: dto.description,
                 startDate: dto.startDate,
                 endDate: dto.endDate,
-                type: dto.type,
+                specialization,
                 isPublished: dto.isPublished,
                 files,
                 team: dto.team.map(m => ({
@@ -433,6 +440,10 @@ export class PhotoSessionsService {
                 manager
             );
 
+            const specialization = await this.specializationsService.findById(
+                dto.specializationId
+            );
+
             photoSession.files =
                 await this.filesService.findAndvalidateByIdsAndUserId(
                     dto.photoIds,
@@ -447,7 +458,7 @@ export class PhotoSessionsService {
             photoSession.description = dto.description;
             photoSession.startDate = new Date(dto.startDate);
             photoSession.endDate = new Date(dto.endDate);
-            photoSession.type = dto.type;
+            photoSession.specialization = specialization;
             photoSession.isPublished = dto.isPublished;
 
             if (dto.location) {
