@@ -107,6 +107,11 @@ export class UsersService {
                 profile: {
                     location: {
                         place: true
+                    },
+                    temporaryLocations: {
+                        location: {
+                            place: true
+                        }
                     }
                 }
             }

@@ -64,7 +64,7 @@ export class ReviewsService {
 
         let entity = null;
 
-        if (review.entityType == EntityType.USER) {
+        if (review.entityType == EntityType.USER && review.entity) {
             entity = {
                 id: review.entity.id,
                 firstName: review.entity.firstName,
@@ -153,6 +153,28 @@ export class ReviewsService {
 
             const exists = await validator(dto.entityId);
             if (!exists) throw new NotFoundException('Сущность не найдена');
+
+            if (dto.entityType == EntityType.USER) {
+                if (dto.entityId == userId) {
+                    throw new BadRequestException(
+                        'Нельзя оставлять отзывы самому себе'
+                    );
+                }
+
+                const count = await this.reviewsRepository.count({
+                    where: {
+                        entityType: EntityType.USER,
+                        entityId: dto.entityId,
+                        userId
+                    }
+                });
+
+                if (count > 0) {
+                    throw new BadRequestException(
+                        'Отзыв о пользователе уже оставлен'
+                    );
+                }
+            }
 
             const files = await this.filesService.findAndvalidateByIdsAndUserId(
                 dto.photoIds,
