@@ -78,6 +78,9 @@ export class FilmingLocationBasicResponseDto {
     @ApiProperty({ type: LocationResponseDto })
     location: LocationResponseDto;
 
+    @ApiProperty({ type: UserShortResponseDto })
+    user: UserShortResponseDto;
+
     @ApiProperty({ type: FavoritesResponseDto })
     favorites: FavoritesResponseDto;
 

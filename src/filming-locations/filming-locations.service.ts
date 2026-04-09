@@ -233,6 +233,17 @@ export class FilmingLocationsService {
     }
 
     createBasicDto(filmingLocation: FilmingLocation) {
+        const user = {
+            id: filmingLocation.user.id,
+            firstName: filmingLocation.user.firstName,
+            lastName: filmingLocation.user.lastName,
+            avatarKey: filmingLocation.user.avatarKey,
+            avatarUrl: filmingLocation.user.avatarKey
+                ? this.filesService.getUrl(filmingLocation.user.avatarKey)
+                : null,
+            isPro: filmingLocation.user.isPro
+        };
+
         return {
             id: filmingLocation.id,
             preview: this.filesService.createBasicDto(
@@ -240,6 +251,7 @@ export class FilmingLocationsService {
             ),
             name: filmingLocation.name,
             location: this.locationsService.getDto(filmingLocation.location),
+            user,
             favorites: {
                 isFavorite: filmingLocation.isFavorite,
                 favoriteId: filmingLocation.favoriteId,
