@@ -78,7 +78,9 @@ export class PhotosController {
             targetUserId: query.userId,
             albumId: query.albumId,
             excludedAlbumId: query.excludedAlbumId,
-            my: query.my
+            my: query.my,
+            search: query.search,
+            specializationId: query.specializationId
         });
     }
 

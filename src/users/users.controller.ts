@@ -21,14 +21,8 @@ import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser, Public } from '@auth/decorators';
 import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 import { JwtPayload } from '@auth/interfaces';
-import { FilmingLocationBasicResponseDto } from '@filming-locations/dto/filming-location-response.dto';
-import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
-import { PhotoQueryDto } from '@photos/dto/photo-query.dto';
-import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
-import { PhotosService } from '@photos/photos.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
-import { SortOption } from '@shared/enums/sort-option.enum';
 
 import { AvatarRequestDto } from './dto/avatar-request.dto';
 import { CoordinatedQueryDto } from './dto/coordinates-query.dto';
@@ -48,9 +42,7 @@ import { UsersService } from './users.service';
 export class UsersController {
     constructor(
         private readonly usersService: UsersService,
-        private readonly albumsService: AlbumsService,
-        private readonly photosService: PhotosService,
-        private readonly filmingLocationsService: FilmingLocationsService
+        private readonly albumsService: AlbumsService
     ) {}
 
     @Get('me')
@@ -188,79 +180,6 @@ export class UsersController {
             requesterUserId: user?.id,
             pagination,
             isPublished: true
-        });
-    }
-
-    // TODOЖ remove
-    @Public()
-    @UseGuards(OptionalJwtAuthGuard)
-    @Get(':id/photos')
-    @ApiExtraModels(PaginationResponseDto, PhotoResponseDto)
-    @ApiOkResponse({
-        schema: {
-            allOf: [
-                {
-                    properties: {
-                        data: {
-                            type: 'array',
-                            items: { $ref: getSchemaPath(PhotoResponseDto) }
-                        }
-                    }
-                },
-                { $ref: getSchemaPath(PaginationResponseDto) }
-            ]
-        }
-    })
-    async getUserPhotos(
-        @Param('id', ParseIntPipe) userId: number,
-        @CurrentUser() user: JwtPayload,
-        @Query() query: PhotoQueryDto
-    ) {
-        return await this.photosService.findAll({
-            sort: SortOption.NEWEST,
-            targetUserId: userId,
-            requesterUserId: user?.id,
-            pagination: query,
-            albumId: query.albumId
-            // isPublished: true
-        });
-    }
-
-    // TODO: remove
-    @Public()
-    @UseGuards(OptionalJwtAuthGuard)
-    @Get(':id/filming-locations')
-    @ApiExtraModels(PaginationResponseDto, FilmingLocationBasicResponseDto)
-    @ApiOkResponse({
-        schema: {
-            allOf: [
-                {
-                    properties: {
-                        data: {
-                            type: 'array',
-                            items: {
-                                $ref: getSchemaPath(
-                                    FilmingLocationBasicResponseDto
-                                )
-                            }
-                        }
-                    }
-                },
-                { $ref: getSchemaPath(PaginationResponseDto) }
-            ]
-        }
-    })
-    async getUserFilmingLocations(
-        @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: JwtPayload,
-        @Query() pagination: PaginationQueryDto
-    ) {
-        return await this.filmingLocationsService.findAll({
-            sort: SortOption.NEWEST,
-            targetUserId: id,
-            requesterUserId: user?.id,
-            pagination
-            // isPublished: true
         });
     }
 }

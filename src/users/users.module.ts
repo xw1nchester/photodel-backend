@@ -2,9 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AlbumsModule } from '@albums/albums.module';
-import { FilmingLocationsModule } from '@filming-locations/filming-locations.module';
 import { LocationsModule } from '@locations/locations.module';
-import { PhotosModule } from '@photos/photos.module';
 import { ProCategoriesModule } from '@pro-categories/pro-categories.module';
 import { S3Module } from '@s3/s3.module';
 import { SocialsModule } from '@socials/socials.module';
@@ -30,9 +28,7 @@ import { UsersService } from './users.service';
         SpecializationsModule,
         SocialsModule,
         LocationsModule,
-        AlbumsModule,
-        PhotosModule,
-        FilmingLocationsModule
+        AlbumsModule
     ],
     controllers: [UsersController],
     providers: [UsersService],

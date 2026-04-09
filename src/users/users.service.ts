@@ -22,6 +22,7 @@ import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
+import { SortOption } from '@shared/enums/sort-option.enum';
 
 @Injectable()
 export class UsersService {
@@ -227,7 +228,7 @@ export class UsersService {
                     .from(Like, 'like')
                     .where('like.entityId = user.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')
@@ -306,7 +307,7 @@ export class UsersService {
             likes: {
                 isLiked: !!raw.likeId,
                 likeId: raw.likeId,
-                count: Number(raw.likesCount)
+                count: Number(raw.likes_count)
             },
             reviews: {
                 count: Number(raw.reviewsCount)
@@ -611,7 +612,7 @@ export class UsersService {
 
             user.isLiked = !!r?.likeId;
             user.likeId = r?.likeId;
-            user.likesCount = Number(r?.likesCount ?? 0);
+            user.likesCount = Number(r?.likes_count ?? 0);
 
             user.reviewsCount = Number(r?.reviewsCount ?? 0);
 
@@ -678,7 +679,7 @@ export class UsersService {
                     .from(Like, 'like')
                     .where('like.entityId = user.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('id')
@@ -763,7 +764,7 @@ export class UsersService {
             limit,
             latitude,
             longitude,
-            order,
+            sort,
             radius,
             placeId,
             search,
@@ -814,7 +815,7 @@ export class UsersService {
                     .from(Like, 'like')
                     .where('like.entityId = user.id')
                     .andWhere('like.entityType = :likeEntityType');
-            }, 'likesCount')
+            }, 'likes_count')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')
@@ -870,8 +871,22 @@ export class UsersService {
                 'distance'
             ).setParameters({ longitude, latitude });
 
-            if (order == 'distance') {
-                qb.orderBy('distance', 'ASC');
+            switch (sort) {
+                case SortOption.NEWEST:
+                    qb.orderBy('user.createdAt', 'DESC');
+                    break;
+
+                case SortOption.POPULARITY:
+                    qb.orderBy(`likes_count`, 'DESC');
+                    break;
+
+                case SortOption.DISTANCE:
+                    qb.orderBy(`distance`, 'DESC');
+                    break;
+
+                default:
+                    qb.orderBy('user.createdAt', 'DESC');
+                    break;
             }
 
             if (radius != undefined) {

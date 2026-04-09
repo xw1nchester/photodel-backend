@@ -158,6 +158,7 @@ export class PhotosService {
         });
     }
 
+    // TODO: типизировать параметры по аналогии findProfessionals и передавать query
     async findAll({
         pagination,
         sort,
@@ -165,7 +166,9 @@ export class PhotosService {
         targetUserId,
         albumId,
         excludedAlbumId,
-        my
+        my,
+        search,
+        specializationId
     }: {
         pagination: PaginationQueryDto;
         sort: SortOption;
@@ -174,6 +177,8 @@ export class PhotosService {
         albumId?: number;
         excludedAlbumId?: number;
         my?: boolean;
+        search?: string;
+        specializationId?: number;
     }) {
         const { page, limit } = pagination;
 
@@ -315,6 +320,27 @@ export class PhotosService {
 
         if (targetUserId != undefined) {
             query.andWhere('photo.userId = :targetUserId', { targetUserId });
+        }
+
+        if (search) {
+            query.andWhere(
+                `photo.name ILIKE :search`,
+                { search: `%${search}%` }
+            );
+        }
+
+        if (specializationId != undefined) {
+            query.andWhere(qb2 => {
+                const subQuery = qb2
+                    .subQuery()
+                    .select('1')
+                    .from('photos_specializations', 'ps')
+                    .where('ps.photo_id = photo.id')
+                    .andWhere('ps.specialization_id = :specializationId')
+                    .getQuery();
+
+                return `EXISTS ${subQuery}`;
+            }).setParameter('specializationId', specializationId);
         }
 
         const { entities, raw } = await query.getRawAndEntities();

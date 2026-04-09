@@ -268,18 +268,23 @@ export class FilmingLocationsService {
         };
     }
 
+    // TODO: типизировать параметры по аналогии findProfessionals и передавать query
     async findAll({
         pagination,
         sort,
         requesterUserId,
         targetUserId,
-        my
+        my,
+        search,
+        specializationId
     }: {
         pagination: PaginationQueryDto;
         sort: SortOption;
         requesterUserId?: number;
         targetUserId?: number;
         my?: boolean;
+        search?: string;
+        specializationId?: number;
     }) {
         const { page, limit } = pagination;
 
@@ -381,6 +386,27 @@ export class FilmingLocationsService {
             query.andWhere('filmingLocation.userId = :targetUserId', {
                 targetUserId
             });
+        }
+
+        if (search) {
+            query.andWhere(
+                `filmingLocation.name ILIKE :search`,
+                { search: `%${search}%` }
+            );
+        }
+
+        if (specializationId != undefined) {
+            query.andWhere(qb2 => {
+                const subQuery = qb2
+                    .subQuery()
+                    .select('1')
+                    .from('filming_locations_specializations', 'fls')
+                    .where('fls.filming_location_id = filmingLocation.id')
+                    .andWhere('fls.specialization_id = :specializationId')
+                    .getQuery();
+
+                return `EXISTS ${subQuery}`;
+            }).setParameter('specializationId', specializationId);
         }
 
         const { entities, raw } = await query.getRawAndEntities();

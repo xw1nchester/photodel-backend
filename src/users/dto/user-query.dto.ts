@@ -2,15 +2,16 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
     IsInt,
-    IsIn,
     IsNumber,
     IsOptional,
     IsString,
     Max,
-    Min
+    Min,
+    IsEnum
 } from 'class-validator';
 
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
+import { SortOption } from '@shared/enums/sort-option.enum';
 
 export class UserQueryDto extends PaginationQueryDto {
     @ApiProperty({
@@ -40,13 +41,13 @@ export class UserQueryDto extends PaginationQueryDto {
     longitude?: number;
 
     @ApiProperty({
-        example: 'popularity',
-        enum: ['popularity', 'distance'],
+        enum: SortOption,
+        example: SortOption.NEWEST,
         required: false
     })
+    @IsEnum(SortOption)
     @IsOptional()
-    @IsIn(['popularity', 'distance'])
-    order?: 'popularity' | 'distance';
+    sort?: SortOption = SortOption.NEWEST;
 
     @ApiProperty({
         example: 5,

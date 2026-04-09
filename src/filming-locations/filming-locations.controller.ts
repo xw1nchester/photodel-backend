@@ -82,7 +82,9 @@ export class FilmingLocationsController {
             sort: query.sort,
             requesterUserId: user?.id,
             targetUserId: query.userId,
-            my: query.my
+            my: query.my,
+            search: query.search,
+            specializationId: query.specializationId
         });
     }
 

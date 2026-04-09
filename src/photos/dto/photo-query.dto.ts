@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsOptional } from 'class-validator';
+import {
+    IsBoolean,
+    IsEnum,
+    IsInt,
+    IsOptional,
+    IsString
+} from 'class-validator';
 
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { SortOption } from '@shared/enums/sort-option.enum';
@@ -56,4 +62,23 @@ export class PhotoQueryDto extends PaginationQueryDto {
             value === 'true' || value === true || value === 1 || value === '1'
     )
     my?: boolean;
+
+    @ApiProperty({
+        example: 'Баклажан',
+        required: false
+    })
+    @IsString()
+    @IsOptional()
+    search?: string;
+
+    @ApiProperty({
+        name: 'specialization_id',
+        example: 1,
+        required: false
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Expose({ name: 'specialization_id' })
+    specializationId?: number;
 }
