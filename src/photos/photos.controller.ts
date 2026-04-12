@@ -129,4 +129,10 @@ export class PhotosController {
     ) {
         await this.photoService.bulkRemove(user.id, ids);
     }
+
+    @Get('top')
+    @ApiOkResponse({ type: PhotoWrapperResponseDto })
+    async getPhotoOfTheDay() {
+        return await this.photoService.getPhotoOfTheDay();
+    }
 }

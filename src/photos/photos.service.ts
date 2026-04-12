@@ -37,7 +37,7 @@ export class PhotosService {
     ) {}
 
     createDto(photo: Photo) {
-        const albums = photo.albums.map(a => this.albumService.createDto(a));
+        const albums = photo.albums?.map(a => this.albumService.createDto(a)) ?? [];
 
         // чтобы модуль фото не зависел от модуля юзеров
         const user = {
@@ -323,24 +323,25 @@ export class PhotosService {
         }
 
         if (search) {
-            query.andWhere(
-                `photo.name ILIKE :search`,
-                { search: `%${search}%` }
-            );
+            query.andWhere(`photo.name ILIKE :search`, {
+                search: `%${search}%`
+            });
         }
 
         if (specializationId != undefined) {
-            query.andWhere(qb2 => {
-                const subQuery = qb2
-                    .subQuery()
-                    .select('1')
-                    .from('photos_specializations', 'ps')
-                    .where('ps.photo_id = photo.id')
-                    .andWhere('ps.specialization_id = :specializationId')
-                    .getQuery();
+            query
+                .andWhere(qb2 => {
+                    const subQuery = qb2
+                        .subQuery()
+                        .select('1')
+                        .from('photos_specializations', 'ps')
+                        .where('ps.photo_id = photo.id')
+                        .andWhere('ps.specialization_id = :specializationId')
+                        .getQuery();
 
-                return `EXISTS ${subQuery}`;
-            }).setParameter('specializationId', specializationId);
+                    return `EXISTS ${subQuery}`;
+                })
+                .setParameter('specializationId', specializationId);
         }
 
         const { entities, raw } = await query.getRawAndEntities();
@@ -657,5 +658,40 @@ export class PhotosService {
         await this.photoRepository.delete({
             id: In(ids)
         });
+    }
+
+    // TODO: завести таблицу (photo_daily_stats), в которую сохранять статистику лучших фото по дням
+    async getPhotoOfTheDay() {
+        // убрал незначащие join/подзапросы, т.к. критически важна производительность
+        // ушел от подзапроса в пользу leftJoin
+        const query = this.photoRepository
+            .createQueryBuilder('photo')
+            .where('photo.isPublished = :isPublished', { isPublished: true })
+            .leftJoinAndSelect('photo.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
+            .leftJoinAndSelect('photo.user', 'user')
+            .leftJoin(
+                Like,
+                'like',
+                `
+                like.entityId = photo.id
+                AND like.entityType = :entityType
+                AND like.createdAt >= NOW() - INTERVAL '1 day'
+                `,
+                { entityType: EntityType.PHOTO }
+            )
+            .addSelect('COUNT(like.id)', 'likes_count')
+            .groupBy('photo.id')
+            .addGroupBy('location.id')
+            .addGroupBy('locationPlace.id')
+            .addGroupBy('user.id')
+            .orderBy('likes_count', 'DESC')
+            .limit(1);
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const photo = this.transformPhotosRawData(entities, raw)[0];
+
+        return { photo: this.createDto(photo) };
     }
 }
