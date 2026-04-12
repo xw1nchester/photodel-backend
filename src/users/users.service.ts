@@ -237,6 +237,14 @@ export class UsersService {
                     .andWhere('review.entityType = :reviewEntityType')
                     .andWhere('review.isPublished = :reviewIsPublished');
             }, 'reviewsCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('ROUND(AVG(review.rating), 2)')
+                    .from(Review, 'review')
+                    .where('review.entityId = user.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'rating')
             .setParameter('favoriteEntityType', EntityType.USER)
             .setParameter('likeEntityType', EntityType.USER)
             .setParameter('reviewEntityType', EntityType.USER)
@@ -310,7 +318,8 @@ export class UsersService {
                 count: Number(raw.likes_count)
             },
             reviews: {
-                count: Number(raw.reviewsCount)
+                count: Number(raw.reviewsCount),
+                rating: Number(raw.rating)
             }
         };
     }
@@ -585,7 +594,8 @@ export class UsersService {
                 count: user.likesCount
             },
             reviews: {
-                count: user.reviewsCount
+                count: user.reviewsCount,
+                rating: user.rating
             }
         };
     }
@@ -615,6 +625,7 @@ export class UsersService {
             user.likesCount = Number(r?.likes_count ?? 0);
 
             user.reviewsCount = Number(r?.reviewsCount ?? 0);
+            user.rating = Number(r?.rating ?? 0);
 
             return user;
         });
@@ -696,6 +707,14 @@ export class UsersService {
                     .andWhere('review.entityType = :reviewEntityType')
                     .andWhere('review.isPublished = :reviewIsPublished');
             }, 'reviewsCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('ROUND(AVG(review.rating), 2)')
+                    .from(Review, 'review')
+                    .where('review.entityId = user.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'rating')
             .setParameter('favoriteEntityType', EntityType.USER)
             .setParameter('likeEntityType', EntityType.USER)
             .setParameter('reviewEntityType', EntityType.USER)
@@ -824,6 +843,14 @@ export class UsersService {
                     .andWhere('review.entityType = :reviewEntityType')
                     .andWhere('review.isPublished = :reviewIsPublished');
             }, 'reviewsCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('ROUND(AVG(review.rating), 2)')
+                    .from(Review, 'review')
+                    .where('review.entityId = user.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'rating')
             .setParameter('favoriteEntityType', EntityType.USER)
             .setParameter('likeEntityType', EntityType.USER)
             .setParameter('reviewEntityType', EntityType.USER)
@@ -944,11 +971,6 @@ export class UsersService {
         const { entities, raw } = await qb.getRawAndEntities();
 
         for (const e of entities) {
-            console.log({
-                id: e.id,
-                temporaryLocation: e.profile.temporaryLocations
-            });
-
             const activeTemporaryLocation = e.profile?.temporaryLocations?.[0];
 
             if (activeTemporaryLocation?.location) {
@@ -965,6 +987,7 @@ export class UsersService {
         return new PaginationDto(dtos, total, page, limit);
     }
 
+    // TODO: удалить если не используется
     async findMapMarkers({ placeId }: MapQueryDto) {
         const qb = this.profilesRepository
             .createQueryBuilder('profile')

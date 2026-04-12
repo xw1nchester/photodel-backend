@@ -98,4 +98,5 @@ export class User {
     likeId?: number;
     likesCount?: number;
     reviewsCount?: number;
+    rating?: number;
 }

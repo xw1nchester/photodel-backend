@@ -5,7 +5,7 @@ export class PlaceResponseDto {
     id: number;
 
     @ApiProperty({
-        example: 'Раша',
+        example: 'Россия',
         nullable: true
     })
     country: string;
