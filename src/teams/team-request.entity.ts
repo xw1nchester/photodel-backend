@@ -28,11 +28,11 @@ export class TeamRequest {
     @Column({ name: 'receiver_user_id' })
     receiverUserId: number;
 
-    @ManyToOne(() => User, { eager: true })
+    @ManyToOne(() => User)
     @JoinColumn({ name: 'sender_user_id' })
     senderUser: User;
 
-    @ManyToOne(() => User, { eager: true })
+    @ManyToOne(() => User)
     @JoinColumn({ name: 'receiver_user_id' })
     receiverUser: User;
 

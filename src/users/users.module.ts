@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { TeamsModule } from '@teams/teams.module';
 import { AlbumsModule } from '@albums/albums.module';
 import { LocationsModule } from '@locations/locations.module';
 import { ProCategoriesModule } from '@pro-categories/pro-categories.module';
@@ -23,6 +24,7 @@ import { UsersService } from './users.service';
             ProfileSocial,
             TemporaryLocation
         ]),
+        forwardRef(() => TeamsModule),
         ProCategoriesModule,
         S3Module,
         SpecializationsModule,

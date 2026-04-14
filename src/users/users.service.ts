@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+    forwardRef,
+    Inject,
+    Injectable,
+    Logger,
+    NotFoundException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
@@ -23,6 +29,7 @@ import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
 import { SortOption } from '@shared/enums/sort-option.enum';
+import { TeamsService } from '@teams/teams.service';
 
 @Injectable()
 export class UsersService {
@@ -38,7 +45,9 @@ export class UsersService {
         private readonly s3Service: S3Service,
         private readonly specializationsService: SpecializationsService,
         private readonly socialsService: SocialsService,
-        private readonly locationsService: LocationsService
+        private readonly locationsService: LocationsService,
+        @Inject(forwardRef(() => TeamsService))
+        private readonly teamsService: TeamsService
     ) {}
 
     async findById(id: number) {
@@ -145,7 +154,7 @@ export class UsersService {
             isPro: user.isPro,
             createdAt: user.createdAt,
             roles: user.roles.map(r => r.name),
-            location: this.locationsService.getDto(location)
+            location: this.locationsService.createDto(location)
         };
     }
 
@@ -194,6 +203,7 @@ export class UsersService {
             : this.profilesRepository;
 
         const today = new Date().toISOString().slice(0, 10);
+        let team = null;
 
         const qb = repo
             .createQueryBuilder('profile')
@@ -268,6 +278,11 @@ export class UsersService {
                         .andWhere('like.userId = :requesterUserId');
                 }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
+
+            team = await this.teamsService.findTeamStateBetweenUsers(
+                requesterUserId,
+                targetUserId
+            );
         }
 
         if (latitude !== undefined && longitude !== undefined) {
@@ -320,7 +335,8 @@ export class UsersService {
             reviews: {
                 count: Number(raw.reviewsCount),
                 rating: Number(raw.rating)
-            }
+            },
+            team
         };
     }
 
@@ -345,7 +361,7 @@ export class UsersService {
                   id: location.id,
                   startDate: location.startDate,
                   endDate: location.endDate,
-                  location: this.locationsService.getDto(location.location),
+                  location: this.locationsService.createDto(location.location),
                   comment: location.comment
               }
             : null;
@@ -363,7 +379,7 @@ export class UsersService {
 
         delete profile.user;
 
-        const location = this.locationsService.getDto(profile.location);
+        const location = this.locationsService.createDto(profile.location);
 
         const activeTemporaryLocation = this.getTemporaryLocationDto(
             this.getActiveTemporaryLocation(profile.temporaryLocations)
@@ -581,7 +597,7 @@ export class UsersService {
             isPro: user.isPro,
             proCategories: user.profile.proCategories,
             specializations: user.profile.specializations,
-            location: this.locationsService.getDto(user.profile.location),
+            location: this.locationsService.createDto(user.profile.location),
             distance: user.distance,
             favorites: {
                 isFavorite: user.isFavorite,

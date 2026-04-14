@@ -1,5 +1,7 @@
 import {
     BadRequestException,
+    forwardRef,
+    Inject,
     Injectable,
     NotFoundException
 } from '@nestjs/common';
@@ -18,6 +20,7 @@ export class TeamsService {
         private readonly dataSource: DataSource,
         @InjectRepository(TeamRequest)
         private readonly teamRequestsRepository: Repository<TeamRequest>,
+        @Inject(forwardRef(() => UsersService))
         private readonly usersService: UsersService
     ) {}
 
@@ -144,11 +147,11 @@ export class TeamsService {
             )
             .orderBy(
                 `CASE 
-                        WHEN teamRequest.status = 'pending' THEN 1
-                        WHEN teamRequest.status = 'accepted' THEN 2
-                        WHEN teamRequest.status = 'rejected' THEN 3
-                        ELSE 4
-                        END`,
+                    WHEN teamRequest.status = 'pending' THEN 1
+                    WHEN teamRequest.status = 'accepted' THEN 2
+                    WHEN teamRequest.status = 'rejected' THEN 3
+                    ELSE 4
+                END`,
                 'ASC'
             )
             .addOrderBy('teamRequest.updatedAt', 'DESC');
@@ -193,5 +196,36 @@ export class TeamsService {
                 'Вы не можете взаимодействовать с указанными пользователями'
             );
         }
+    }
+
+    createRequestBasicDto(request: TeamRequest, userId: number) {
+        const direction =
+            request.senderUserId === userId
+                ? TeamRequestDirection.OUTGOING
+                : TeamRequestDirection.INCOMING;
+
+        return {
+            id: request.id,
+            status: request.status,
+            direction
+        };
+    }
+
+    async findTeamStateBetweenUsers(
+        requesterUserId: number,
+        targetUserId: number
+    ) {
+        const existingRequest = await this.teamRequestsRepository.findOne({
+            where: [
+                { senderUserId: requesterUserId, receiverUserId: targetUserId },
+                { senderUserId: targetUserId, receiverUserId: requesterUserId }
+            ]
+        });
+
+        if (!existingRequest) {
+            return null;
+        }
+
+        return this.createRequestBasicDto(existingRequest, requesterUserId);
     }
 }

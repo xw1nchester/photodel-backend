@@ -6,6 +6,7 @@ import { FavoritesResponseDto } from '@shared/dto/favorites-response.dto';
 import { LikesResponseDto } from '@shared/dto/likes-response.dto';
 import { ReviewsResponseDto } from '@shared/dto/reviews-response.dto';
 import { SpecializationDto } from '@specializations/dto/specializations-response.dto';
+import { TeamRequestBasicResponseDto } from '@teams/dto/team-response.dto';
 
 export class SocialResponseDto {
     @ApiProperty({ example: 1 })
@@ -69,6 +70,9 @@ export class ProfileResponseDto {
 
     @ApiProperty({ type: ReviewsResponseDto })
     reviews: ReviewsResponseDto;
+
+    @ApiProperty({ type: () => TeamRequestBasicResponseDto })
+    team: TeamRequestBasicResponseDto;
 
     @ApiProperty({ example: '2026-02-15T15:31:31.992Z' })
     createdAt: string;

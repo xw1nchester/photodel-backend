@@ -14,6 +14,7 @@ import { PhotoSessionsModule } from './photo-sessions/photo-sessions.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { RolesModule } from './roles/roles.module';
 import { TeamsModule } from './teams/teams.module';
+import { FilmingRequestsModule } from './filming-requests/filming-requests.module';
 
 @Module({
     imports: [
@@ -28,7 +29,8 @@ import { TeamsModule } from './teams/teams.module';
         LikesModule,
         ReviewsModule,
         PhotoSessionsModule,
-        TeamsModule
+        TeamsModule,
+        FilmingRequestsModule
     ],
     controllers: [AppController],
     providers: [

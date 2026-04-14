@@ -65,6 +65,8 @@
             "@photo-sessions/*": ["src/photo-sessions/*"],
             "@teams": ["src/teams"],
             "@teams/*": ["src/teams/*"],
+            "@filming-requests": ["src/filming-requests"],
+            "@filming-requests/*": ["src/filming-requests/*"],
         }
     }
 }

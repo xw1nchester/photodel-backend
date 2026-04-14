@@ -67,7 +67,7 @@ export class PhotoSessionsService {
             photos,
             name: photoSession.name,
             description: photoSession.description,
-            location: this.locationsService.getDto(photoSession.location),
+            location: this.locationsService.createDto(photoSession.location),
             startDate: photoSession.startDate,
             endDate: photoSession.endDate,
             specialization: photoSession.specialization,
@@ -260,7 +260,7 @@ export class PhotoSessionsService {
             id: photoSession.id,
             preview: this.filesService.createBasicDto(photoSession.previewFile),
             name: photoSession.name,
-            location: this.locationsService.getDto(photoSession.location),
+            location: this.locationsService.createDto(photoSession.location),
             favorites: {
                 isFavorite: photoSession.isFavorite,
                 favoriteId: photoSession.favoriteId,

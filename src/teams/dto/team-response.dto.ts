@@ -20,7 +20,7 @@ class TeamRequestResponseDto {
     })
     direction: TeamRequestDirection;
 
-    @ApiProperty({ type: ProfileBasicResponseDto })
+    @ApiProperty({ type: () => ProfileBasicResponseDto })
     user: ProfileBasicResponseDto;
 
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
@@ -33,4 +33,21 @@ class TeamRequestResponseDto {
 export class TeamRequestWrapperResponseDto {
     @ApiProperty({ type: TeamRequestResponseDto, isArray: true })
     teamRequests: TeamRequestResponseDto[];
+}
+
+export class TeamRequestBasicResponseDto {
+    @ApiProperty({ example: 1 })
+    id: number;
+
+    @ApiProperty({
+        enum: TeamRequestStatus,
+        example: TeamRequestStatus.PENDING
+    })
+    status: TeamRequestStatus;
+
+    @ApiProperty({
+        enum: TeamRequestDirection,
+        example: TeamRequestDirection.OUTGOING
+    })
+    direction: TeamRequestDirection;
 }

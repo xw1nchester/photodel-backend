@@ -57,7 +57,7 @@ export class PhotosService {
             imageUrl: this.s3Service.getUrl(photo.imageKey),
             name: photo.name,
             description: photo.description,
-            location: this.locationsService.getDto(photo.location),
+            location: this.locationsService.createDto(photo.location),
             camera: photo.camera,
             aperture: photo.aperture,
             focalLength: photo.focalLength,

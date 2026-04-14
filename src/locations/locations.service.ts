@@ -30,7 +30,7 @@ export class LocationsService {
             : null;
     }
 
-    getDto(location: Location) {
+    createDto(location: Location) {
         return location
             ? {
                   id: location.id,
@@ -42,13 +42,21 @@ export class LocationsService {
             : null;
     }
 
-    async create(dto: CreateLocationDto) {
+    async create(dto: CreateLocationDto, manager?: EntityManager) {
+        const locationsRepo = manager
+            ? manager.getRepository(Location)
+            : this.locationsRepository;
+            
+        const placesRepo = manager
+            ? manager.getRepository(Place)
+            : this.placesRepository;
+
         const coordinates: Point = {
             type: 'Point',
             coordinates: [dto.longitude, dto.latitude]
         };
 
-        const nearestPlace = await this.placesRepository
+        const nearestPlace = await placesRepo
             .createQueryBuilder('place')
             .orderBy(
                 'place.coordinates <-> ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)',
@@ -57,7 +65,7 @@ export class LocationsService {
             .setParameters({ lat: dto.latitude, lon: dto.longitude })
             .getOne();
 
-        return this.locationsRepository.create({
+        return locationsRepo.create({
             coordinates,
             address: dto.address,
             place: nearestPlace

@@ -49,7 +49,7 @@ export class FilmingLocationsService {
             photos,
             name: filmingLocation.name,
             description: filmingLocation.description,
-            location: this.locationsService.getDto(filmingLocation.location),
+            location: this.locationsService.createDto(filmingLocation.location),
             camera: filmingLocation.camera,
             price: filmingLocation.price,
             conditions: filmingLocation.conditions,
@@ -250,7 +250,7 @@ export class FilmingLocationsService {
                 filmingLocation.previewFile
             ),
             name: filmingLocation.name,
-            location: this.locationsService.getDto(filmingLocation.location),
+            location: this.locationsService.createDto(filmingLocation.location),
             user,
             favorites: {
                 isFavorite: filmingLocation.isFavorite,
