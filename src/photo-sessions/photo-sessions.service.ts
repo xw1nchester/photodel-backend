@@ -228,7 +228,7 @@ export class PhotoSessionsService {
 
             let location: Location | null = null;
             if (dto.location) {
-                location = await this.locationsService.create(dto.location);
+                location = await this.locationsService.create(dto.location, manager);
             }
 
             const createdPhotoSession = await repo.save({
@@ -463,7 +463,8 @@ export class PhotoSessionsService {
 
             if (dto.location) {
                 const createdLocation = await this.locationsService.create(
-                    dto.location
+                    dto.location,
+                    manager
                 );
                 if (photoSession.location) {
                     photoSession.location.coordinates =

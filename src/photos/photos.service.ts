@@ -93,7 +93,7 @@ export class PhotosService {
 
             let location: Location | null = null;
             if (dto.location) {
-                location = await this.locationsService.create(dto.location);
+                location = await this.locationsService.create(dto.location, manager);
             }
 
             const specializations =
@@ -575,7 +575,8 @@ export class PhotosService {
 
             if (dto.location) {
                 const createdLocation = await this.locationsService.create(
-                    dto.location
+                    dto.location,
+                    manager
                 );
                 if (photo.location) {
                     photo.location.coordinates = createdLocation.coordinates;

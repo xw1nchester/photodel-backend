@@ -9,10 +9,11 @@ import {
     Post
 } from '@nestjs/common';
 import { FilmingRequestsService } from './filming-requests.service';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 import { FilmingRequestDto } from './dto/filming-request.dto';
+import { FilmingRequestWrapperResponseDto } from './dto/filming-response.dto';
 
 @Controller('filming-requests')
 export class FilmingRequestsController {
@@ -61,6 +62,7 @@ export class FilmingRequestsController {
     // нужна наверно паджинация
     @Get()
     @ApiBearerAuth()
+    @ApiOkResponse({ type: FilmingRequestWrapperResponseDto })
     async findRequests(@CurrentUser() user: JwtPayload) {
         return await this.filmingRequestsService.findRequests(user.id);
     }

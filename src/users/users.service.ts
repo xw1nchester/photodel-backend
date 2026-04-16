@@ -459,7 +459,8 @@ export class UsersService {
 
             if (dto.location) {
                 const createdLocation = await this.locationsService.create(
-                    dto.location
+                    dto.location,
+                    manager
                 );
                 if (profile.location) {
                     profile.location.coordinates = createdLocation.coordinates;
@@ -521,7 +522,8 @@ export class UsersService {
                         startDate: new Date(locDto.startDate),
                         endDate: new Date(locDto.endDate),
                         location: await this.locationsService.create(
-                            locDto.location
+                            locDto.location,
+                            manager
                         ),
                         comment: locDto.comment
                     })

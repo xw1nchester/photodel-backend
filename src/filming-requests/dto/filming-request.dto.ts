@@ -11,7 +11,6 @@ export class FilmingRequestDto {
     @ApiProperty({
         type: String,
         format: 'date-time'
-        // example: "2026-04-14T12:34:56.000Z",
     })
     @IsISO8601()
     date: Date;
