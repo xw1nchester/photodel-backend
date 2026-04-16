@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { TeamRequestDirection } from '@teams/enums/team-request-direction.enums';
 import { TeamRequestStatus } from '@teams/team-request.entity';
-import { ProfileBasicResponseDto } from '@users/dto/profile-response.dto';
+import { UserShortResponseDto } from '@users/dto/user-response.dto';
 
 class TeamRequestResponseDto {
     @ApiProperty({ example: 1 })
@@ -20,8 +20,8 @@ class TeamRequestResponseDto {
     })
     direction: TeamRequestDirection;
 
-    @ApiProperty({ type: () => ProfileBasicResponseDto })
-    user: ProfileBasicResponseDto;
+    @ApiProperty({ type: () => UserShortResponseDto })
+    user: UserShortResponseDto;
 
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
     createdAt: string;

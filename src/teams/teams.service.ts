@@ -132,7 +132,7 @@ export class TeamsService {
         };
     }
 
-    async findRequests(userId: number, { accepted }: TeamRequestQueryDto) {
+    async findRequests(userId: number, { status }: TeamRequestQueryDto) {
         const query = this.teamRequestsRepository
             .createQueryBuilder('teamRequest')
             .leftJoinAndSelect('teamRequest.senderUser', 'senderUser')
@@ -166,10 +166,8 @@ export class TeamsService {
             )
             .addOrderBy('teamRequest.updatedAt', 'DESC');
 
-        if (accepted) {
-            query.andWhere('teamRequest.status = :status', {
-                status: TeamRequestStatus.ACCEPTED
-            });
+        if (status) {
+            query.andWhere('teamRequest.status = :status', { status });
         }
 
         const data = await query.getMany();
