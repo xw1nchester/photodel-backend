@@ -96,8 +96,18 @@ export class TeamsService {
         return await this.teamRequestsRepository.save(existingRequest);
     }
 
-    async removeRequest(id: number) {
-        const existingRequest = await this.findById(id);
+    async removeRequest(id: number, userId: number) {
+        const existingRequest = await this.teamRequestsRepository.findOne({
+            where: [
+                { id, senderUserId: userId },
+                { id, receiverUserId: userId }
+            ]
+        });
+
+        if (!existingRequest) {
+            throw new NotFoundException('Запрос не найден');
+        }
+
         return await this.teamRequestsRepository.remove(existingRequest);
     }
 

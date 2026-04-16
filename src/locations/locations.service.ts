@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, ILike, Point, Repository } from 'typeorm';
+import { EntityManager, Point, Repository } from 'typeorm';
 
 import { PaginationDto } from '@shared/dto/pagination.dto';
 
@@ -8,6 +8,7 @@ import { CreateLocationDto } from './dto/create-location.dto';
 import { PlaceQueryDto } from './dto/place-query.dto';
 import { Location } from './entities/location.entity';
 import { Place } from './entities/place.entity';
+import { PlaceSortOption } from './enums/place-sort-option.enum';
 
 @Injectable()
 export class LocationsService {
@@ -46,7 +47,7 @@ export class LocationsService {
         const locationsRepo = manager
             ? manager.getRepository(Location)
             : this.locationsRepository;
-            
+
         const placesRepo = manager
             ? manager.getRepository(Place)
             : this.placesRepository;
@@ -84,23 +85,57 @@ export class LocationsService {
         await repo.delete(idsArray);
     }
 
-    async findPlaces({ page, limit, search }: PlaceQueryDto) {
-        let where = {};
+    async findPlaces({
+        page,
+        limit,
+        search,
+        latitude,
+        longitude,
+        sort
+    }: PlaceQueryDto) {
+        const query = this.placesRepository
+            .createQueryBuilder('place')
+            .addSelect(
+                `
+                ST_Distance(
+                    place.coordinates,
+                    ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
+                )
+                `,
+                'distance'
+            ).setParameters({ longitude, latitude })
+            .take(limit)
+            .skip((page - 1) * limit);
 
         if (search) {
-            where = {
-                city: ILike(`%${search}%`)
-            };
+            query.andWhere(
+                `(place.city ILIKE :search)`,
+                { search: `%${search}%` }
+            );
         }
 
-        const [enitities, count] = await this.placesRepository.findAndCount({
-            where,
-            take: limit,
-            skip: (page - 1) * limit
-        });
+        switch (sort) {
+            case PlaceSortOption.ALPHABET:
+                query.orderBy('place.country', 'ASC');
+                query.addOrderBy('place.city', 'ASC');
+                break;
+
+            case PlaceSortOption.DISTANCE:
+                query.orderBy('distance', 'ASC');
+                break;
+
+            default:
+                query.orderBy('place.country', 'ASC');
+                query.addOrderBy('place.city', 'ASC');
+                break;
+        }
+
+        const enitities = await query.getMany();
+
+        const total = await query.getCount();
 
         const places = enitities.map(e => this.getPlaceDto(e));
 
-        return new PaginationDto(places, count, page, limit);
+        return new PaginationDto(places, total, page, limit);
     }
 }
