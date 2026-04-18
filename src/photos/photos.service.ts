@@ -693,6 +693,6 @@ export class PhotosService {
 
         const photo = this.transformPhotosRawData(entities, raw)[0];
 
-        return { photo: this.createDto(photo) };
+        return { photo: photo ? this.createDto(photo): null };
     }
 }

@@ -103,32 +103,25 @@ export class LocationsService {
                 )
                 `,
                 'distance'
-            ).setParameters({ longitude, latitude })
+            )
+            .setParameters({ longitude, latitude })
             .take(limit)
             .skip((page - 1) * limit);
 
         if (search) {
-            query.andWhere(
-                `(place.city ILIKE :search)`,
-                { search: `%${search}%` }
-            );
+            query.andWhere(`(place.city ILIKE :search)`, {
+                search: `%${search}%`
+            });
         }
 
         switch (sort) {
-            case PlaceSortOption.ALPHABET:
-                query.orderBy('place.country', 'ASC');
-                query.addOrderBy('place.city', 'ASC');
-                break;
-
             case PlaceSortOption.DISTANCE:
                 query.orderBy('distance', 'ASC');
                 break;
-
-            default:
-                query.orderBy('place.country', 'ASC');
-                query.addOrderBy('place.city', 'ASC');
-                break;
         }
+
+        query.addOrderBy('place.country', 'ASC');
+        query.addOrderBy('place.city', 'ASC');
 
         const enitities = await query.getMany();
 

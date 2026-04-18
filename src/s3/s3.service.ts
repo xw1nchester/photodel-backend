@@ -104,7 +104,7 @@ export class S3Service implements OnModuleInit {
     //     });
     // }
     getUrl(key: string) {
-        return `${this.configService.get('S3_URL')}/${this.configService.get('S3_BUCKET')}/${key}`;
+        return `${this.configService.get('S3_PUBLIC_URL')}/${this.configService.get('S3_BUCKET')}/${key}`;
     }
 
     async uploadFile(body: Buffer, contentType: string) {
