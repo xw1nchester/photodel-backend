@@ -12,6 +12,7 @@ import { PaginationDto } from '@shared/dto/pagination.dto';
 
 import { ChatMember } from './entities/chat-members.entity';
 import { Chat } from './entities/chat.entity';
+import { FilesService } from '@files/files.service';
 
 @Injectable()
 export class ChatsService {
@@ -21,7 +22,8 @@ export class ChatsService {
         @InjectRepository(ChatMember)
         private readonly chatsMembersRepository: Repository<ChatMember>,
         @Inject(forwardRef(() => MessagesService))
-        private readonly messagesService: MessagesService
+        private readonly messagesService: MessagesService,
+        private readonly filesService: FilesService
     ) {}
 
     async findPrivateChat(
@@ -86,13 +88,24 @@ export class ChatsService {
 
     createDto(chat: Chat, requesterUserId: number) {
         const companion = chat.members.find(m => m.userId !== requesterUserId);
+        let title = null,
+            picture = null;
+
+        if (companion) {
+            title = `${companion.user.lastName} ${companion?.user?.firstName}`;
+            picture = companion.user.avatarKey
+                ? this.filesService.getUrl(companion.user.avatarKey)
+                : null;
+        }
+
         const latestMessage = this.messagesService.createDto(
             chat.latestMessage
         );
 
         return {
             id: chat.id,
-            title: `${companion?.user?.lastName} ${companion?.user?.firstName}`,
+            title,
+            picture,
             latestMessage
         };
     }
