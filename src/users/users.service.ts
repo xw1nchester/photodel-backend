@@ -16,8 +16,10 @@ import { Review } from '@reviews/review.entity';
 import { S3Service } from '@s3/s3.service';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
+import { SortOption } from '@shared/enums/sort-option.enum';
 import { SocialsService } from '@socials/socials.service';
 import { SpecializationsService } from '@specializations/specializations.service';
+import { TeamsService } from '@teams/teams.service';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { MapQueryDto } from './dto/map-query.dto';
@@ -28,8 +30,6 @@ import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
 import { TemporaryLocation } from './entities/temporary-location.entity';
 import { User } from './entities/user.entity';
-import { SortOption } from '@shared/enums/sort-option.enum';
-import { TeamsService } from '@teams/teams.service';
 
 @Injectable()
 export class UsersService {

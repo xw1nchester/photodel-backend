@@ -1,13 +1,14 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { TeamsModule } from '@teams/teams.module';
 import { AlbumsModule } from '@albums/albums.module';
 import { LocationsModule } from '@locations/locations.module';
+import { MessagesModule } from '@messenger/messages/messages.module';
 import { ProCategoriesModule } from '@pro-categories/pro-categories.module';
 import { S3Module } from '@s3/s3.module';
 import { SocialsModule } from '@socials/socials.module';
 import { SpecializationsModule } from '@specializations/specializations.module';
+import { TeamsModule } from '@teams/teams.module';
 
 import { ProfileSocial } from './entities/profile-social.entity';
 import { Profile } from './entities/profile.entity';
@@ -30,7 +31,8 @@ import { UsersService } from './users.service';
         SpecializationsModule,
         SocialsModule,
         LocationsModule,
-        AlbumsModule
+        AlbumsModule,
+        forwardRef(() => MessagesModule)
     ],
     controllers: [UsersController],
     providers: [UsersService],

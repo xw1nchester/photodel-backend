@@ -185,7 +185,10 @@ export class FilmingLocationsService {
 
             let location: Location | null = null;
             if (dto.location) {
-                location = await this.locationsService.create(dto.location, manager);
+                location = await this.locationsService.create(
+                    dto.location,
+                    manager
+                );
             }
 
             const specializations =
@@ -389,24 +392,25 @@ export class FilmingLocationsService {
         }
 
         if (search) {
-            query.andWhere(
-                `filmingLocation.name ILIKE :search`,
-                { search: `%${search}%` }
-            );
+            query.andWhere(`filmingLocation.name ILIKE :search`, {
+                search: `%${search}%`
+            });
         }
 
         if (specializationId != undefined) {
-            query.andWhere(qb2 => {
-                const subQuery = qb2
-                    .subQuery()
-                    .select('1')
-                    .from('filming_locations_specializations', 'fls')
-                    .where('fls.filming_location_id = filmingLocation.id')
-                    .andWhere('fls.specialization_id = :specializationId')
-                    .getQuery();
+            query
+                .andWhere(qb2 => {
+                    const subQuery = qb2
+                        .subQuery()
+                        .select('1')
+                        .from('filming_locations_specializations', 'fls')
+                        .where('fls.filming_location_id = filmingLocation.id')
+                        .andWhere('fls.specialization_id = :specializationId')
+                        .getQuery();
 
-                return `EXISTS ${subQuery}`;
-            }).setParameter('specializationId', specializationId);
+                    return `EXISTS ${subQuery}`;
+                })
+                .setParameter('specializationId', specializationId);
         }
 
         const { entities, raw } = await query.getRawAndEntities();

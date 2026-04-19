@@ -1,7 +1,7 @@
-import { FilmingRequestStatus } from '@filming-requests/filming-requests.entity';
-import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
+import { FilmingRequestStatus } from '@filming-requests/filming-requests.entity';
+import { LocationResponseDto } from '@locations/dto/location-response.dto';
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
 
 class FilmingRequestResponseDto {

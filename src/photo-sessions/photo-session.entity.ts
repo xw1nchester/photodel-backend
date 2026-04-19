@@ -12,8 +12,8 @@ import {
 
 import { File } from '@files/file.entity';
 import { Location } from '@locations/entities/location.entity';
-import { User } from '@users/entities/user.entity';
 import { Specialization } from '@specializations/specialization.entity';
+import { User } from '@users/entities/user.entity';
 
 @Entity('photo_sessions')
 export class PhotoSession {

@@ -27,7 +27,10 @@ export class Location {
     @Column({ name: 'place_id', nullable: true })
     placeId: Place;
 
-    @ManyToOne(() => Place, place => place.locations, { onDelete: 'SET NULL' })
+    @ManyToOne(() => Place, place => place.locations, {
+        nullable: true,
+        onDelete: 'SET NULL'
+    })
     @JoinColumn({ name: 'place_id' })
     place: Place;
 }

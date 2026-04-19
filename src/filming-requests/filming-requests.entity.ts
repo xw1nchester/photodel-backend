@@ -1,5 +1,3 @@
-import { Location } from '@locations/entities/location.entity';
-import { User } from '@users/entities/user.entity';
 import {
     Column,
     CreateDateColumn,
@@ -9,6 +7,9 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from 'typeorm';
+
+import { Location } from '@locations/entities/location.entity';
+import { User } from '@users/entities/user.entity';
 
 export enum FilmingRequestStatus {
     PENDING = 'pending',

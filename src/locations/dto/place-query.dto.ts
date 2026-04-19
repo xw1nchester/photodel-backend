@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
     IsEnum,
     IsInt,
@@ -9,9 +10,8 @@ import {
     Min
 } from 'class-validator';
 
-import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
-import { Expose, Transform, Type } from 'class-transformer';
 import { PlaceSortOption } from '@locations/enums/place-sort-option.enum';
+import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 
 export class PlaceQueryDto extends PaginationQueryDto {
     @ApiProperty({

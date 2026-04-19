@@ -1,7 +1,17 @@
-import { LocationRequestDto } from '@locations/dto/location-request.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsISO8601, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import {
+    IsBoolean,
+    IsISO8601,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString,
+    Min,
+    ValidateNested
+} from 'class-validator';
+
+import { LocationRequestDto } from '@locations/dto/location-request.dto';
 
 export class FilmingRequestDto {
     @ApiProperty({ example: 1 })

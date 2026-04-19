@@ -37,7 +37,8 @@ export class PhotosService {
     ) {}
 
     createDto(photo: Photo) {
-        const albums = photo.albums?.map(a => this.albumService.createDto(a)) ?? [];
+        const albums =
+            photo.albums?.map(a => this.albumService.createDto(a)) ?? [];
 
         // чтобы модуль фото не зависел от модуля юзеров
         const user = {
@@ -93,7 +94,10 @@ export class PhotosService {
 
             let location: Location | null = null;
             if (dto.location) {
-                location = await this.locationsService.create(dto.location, manager);
+                location = await this.locationsService.create(
+                    dto.location,
+                    manager
+                );
             }
 
             const specializations =
@@ -693,6 +697,6 @@ export class PhotosService {
 
         const photo = this.transformPhotosRawData(entities, raw)[0];
 
-        return { photo: photo ? this.createDto(photo): null };
+        return { photo: photo ? this.createDto(photo) : null };
     }
 }

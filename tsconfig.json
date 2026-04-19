@@ -67,6 +67,8 @@
             "@teams/*": ["src/teams/*"],
             "@filming-requests": ["src/filming-requests"],
             "@filming-requests/*": ["src/filming-requests/*"],
+            "@messenger": ["src/messenger"],
+            "@messenger/*": ["src/messenger/*"],
         }
     }
 }

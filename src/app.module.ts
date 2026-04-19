@@ -9,12 +9,14 @@ import { DatabaseModule } from '@database/database.module';
 import { AppController } from './app.controller';
 import { FavoritesModule } from './favorites/favorites.module';
 import { FilesModule } from './files/files.module';
+import { FilmingRequestsModule } from './filming-requests/filming-requests.module';
 import { LikesModule } from './likes/likes.module';
+import { ChatsModule } from './messenger/chats/chats.module';
+import { MessagesModule } from './messenger/messages/messages.module';
 import { PhotoSessionsModule } from './photo-sessions/photo-sessions.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { RolesModule } from './roles/roles.module';
 import { TeamsModule } from './teams/teams.module';
-import { FilmingRequestsModule } from './filming-requests/filming-requests.module';
 
 @Module({
     imports: [
@@ -30,7 +32,9 @@ import { FilmingRequestsModule } from './filming-requests/filming-requests.modul
         ReviewsModule,
         PhotoSessionsModule,
         TeamsModule,
-        FilmingRequestsModule
+        FilmingRequestsModule,
+        ChatsModule,
+        MessagesModule
     ],
     controllers: [AppController],
     providers: [

@@ -52,7 +52,10 @@ export class TeamsController {
 
     @Delete('requests/:id')
     @ApiBearerAuth()
-    async removeRequest(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtPayload) {
+    async removeRequest(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload
+    ) {
         await this.teamsService.removeRequest(id, user.id);
     }
 

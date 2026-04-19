@@ -12,7 +12,7 @@ import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
 
 export class ReviewRequestDto extends EntityActionRequestDto {
     @ApiProperty({
-        example: 'content'
+        example: 'Чудненько'
     })
     @IsString()
     content?: string;

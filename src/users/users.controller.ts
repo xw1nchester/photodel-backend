@@ -7,12 +7,14 @@ import {
     Query,
     Param,
     ParseIntPipe,
-    UseGuards
+    UseGuards,
+    Post
 } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiExtraModels,
     ApiOkResponse,
+    ApiTags,
     getSchemaPath
 } from '@nestjs/swagger';
 
@@ -21,6 +23,9 @@ import { AlbumResponseDto } from '@albums/dto/album-response.dto';
 import { CurrentUser, Public } from '@auth/decorators';
 import { OptionalJwtAuthGuard } from '@auth/guards/optional-jwt-auth.guard';
 import { JwtPayload } from '@auth/interfaces';
+import { MessageRequestDto } from '@messenger/messages/dto/message-request.dto';
+import { MessageWrapperResponseDto } from '@messenger/messages/dto/message-response.dto';
+import { MessagesService } from '@messenger/messages/messages.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 
@@ -42,7 +47,8 @@ import { UsersService } from './users.service';
 export class UsersController {
     constructor(
         private readonly usersService: UsersService,
-        private readonly albumsService: AlbumsService
+        private readonly albumsService: AlbumsService,
+        private readonly messagesService: MessagesService
     ) {}
 
     @Get('me')
@@ -181,5 +187,21 @@ export class UsersController {
             pagination,
             isPublished: true
         });
+    }
+
+    @ApiTags('Messenger')
+    @ApiBearerAuth()
+    @Post(':id/messages')
+    @ApiOkResponse({ type: MessageWrapperResponseDto })
+    async sendMessage(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload,
+        @Body() dto: MessageRequestDto
+    ) {
+        return await this.messagesService.createMessageByUserId(
+            user.id,
+            id,
+            dto
+        );
     }
 }

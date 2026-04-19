@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TeamRequestStatus } from '@teams/team-request.entity';
 import { IsEnum, IsOptional } from 'class-validator';
+
+import { TeamRequestStatus } from '@teams/team-request.entity';
 
 export class TeamRequestQueryDto {
     @ApiProperty({

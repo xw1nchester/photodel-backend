@@ -16,11 +16,11 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { SortOption } from '@shared/enums/sort-option.enum';
+import { SpecializationsService } from '@specializations/specializations.service';
 import { TeamsService } from '@teams/teams.service';
 
 import { PhotoSessionRequestDto } from './dto/photo-session-request.dto';
 import { PhotoSession } from './photo-session.entity';
-import { SpecializationsService } from '@specializations/specializations.service';
 
 @Injectable()
 export class PhotoSessionsService {
@@ -228,7 +228,10 @@ export class PhotoSessionsService {
 
             let location: Location | null = null;
             if (dto.location) {
-                location = await this.locationsService.create(dto.location, manager);
+                location = await this.locationsService.create(
+                    dto.location,
+                    manager
+                );
             }
 
             const createdPhotoSession = await repo.save({
