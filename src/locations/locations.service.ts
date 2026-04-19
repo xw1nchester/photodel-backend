@@ -91,7 +91,8 @@ export class LocationsService {
         search,
         latitude,
         longitude,
-        sort
+        sort,
+        excludedPlaceId
     }: PlaceQueryDto) {
         const query = this.placesRepository
             .createQueryBuilder('place')
@@ -109,7 +110,7 @@ export class LocationsService {
             .skip((page - 1) * limit);
 
         if (search) {
-            query.andWhere(`(place.city ILIKE :search)`, {
+            query.where(`place.city ILIKE :search`, {
                 search: `%${search}%`
             });
         }
@@ -118,6 +119,10 @@ export class LocationsService {
             case PlaceSortOption.DISTANCE:
                 query.orderBy('distance', 'ASC');
                 break;
+        }
+
+        if (excludedPlaceId != undefined) {
+            query.andWhere('place.id != :excludedPlaceId', { excludedPlaceId });
         }
 
         query.addOrderBy('place.country', 'ASC');

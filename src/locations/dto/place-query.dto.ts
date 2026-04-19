@@ -1,8 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+    IsEnum,
+    IsInt,
+    IsNumber,
+    IsOptional,
+    IsString,
+    Max,
+    Min
+} from 'class-validator';
 
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
-import { Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { PlaceSortOption } from '@locations/enums/place-sort-option.enum';
 
 export class PlaceQueryDto extends PaginationQueryDto {
@@ -48,4 +56,15 @@ export class PlaceQueryDto extends PaginationQueryDto {
     @IsEnum(PlaceSortOption)
     @IsOptional()
     sort?: PlaceSortOption = PlaceSortOption.ALPHABET;
+
+    @ApiProperty({
+        name: 'excluded_place_id',
+        example: 1,
+        required: false
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Expose({ name: 'excluded_place_id' })
+    excludedPlaceId?: number;
 }
