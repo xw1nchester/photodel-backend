@@ -66,5 +66,6 @@ export class Review {
     updatedAt: Date;
 
     // вычисляемые поля
-    entity: User;
+    // TODO: разобраться с типом, должен быть User | Photo
+    entity: any;
 }

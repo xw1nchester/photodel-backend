@@ -54,9 +54,6 @@ export class PhotoResponseDto {
     @ApiProperty({ example: true })
     isPublished: boolean;
 
-    // @ApiProperty({ example: 1 })
-    // userId: number;
-
     @ApiProperty({ type: [SpecializationDto] })
     specializations: SpecializationDto[];
 

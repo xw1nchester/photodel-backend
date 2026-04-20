@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 
 import { FileBasicResponseDto } from '@files/dto/files-response.dto';
+import { PhotoResponseDto } from '@photos/dto/photo-response.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { UserShortResponseDto } from '@users/dto/user-response.dto';
 
@@ -17,8 +18,14 @@ export class ReviewResponseDto {
     @ApiProperty({ example: 1 })
     entityId: number;
 
-    @ApiProperty({ type: UserShortResponseDto, nullable: true })
-    entity: UserShortResponseDto;
+    @ApiProperty({
+        oneOf: [
+            { $ref: getSchemaPath(UserShortResponseDto) },
+            { $ref: getSchemaPath(PhotoResponseDto) }
+        ],
+        nullable: true
+    })
+    entity: UserShortResponseDto | PhotoResponseDto;
 
     @ApiProperty({
         example: 'Чудненько'

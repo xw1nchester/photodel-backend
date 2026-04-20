@@ -9,6 +9,7 @@ import { Brackets, DataSource, EntityManager, Repository } from 'typeorm';
 import { FilesService } from '@files/files.service';
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
 import { PhotoSessionsService } from '@photo-sessions/photo-sessions.service';
+import { Photo } from '@photos/photo.entity';
 import { PhotosService } from '@photos/photos.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
@@ -64,17 +65,26 @@ export class ReviewsService {
 
         let entity = null;
 
-        if (review.entityType == EntityType.USER && review.entity) {
-            entity = {
-                id: review.entity.id,
-                firstName: review.entity.firstName,
-                lastName: review.entity.lastName,
-                avatarKey: review.entity.avatarKey,
-                avatarUrl: review.entity.avatarKey
-                    ? this.filesService.getUrl(review.entity.avatarKey)
-                    : null,
-                isPro: review.entity.isPro
-            };
+        if (review.entity) {
+            if (review.entityType == EntityType.USER) {
+                entity = {
+                    id: review.entity.id,
+                    firstName: review.entity.firstName,
+                    lastName: review.entity.lastName,
+                    avatarKey: review.entity.avatarKey,
+                    avatarUrl: review.entity.avatarKey
+                        ? this.filesService.getUrl(review.entity.avatarKey)
+                        : null,
+                    isPro: review.entity.isPro
+                };
+            }
+
+            if (review.entityType == EntityType.PHOTO) {
+                entity = {
+                    id: review.entity.id,
+                    name: review.entity.name
+                };
+            }
         }
 
         return {
@@ -221,16 +231,29 @@ export class ReviewsService {
             .where('review.entityType = :entityType', { entityType })
             .leftJoinAndSelect('review.user', 'user')
             .leftJoinAndSelect('review.files', 'files')
-            .leftJoinAndMapOne(
+            .orderBy('review.createdAt', 'DESC')
+            .take(limit)
+            .skip((page - 1) * limit);
+
+        if (entityType == EntityType.USER) {
+            query.leftJoinAndMapOne(
                 'review.entity',
                 User,
                 'entity',
                 'review.entityType = :userEntityType AND review.entityId = entity.id',
                 { userEntityType: EntityType.USER }
-            )
-            .orderBy('review.createdAt', 'DESC')
-            .take(limit)
-            .skip((page - 1) * limit);
+            );
+        }
+
+        if (entityType == EntityType.PHOTO) {
+            query.leftJoinAndMapOne(
+                'review.entity',
+                Photo,
+                'entity',
+                'review.entityType = :photoEntityType AND review.entityId = entity.id',
+                { photoEntityType: EntityType.PHOTO }
+            );
+        }
 
         if (requesterUserId != undefined) {
             query.andWhere(
