@@ -7,12 +7,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 
+import { FilesService } from '@files/files.service';
 import { MessagesService } from '@messenger/messages/messages.service';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 
 import { ChatMember } from './entities/chat-members.entity';
 import { Chat } from './entities/chat.entity';
-import { FilesService } from '@files/files.service';
 
 @Injectable()
 export class ChatsService {
@@ -106,8 +106,23 @@ export class ChatsService {
             id: chat.id,
             title,
             picture,
-            latestMessage
+            latestMessage,
+            unreadCount: chat.unreadCount
         };
+    }
+
+    private transformPhotosRawData(entities: Chat[], raw: any[]) {
+        const rawMap = new Map();
+
+        for (const r of raw) {
+            rawMap.set(r.chat_id, r);
+        }
+
+        return entities.map(chat => {
+            const r = rawMap.get(chat.id);
+            chat.unreadCount = Number(r?.unreadCount || 0);
+            return chat;
+        });
     }
 
     async findUserChats(userId: number, page: number, limit: number) {
@@ -120,19 +135,38 @@ export class ChatsService {
             .leftJoinAndSelect('members.user', 'user')
             .leftJoinAndSelect('chat.latestMessage', 'latestMessage')
             .leftJoinAndSelect('latestMessage.sender', 'sender')
+            .leftJoin(
+                'messages',
+                'unreadMessages',
+                `
+                unreadMessages.chat_id = chat.id
+                AND unreadMessages.id > COALESCE(member.last_read_message_id, 0)
+                `
+            )
+            .addSelect('COUNT(unreadMessages.id)', 'unreadCount')
+            .groupBy('chat.id')
+            .addGroupBy('member.id')
+            .addGroupBy('members.id')
+            .addGroupBy('user.id')
+            .addGroupBy('latestMessage.id')
+            .addGroupBy('sender.id')
             .orderBy('latestMessage.createdAt', 'DESC', 'NULLS LAST')
             .take(limit)
             .skip((page - 1) * limit);
 
-        const [data, totalCount] = await query.getManyAndCount();
+        const { entities, raw } = await query.getRawAndEntities();
 
-        const dto = data.map(c => this.createDto(c, userId));
+        const total = await query.getCount();
 
-        return new PaginationDto(dto, totalCount, page, limit);
+        const chats = this.transformPhotosRawData(entities, raw);
+
+        const dtos = chats.map(c => this.createDto(c, userId));
+
+        return new PaginationDto(dtos, total, page, limit);
     }
 
     async findUserChatById(chatId: number, userId: number) {
-        const chat = await this.chatsRepository
+        const query = this.chatsRepository
             .createQueryBuilder('chat')
             .where('chat.id = :chatId', { chatId })
             .innerJoin('chat.members', 'member', 'member.userId = :userId', {
@@ -142,12 +176,57 @@ export class ChatsService {
             .leftJoinAndSelect('members.user', 'user')
             .leftJoinAndSelect('chat.latestMessage', 'latestMessage')
             .leftJoinAndSelect('latestMessage.sender', 'sender')
-            .getOne();
+            .leftJoin(
+                'messages',
+                'unreadMessages',
+                `
+                unreadMessages.chat_id = chat.id
+                AND unreadMessages.id > COALESCE(member.last_read_message_id, 0)
+                `
+            )
+            .addSelect('COUNT(unreadMessages.id)', 'unreadCount')
+            .groupBy('chat.id')
+            .addGroupBy('member.id')
+            .addGroupBy('members.id')
+            .addGroupBy('user.id')
+            .addGroupBy('latestMessage.id')
+            .addGroupBy('sender.id')
+            .orderBy('latestMessage.createdAt', 'DESC', 'NULLS LAST');
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const chat = this.transformPhotosRawData(entities, raw)[0];
 
         if (!chat) {
             throw new NotFoundException('Чат не найден');
         }
 
         return { chat: this.createDto(chat, userId) };
+    }
+
+    async setLastReadMessage(
+        chatId: number,
+        userId: number,
+        lastReadMessageId: number,
+        manager?: EntityManager
+    ) {
+        const repo = manager
+            ? manager.getRepository(ChatMember)
+            : this.chatsMembersRepository;
+
+        return await repo.update({ chatId, userId }, { lastReadMessageId });
+    }
+
+    async getUnreadChatsCount(userId: number) {
+        const count = await this.chatsMembersRepository
+            .createQueryBuilder('cm')
+            .innerJoin('cm.chat', 'c')
+            .where('cm.userId = :userId', { userId })
+            .andWhere(
+                `(cm.lastReadMessageId IS NULL OR cm.lastReadMessageId < c.latestMessageId)`
+            )
+            .getCount();
+
+        return { count };
     }
 }

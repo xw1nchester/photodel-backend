@@ -100,6 +100,13 @@ export class MessagesService {
                 manager
             );
 
+            await this.chatsService.setLastReadMessage(
+                chat.id,
+                senderUserId,
+                createdMessage.id,
+                manager
+            );
+
             return {
                 message: await this.getDtoById(createdMessage.id, manager)
             };
@@ -136,13 +143,20 @@ export class MessagesService {
                 manager
             );
 
+            await this.chatsService.setLastReadMessage(
+                chatId,
+                senderUserId,
+                createdMessage.id,
+                manager
+            );
+
             return {
                 message: await this.getDtoById(createdMessage.id, manager)
             };
         });
     }
 
-    // TODO: impenent pagination with cursor
+    // TODO: implenent pagination with cursor
     async findChatMessages(
         chatId: number,
         userId: number
@@ -172,5 +186,39 @@ export class MessagesService {
         const data = await qb.getMany();
 
         return { data: data.map(m => this.createDto(m)) };
+    }
+
+    async findById(id: number) {
+        const message = await this.messagesRepository.findOne({
+            where: { id },
+            relations: { sender: true }
+        });
+
+        if (!message) {
+            throw new NotFoundException('Сообщение не найдено');
+        }
+
+        return message;
+    }
+
+    async readMessage(id: number, userId: number) {
+        const message = await this.findById(id);
+
+        const isUserInChat = await this.chatsService.isUserInChat(
+            userId,
+            message.chatId
+        );
+
+        if (!isUserInChat) {
+            throw new NotFoundException('Сообщение не найдено');
+        }
+
+        await this.chatsService.setLastReadMessage(
+            message.chatId,
+            userId,
+            message.id
+        );
+
+        return this.createDto(message);
     }
 }

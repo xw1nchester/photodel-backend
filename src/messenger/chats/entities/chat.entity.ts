@@ -33,4 +33,7 @@ export class Chat {
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    // вычисляемые поля
+    unreadCount?: number;
 }

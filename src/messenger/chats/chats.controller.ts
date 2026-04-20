@@ -29,7 +29,8 @@ import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 import { ChatsService } from './chats.service';
 import {
     ChatResponseDto,
-    ChatWrapperResponseDto
+    ChatWrapperResponseDto,
+    UnreadCountResponseDto
 } from './dto/chat-response.dto';
 
 @ApiTags('Messenger')
@@ -118,4 +119,16 @@ export class ChatsController {
     ) {
         return await this.messagesService.findChatMessages(id, user.id);
     }
+
+    // TODO: как вариант, присоединить к запросу me,
+    // а также добавить туда кол-во запросов на съемку, обучение итд
+    // либо сделать отдельный stats запрос
+    @Get('unread/count')
+    @ApiBearerAuth()
+    @ApiOkResponse({ type: UnreadCountResponseDto })
+    async getUnreadChatsCount(@CurrentUser() user: JwtPayload) {
+        return await this.chatsService.getUnreadChatsCount(user.id);
+    }
+
+    // read all messages?
 }

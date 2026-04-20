@@ -17,9 +17,17 @@ export class ChatResponseDto {
 
     @ApiProperty({ type: MessageResponseDto })
     latestMessage: MessageResponseDto;
+
+    @ApiProperty({ example: 1 })
+    unreadCount: number;
 }
 
 export class ChatWrapperResponseDto {
     @ApiProperty({ type: ChatResponseDto })
     chat: ChatResponseDto;
+}
+
+export class UnreadCountResponseDto {
+    @ApiProperty({ example: 1 })
+    count: number;
 }
