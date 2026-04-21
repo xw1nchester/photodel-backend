@@ -205,10 +205,11 @@ export class PhotoSessionsService {
     }
 
     async create(userId: number, dto: PhotoSessionRequestDto) {
-        if (new Date(dto.startDate) > new Date(dto.endDate)) {
-            throw new BadRequestException(
-                'Дата начала должна быть раньше даты окончания'
-            );
+        if (
+            new Date(dto.startDate) > new Date(dto.endDate) ||
+            new Date(dto.endDate) < new Date()
+        ) {
+            throw new BadRequestException('Некорректные даты');
         }
 
         return await this.dataSource.transaction(async manager => {
@@ -434,6 +435,13 @@ export class PhotoSessionsService {
     }
 
     async update(id: number, userId: number, dto: PhotoSessionRequestDto) {
+        if (
+            new Date(dto.startDate) > new Date(dto.endDate) ||
+            new Date(dto.endDate) < new Date()
+        ) {
+            throw new BadRequestException('Некорректные даты');
+        }
+
         return await this.dataSource.transaction(async manager => {
             const repo = manager.getRepository(PhotoSession);
 
