@@ -205,10 +205,7 @@ export class PhotoSessionsService {
     }
 
     async create(userId: number, dto: PhotoSessionRequestDto) {
-        if (
-            new Date(dto.startDate) > new Date(dto.endDate) ||
-            new Date(dto.endDate) < new Date()
-        ) {
+        if (new Date(dto.startDate) > new Date(dto.endDate)) {
             throw new BadRequestException('Некорректные даты');
         }
 
@@ -435,10 +432,7 @@ export class PhotoSessionsService {
     }
 
     async update(id: number, userId: number, dto: PhotoSessionRequestDto) {
-        if (
-            new Date(dto.startDate) > new Date(dto.endDate) ||
-            new Date(dto.endDate) < new Date()
-        ) {
+        if (new Date(dto.startDate) > new Date(dto.endDate)) {
             throw new BadRequestException('Некорректные даты');
         }
 

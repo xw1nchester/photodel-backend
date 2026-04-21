@@ -14,6 +14,7 @@ import { PhotosService } from '@photos/photos.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
+import { TrainingsService } from '@trainings/trainings.service';
 import { User } from '@users/entities/user.entity';
 import { UsersService } from '@users/users.service';
 
@@ -30,7 +31,8 @@ export class ReviewsService {
         private readonly usersService: UsersService,
         private readonly photosService: PhotosService,
         private readonly filmingLocationsService: FilmingLocationsService,
-        private readonly photoSessionsService: PhotoSessionsService
+        private readonly photoSessionsService: PhotoSessionsService,
+        private readonly trainingsService: TrainingsService
     ) {}
 
     private validators = {
@@ -42,7 +44,9 @@ export class ReviewsService {
             this.filmingLocationsService.exists(id),
 
         [EntityType.PHOTO_SESSION]: (id: number) =>
-            this.photoSessionsService.exists(id)
+            this.photoSessionsService.exists(id),
+
+        [EntityType.TRAINING]: (id: number) => this.trainingsService.exists(id)
     };
 
     createDto(review: Review) {

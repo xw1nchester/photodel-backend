@@ -13,6 +13,7 @@ import { EntityActionQueryDto } from '@shared/dto/entity-action-query.dto';
 import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
+import { TrainingsService } from '@trainings/trainings.service';
 import { UsersService } from '@users/users.service';
 
 import { Favorite } from './favorite.entity';
@@ -25,7 +26,8 @@ export class FavoritesService {
         private readonly usersService: UsersService,
         private readonly photosService: PhotosService,
         private readonly filmingLocationsService: FilmingLocationsService,
-        private readonly photoSessionsService: PhotoSessionsService
+        private readonly photoSessionsService: PhotoSessionsService,
+        private readonly trainingsService: TrainingsService
     ) {}
 
     private validators = {
@@ -37,7 +39,9 @@ export class FavoritesService {
             this.filmingLocationsService.exists(id),
 
         [EntityType.PHOTO_SESSION]: (id: number) =>
-            this.photoSessionsService.exists(id)
+            this.photoSessionsService.exists(id),
+
+        [EntityType.TRAINING]: (id: number) => this.trainingsService.exists(id)
     };
 
     private loaders = {
@@ -51,7 +55,10 @@ export class FavoritesService {
             this.filmingLocationsService.findByIds(ids, requesterUserId),
 
         [EntityType.PHOTO_SESSION]: (ids: number[], requesterUserId: number) =>
-            this.photoSessionsService.findByIds(ids, requesterUserId)
+            this.photoSessionsService.findByIds(ids, requesterUserId),
+
+        [EntityType.TRAINING]: (ids: number[], requesterUserId: number) =>
+            this.trainingsService.findByIds(ids, requesterUserId)
     };
 
     async addFavorite(userId: number, dto: EntityActionRequestDto) {

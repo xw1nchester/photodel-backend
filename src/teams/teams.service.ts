@@ -183,6 +183,8 @@ export class TeamsService {
     ): Promise<boolean> {
         if (memberIds.length === 0) return;
 
+        memberIds = [...new Set(memberIds)];
+
         const count = await this.teamRequestsRepository.count({
             where: memberIds
                 .map(memberId => ({

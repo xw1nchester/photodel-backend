@@ -12,7 +12,10 @@ import { Like } from '@likes/like.entity';
 import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { Review } from '@reviews/review.entity';
+import { FilterQueryDto } from '@shared/dto/filter-query.dto';
+import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
+import { SortOption } from '@shared/enums/sort-option.enum';
 import { createUserDto } from '@shared/mappers/user.mapper';
 import { TeamsService } from '@teams/teams.service';
 
@@ -225,7 +228,10 @@ export class TrainingsService {
                 manager
             );
 
-            await this.teamsService.validateTeamMembers(userId, dto.team);
+            await this.teamsService.validateTeamMembers(
+                userId,
+                dto.team.concat(dto.organizers)
+            );
 
             let location: Location | null = null;
             if (dto.location) {
@@ -265,6 +271,155 @@ export class TrainingsService {
         });
     }
 
+    createBasicDto(training: Training) {
+        const avatarUrl = training.user.avatarKey
+            ? this.filesService.getUrl(training.user.avatarKey)
+            : null;
+
+        const user = createUserDto(training.user, avatarUrl);
+
+        return {
+            id: training.id,
+            preview: this.filesService.createBasicDto(training.previewFile),
+            name: training.name,
+            location: this.locationsService.createDto(training.location),
+            format: training.format,
+            startDate: training.startDate,
+            endDate: training.endDate,
+            price: training.price,
+            user,
+            favorites: {
+                isFavorite: training.isFavorite,
+                favoriteId: training.favoriteId,
+                count: training.favoritesCount
+            },
+            likes: {
+                isLiked: training.isLiked,
+                likeId: training.likeId,
+                count: training.likesCount
+            },
+            reviews: {
+                count: training.reviewsCount
+            }
+        };
+    }
+
+    async findAll(
+        { page, limit, sort, userId: targetUserId, my, search }: FilterQueryDto,
+        requesterUserId?: number
+    ) {
+        const query = this.trainingsRepository
+            .createQueryBuilder('training')
+            .leftJoinAndSelect('training.previewFile', 'previewFile')
+            .leftJoinAndSelect('training.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
+            .leftJoinAndSelect('training.user', 'user')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = training.id')
+                    .andWhere('favorite.entityType = :favoriteEntityType');
+            }, 'favoritesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = training.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likes_count')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = training.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
+            .setParameter('favoriteEntityType', EntityType.TRAINING)
+            .setParameter('likeEntityType', EntityType.TRAINING)
+            .setParameter('reviewEntityType', EntityType.TRAINING)
+            .setParameter('reviewIsPublished', true)
+            .take(limit)
+            .skip((page - 1) * limit);
+
+        switch (sort) {
+            case SortOption.NEWEST:
+                query.orderBy('training.createdAt', 'DESC');
+                break;
+
+            case SortOption.POPULARITY:
+                query.orderBy(`likes_count`, 'DESC');
+                break;
+
+            default:
+                query.orderBy('training.createdAt', 'DESC');
+                break;
+        }
+
+        if (requesterUserId != undefined) {
+            query
+                .andWhere(
+                    new Brackets(qb => {
+                        qb.where('training.userId = :requesterUserId', {
+                            requesterUserId
+                        }).orWhere('training.isPublished = :isPublished', {
+                            isPublished: true
+                        });
+                    })
+                )
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Favorite, 'favorite')
+                        .where('favorite.entityId = training.id')
+                        .andWhere('favorite.entityType = :favoriteEntityType')
+                        .andWhere('favorite.userId = :requesterUserId');
+                }, 'favoriteId')
+                .addSelect(subQuery => {
+                    return subQuery
+                        .select('id')
+                        .from(Like, 'like')
+                        .where('like.entityId = training.id')
+                        .andWhere('like.entityType = :likeEntityType')
+                        .andWhere('like.userId = :requesterUserId');
+                }, 'likeId')
+                .setParameter('requesterUserId', requesterUserId);
+        } else {
+            query.andWhere('training.isPublished = :isPublished', {
+                isPublished: true
+            });
+        }
+
+        if (my && requesterUserId != undefined) {
+            query.andWhere('training.userId = :requesterUserId', {
+                requesterUserId
+            });
+        }
+
+        if (targetUserId != undefined) {
+            query.andWhere('training.userId = :targetUserId', {
+                targetUserId
+            });
+        }
+
+        if (search) {
+            query.andWhere(`training.name ILIKE :search)`, {
+                search: `%${search}%`
+            });
+        }
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const total = await query.getCount();
+
+        const trainings = this.transformRawData(entities, raw);
+
+        const dtos = trainings.map(fl => this.createBasicDto(fl));
+
+        return new PaginationDto(dtos, total, page, limit);
+    }
+
     async findByIdAndUserId(
         id: number,
         userId: number,
@@ -280,7 +435,11 @@ export class TrainingsService {
                 files: true,
                 location: true,
                 user: true,
-                team: true,
+                team: {
+                    profile: {
+                        proCategories: true
+                    }
+                },
                 organizers: true
             }
         });
@@ -332,7 +491,10 @@ export class TrainingsService {
                     manager
                 );
 
-            await this.teamsService.validateTeamMembers(userId, dto.team);
+            await this.teamsService.validateTeamMembers(
+                userId,
+                dto.team.concat(dto.organizers)
+            );
 
             training.previewFileId = dto.photoIds[0];
             training.name = dto.name;
@@ -414,5 +576,74 @@ export class TrainingsService {
             where: { id }
         });
         return count > 0;
+    }
+
+    async findByIds(
+        ids: number[],
+        requesterUserId: number,
+        manager?: EntityManager
+    ) {
+        if (ids.length == 0) return [];
+
+        const repo = manager
+            ? manager.getRepository(Training)
+            : this.trainingsRepository;
+
+        const query = repo
+            .createQueryBuilder('training')
+            .where('training.id IN (:...ids)', { ids })
+            .leftJoinAndSelect('training.previewFile', 'previewFile')
+            .leftJoinAndSelect('training.location', 'location')
+            .leftJoinAndSelect('location.place', 'locationPlace')
+            .leftJoinAndSelect('training.user', 'user')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = training.id')
+                    .andWhere('favorite.entityType = :favoriteEntityType');
+            }, 'favoritesCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Like, 'like')
+                    .where('like.entityId = training.id')
+                    .andWhere('like.entityType = :likeEntityType');
+            }, 'likes_count')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('COUNT(*)')
+                    .from(Review, 'review')
+                    .where('review.entityId = training.id')
+                    .andWhere('review.entityType = :reviewEntityType')
+                    .andWhere('review.isPublished = :reviewIsPublished');
+            }, 'reviewsCount')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Favorite, 'favorite')
+                    .where('favorite.entityId = training.id')
+                    .andWhere('favorite.entityType = :favoriteEntityType')
+                    .andWhere('favorite.userId = :requesterUserId');
+            }, 'favoriteId')
+            .addSelect(subQuery => {
+                return subQuery
+                    .select('id')
+                    .from(Like, 'like')
+                    .where('like.entityId = training.id')
+                    .andWhere('like.entityType = :likeEntityType')
+                    .andWhere('like.userId = :requesterUserId');
+            }, 'likeId')
+            .setParameter('favoriteEntityType', EntityType.TRAINING)
+            .setParameter('likeEntityType', EntityType.TRAINING)
+            .setParameter('reviewEntityType', EntityType.TRAINING)
+            .setParameter('reviewIsPublished', true)
+            .setParameter('requesterUserId', requesterUserId);
+
+        const { entities, raw } = await query.getRawAndEntities();
+
+        const trainings = this.transformRawData(entities, raw);
+
+        return trainings.map(fl => this.createBasicDto(fl));
     }
 }

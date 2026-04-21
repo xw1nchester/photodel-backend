@@ -11,6 +11,7 @@ import { PhotoSessionsService } from '@photo-sessions/photo-sessions.service';
 import { PhotosService } from '@photos/photos.service';
 import { EntityActionRequestDto } from '@shared/dto/entity-action-request.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
+import { TrainingsService } from '@trainings/trainings.service';
 import { UsersService } from '@users/users.service';
 
 import { Like } from './like.entity';
@@ -23,7 +24,8 @@ export class LikesService {
         private readonly usersService: UsersService,
         private readonly photosService: PhotosService,
         private readonly filmingLocationsService: FilmingLocationsService,
-        private readonly photoSessionsService: PhotoSessionsService
+        private readonly photoSessionsService: PhotoSessionsService,
+        private readonly trainingsService: TrainingsService
     ) {}
 
     private validators = {
@@ -35,7 +37,9 @@ export class LikesService {
             this.filmingLocationsService.exists(id),
 
         [EntityType.PHOTO_SESSION]: (id: number) =>
-            this.photoSessionsService.exists(id)
+            this.photoSessionsService.exists(id),
+
+        [EntityType.TRAINING]: (id: number) => this.trainingsService.exists(id)
     };
 
     async addLike(userId: number, dto: EntityActionRequestDto) {
