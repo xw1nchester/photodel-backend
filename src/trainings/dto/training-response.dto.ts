@@ -74,7 +74,7 @@ export class TrainingResponseDto {
 
 export class TrainingWrapperResponseDto {
     @ApiProperty({ type: TrainingResponseDto })
-    photoSession: TrainingResponseDto;
+    training: TrainingResponseDto;
 }
 
 export class TrainingBasicResponseDto {
