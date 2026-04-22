@@ -251,6 +251,7 @@ export class TrainingsService {
                 endDate: dto.endDate,
                 price: dto.price,
                 prepayment: dto.prepayment,
+                maxParticipants: dto.maxParticipants,
                 isPublished: dto.isPublished,
                 files,
                 team: dto.team.map(m => ({
@@ -505,6 +506,7 @@ export class TrainingsService {
             training.endDate = new Date(dto.endDate);
             training.price = dto.price;
             training.prepayment = dto.prepayment;
+            training.maxParticipants = dto.maxParticipants;
             training.isPublished = dto.isPublished;
 
             if (dto.location) {

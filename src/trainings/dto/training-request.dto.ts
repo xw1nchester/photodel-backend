@@ -5,8 +5,10 @@ import {
     IsArray,
     IsBoolean,
     IsDateString,
+    IsNumber,
     IsOptional,
     IsString,
+    Min,
     ValidateNested
 } from 'class-validator';
 
@@ -59,6 +61,12 @@ export class TrainingRequestDto {
     @ApiProperty({ example: '1000 руб.' })
     @IsString()
     prepayment: string;
+
+    @ApiProperty({ example: 10, required: false })
+    @IsNumber()
+    @Min(1)
+    @IsOptional()
+    maxParticipants: number;
 
     @ApiProperty({ example: true })
     @IsBoolean()

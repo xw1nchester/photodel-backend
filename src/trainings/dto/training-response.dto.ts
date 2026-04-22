@@ -44,6 +44,9 @@ export class TrainingResponseDto {
     @ApiProperty({ example: '1000 руб.' })
     prepayment: string;
 
+    @ApiProperty({ example: 10 })
+    maxParticipants: number;
+
     @ApiProperty({ example: true })
     isPublished: boolean;
 

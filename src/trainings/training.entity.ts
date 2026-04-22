@@ -51,6 +51,9 @@ export class Training {
     @Column()
     prepayment: string;
 
+    @Column({ name: 'max_participants', nullable: true })
+    maxParticipants: number;
+
     @Column({ name: 'is_published', default: false })
     isPublished: boolean;
 
