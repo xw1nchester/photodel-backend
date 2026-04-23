@@ -32,12 +32,16 @@ export class MessagesService {
 
         const sender = createUserDto(message.sender, avatarUrl);
 
+        const isDeleted = !!message.deletedAt;
+
         return {
             id: message.id,
-            content: message.content,
+            content: isDeleted ? 'Сообщение удалено' : message.content,
             sender,
             createdAt: message.createdAt,
-            updatedAt: message.updatedAt
+            updatedAt: message.updatedAt,
+            isRead: message.isRead,
+            isDeleted
         };
     }
 
@@ -156,6 +160,20 @@ export class MessagesService {
         });
     }
 
+    private transformRawData(entities: Message[], raw: any[]) {
+        const rawMap = new Map();
+
+        for (const r of raw) {
+            rawMap.set(r.message_id, r);
+        }
+
+        return entities.map(msg => {
+            const r = rawMap.get(msg.id);
+            msg.isRead = r.isRead;
+            return msg;
+        });
+    }
+
     // TODO: implenent pagination with cursor
     async findChatMessages(
         chatId: number,
@@ -176,6 +194,20 @@ export class MessagesService {
             .createQueryBuilder('message')
             .where('message.chatId = :chatId', { chatId })
             .leftJoinAndSelect('message.sender', 'sender')
+            .innerJoin(
+                'chats_members',
+                'cm',
+                'cm.chat_id = message.chatId AND cm.user_id = :userId',
+                { userId }
+            )
+            .addSelect(
+                `CASE 
+                    WHEN message.id <= COALESCE(cm.last_read_message_id, 0)
+                    THEN true 
+                    ELSE false 
+                END`,
+                'isRead'
+            )
             .orderBy('message.createdAt', 'DESC');
         // .limit(limit);
 
@@ -183,9 +215,13 @@ export class MessagesService {
         //     qb.andWhere('message.createdAt < :cursor', { cursor });
         // }
 
-        const data = await qb.getMany();
+        const { entities, raw } = await qb.getRawAndEntities();
 
-        return { data: data.map(m => this.createDto(m)) };
+        const messages = this.transformRawData(entities, raw);
+
+        const data = messages.map(msg => this.createDto(msg));
+
+        return { data };
     }
 
     async findById(id: number) {
@@ -219,6 +255,32 @@ export class MessagesService {
             message.id
         );
 
-        return this.createDto(message);
+        return { message: this.createDto(message) };
+    }
+
+    async deleteMessage(id: number, userId: number) {
+        const message = await this.findById(id);
+
+        const isUserInChat = await this.chatsService.isUserInChat(
+            userId,
+            message.chatId
+        );
+
+        if (!isUserInChat) {
+            throw new NotFoundException('Сообщение не найдено');
+        }
+
+        if (message.senderId != userId) {
+            throw new BadRequestException(
+                'Вы можете удалять только свои сообщения'
+            );
+        }
+
+        await this.messagesRepository.update(id, {
+            content: '',
+            deletedAt: new Date()
+        });
+
+        return { message: await this.getDtoById(id) };
     }
 }

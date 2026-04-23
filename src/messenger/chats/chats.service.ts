@@ -88,10 +88,12 @@ export class ChatsService {
 
     createDto(chat: Chat, requesterUserId: number) {
         const companion = chat.members.find(m => m.userId !== requesterUserId);
-        let title = null,
+        let userId = null,
+            title = null,
             picture = null;
 
         if (companion) {
+            userId = companion.userId;
             title = `${companion.user.lastName} ${companion?.user?.firstName}`;
             picture = companion.user.avatarKey
                 ? this.filesService.getUrl(companion.user.avatarKey)
@@ -104,6 +106,7 @@ export class ChatsService {
 
         return {
             id: chat.id,
+            userId,
             title,
             picture,
             latestMessage,
@@ -111,7 +114,7 @@ export class ChatsService {
         };
     }
 
-    private transformPhotosRawData(entities: Chat[], raw: any[]) {
+    private transformRawData(entities: Chat[], raw: any[]) {
         const rawMap = new Map();
 
         for (const r of raw) {
@@ -121,6 +124,7 @@ export class ChatsService {
         return entities.map(chat => {
             const r = rawMap.get(chat.id);
             chat.unreadCount = Number(r?.unreadCount || 0);
+            chat.latestMessage.isRead = r.latestMessage_isRead;
             return chat;
         });
     }
@@ -144,6 +148,17 @@ export class ChatsService {
                 `
             )
             .addSelect('COUNT(unreadMessages.id)', 'unreadCount')
+            .addSelect(
+                `
+                CASE 
+                    WHEN latestMessage.id IS NULL THEN false
+                    WHEN latestMessage.id <= COALESCE(member.last_read_message_id, 0)
+                    THEN true
+                    ELSE false
+                END
+                `,
+                'latestMessage_isRead'
+            )
             .groupBy('chat.id')
             .addGroupBy('member.id')
             .addGroupBy('members.id')
@@ -158,7 +173,7 @@ export class ChatsService {
 
         const total = await query.getCount();
 
-        const chats = this.transformPhotosRawData(entities, raw);
+        const chats = this.transformRawData(entities, raw);
 
         const dtos = chats.map(c => this.createDto(c, userId));
 
@@ -195,7 +210,7 @@ export class ChatsService {
 
         const { entities, raw } = await query.getRawAndEntities();
 
-        const chat = this.transformPhotosRawData(entities, raw)[0];
+        const chat = this.transformRawData(entities, raw)[0];
 
         if (!chat) {
             throw new NotFoundException('Чат не найден');

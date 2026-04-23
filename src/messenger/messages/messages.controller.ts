@@ -1,4 +1,4 @@
-import { Controller, Param, ParseIntPipe, Patch } from '@nestjs/common';
+import { Controller, Delete, Param, ParseIntPipe, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '@auth/decorators';
@@ -20,5 +20,15 @@ export class MessagesController {
         @CurrentUser() user: JwtPayload
     ) {
         return await this.messagesService.readMessage(id, user.id);
+    }
+
+    @Delete(':id')
+    @ApiBearerAuth()
+    @ApiOkResponse({ type: MessageWrapperResponseDto })
+    async deleteMessage(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload
+    ) {
+        return await this.messagesService.deleteMessage(id, user.id);
     }
 }

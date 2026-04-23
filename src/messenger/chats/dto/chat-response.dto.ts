@@ -6,6 +6,9 @@ export class ChatResponseDto {
     @ApiProperty({ example: 1 })
     id: number;
 
+    @ApiProperty({ example: 1 })
+    userId: number;
+
     @ApiProperty({ example: 'Иванов Иван' })
     title: string;
 

@@ -20,6 +20,12 @@ export class MessageResponseDto {
 
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
     updatedAt: string;
+
+    @ApiProperty({ example: false })
+    isRead: boolean;
+
+    @ApiProperty({ example: false })
+    isDeleted: boolean;
 }
 
 export class MessageWrapperResponseDto {
