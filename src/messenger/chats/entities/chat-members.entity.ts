@@ -40,4 +40,7 @@ export class ChatMember {
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
+
+    @Column({ name: 'deleted_at', nullable: true, type: 'timestamptz' })
+    deletedAt: Date;
 }

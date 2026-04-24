@@ -98,6 +98,8 @@ export class MessagesService {
                 content: dto.content
             });
 
+            await this.chatsService.restoreChatForAllMembers(chat.id, manager);
+
             await this.chatsService.setLatestMessage(
                 chat.id,
                 createdMessage.id,
@@ -140,6 +142,8 @@ export class MessagesService {
                 senderId: senderUserId,
                 content: dto.content
             });
+
+            await this.chatsService.restoreChatForAllMembers(chatId, manager);
 
             await this.chatsService.setLatestMessage(
                 chatId,
@@ -258,7 +262,7 @@ export class MessagesService {
         return { message: this.createDto(message) };
     }
 
-    async deleteMessage(id: number, userId: number) {
+    async remove(id: number, userId: number) {
         const message = await this.findById(id);
 
         const isUserInChat = await this.chatsService.isUserInChat(

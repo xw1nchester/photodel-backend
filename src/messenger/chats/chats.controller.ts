@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
     ParseIntPipe,
@@ -92,7 +93,7 @@ export class ChatsController {
         @Param('id', ParseIntPipe) id: number,
         @CurrentUser() user: JwtPayload
     ) {
-        return await this.chatsService.findUserChatById(id, user.id);
+        return await this.chatsService.getDtoByIdAndUserId(id, user.id);
     }
 
     @Get(':id/messages')
@@ -128,6 +129,14 @@ export class ChatsController {
     @ApiOkResponse({ type: UnreadCountResponseDto })
     async getUnreadChatsCount(@CurrentUser() user: JwtPayload) {
         return await this.chatsService.getUnreadChatsCount(user.id);
+    }
+
+    @Delete(':id')
+    @ApiBearerAuth()
+    @ApiOkResponse({ type: UnreadCountResponseDto })
+    async remove(@Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload) {
+        return await this.chatsService.remove(id, user.id);
     }
 
     // read all messages?

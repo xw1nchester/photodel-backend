@@ -25,10 +25,10 @@ export class MessagesController {
     @Delete(':id')
     @ApiBearerAuth()
     @ApiOkResponse({ type: MessageWrapperResponseDto })
-    async deleteMessage(
+    async remove(
         @Param('id', ParseIntPipe) id: number,
         @CurrentUser() user: JwtPayload
     ) {
-        return await this.messagesService.deleteMessage(id, user.id);
+        return await this.messagesService.remove(id, user.id);
     }
 }

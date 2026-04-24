@@ -59,6 +59,14 @@ export class ChatsService {
         });
     }
 
+    async restoreChatForAllMembers(chatId: number, manager?: EntityManager) {
+        const repo = manager
+            ? manager.getRepository(ChatMember)
+            : this.chatsMembersRepository;
+
+        return await repo.update({ chatId }, { deletedAt: null });
+    }
+
     async setLatestMessage(
         chatId: number,
         messageId: number,
@@ -132,9 +140,14 @@ export class ChatsService {
     async findUserChats(userId: number, page: number, limit: number) {
         const query = this.chatsRepository
             .createQueryBuilder('chat')
-            .innerJoin('chat.members', 'member', 'member.userId = :userId', {
-                userId
-            })
+            .innerJoin(
+                'chat.members',
+                'member',
+                'member.userId = :userId AND member.deletedAt IS NULL',
+                {
+                    userId
+                }
+            )
             .leftJoinAndSelect('chat.members', 'members')
             .leftJoinAndSelect('members.user', 'user')
             .leftJoinAndSelect('chat.latestMessage', 'latestMessage')
@@ -180,7 +193,7 @@ export class ChatsService {
         return new PaginationDto(dtos, total, page, limit);
     }
 
-    async findUserChatById(chatId: number, userId: number) {
+    async getDtoByIdAndUserId(chatId: number, userId: number) {
         const query = this.chatsRepository
             .createQueryBuilder('chat')
             .where('chat.id = :chatId', { chatId })
@@ -243,5 +256,20 @@ export class ChatsService {
             .getCount();
 
         return { count };
+    }
+
+    async remove(id: number, userId: number) {
+        const isUserInChat = await this.isUserInChat(userId, id);
+
+        if (!isUserInChat) {
+            throw new NotFoundException('Чат не найден');
+        }
+
+        await this.chatsMembersRepository.update(
+            { chatId: id, userId },
+            { deletedAt: new Date() }
+        );
+
+        return this.getDtoByIdAndUserId(id, userId);
     }
 }

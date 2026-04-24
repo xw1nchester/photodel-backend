@@ -74,6 +74,7 @@ export class TrainingsService {
             endDate: training.endDate,
             price: training.price,
             prepayment: training.prepayment,
+            maxParticipants: training.maxParticipants,
             isPublished: training.isPublished,
             team,
             organizers,
