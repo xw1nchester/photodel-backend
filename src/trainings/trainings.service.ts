@@ -406,7 +406,7 @@ export class TrainingsService {
         }
 
         if (search) {
-            query.andWhere(`training.name ILIKE :search)`, {
+            query.andWhere(`training.name ILIKE :search`, {
                 search: `%${search}%`
             });
         }
