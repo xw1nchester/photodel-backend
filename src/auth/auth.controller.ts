@@ -2,6 +2,7 @@ import {
     Body,
     Controller,
     Get,
+    HttpCode,
     HttpStatus,
     Post,
     Res,
@@ -28,6 +29,7 @@ import { RegisterRequestDto } from './dto/register-request.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { VerifyRecoveryDto } from './dto/verify-recovery.dto';
 import { JwtPayload } from './interfaces';
+import { ChangePasswordRequestDto } from './dto/change-password-request.dto';
 
 const REFRESH_TOKEN = 'refresh-token';
 
@@ -122,26 +124,26 @@ export class AuthController {
 
     @ApiBearerAuth()
     @Get('resend-verification')
+    @HttpCode(HttpStatus.OK)
     async resendVerificationCode(@CurrentUser() user: JwtPayload) {
         await this.authService.resendVerificationCode(user.id);
-        return HttpStatus.OK;
     }
 
     @ApiBearerAuth()
     @Post('verify-email')
+    @HttpCode(HttpStatus.OK)
     async verifyEmail(
         @Body() { code }: CodeDto,
         @CurrentUser() user: JwtPayload
     ) {
         await this.authService.verifyEmail(code, user.id);
-        return HttpStatus.OK;
     }
 
     @Public()
     @Post('send-recovery')
+    @HttpCode(HttpStatus.OK)
     async sendRecoveryCode(@Body() { email }: RecoveryRequestDto) {
         await this.authService.sendRecoveryCode(email);
-        return HttpStatus.OK;
     }
 
     @Public()
@@ -153,8 +155,18 @@ export class AuthController {
 
     @Public()
     @Post('recovery-password')
+    @HttpCode(HttpStatus.OK)
     async recoveryPassword(@Body() dto: RecoveryPasswordDto) {
         await this.authService.recoveryPassword(dto);
-        return HttpStatus.OK;
+    }
+
+    @ApiBearerAuth()
+    @Post('change-password')
+    @HttpCode(HttpStatus.OK)
+    async changePassword(
+        @CurrentUser() user: JwtPayload,
+        @Body() dto: ChangePasswordRequestDto
+    ) {
+        await this.authService.changePassword(user.id, dto);
     }
 }

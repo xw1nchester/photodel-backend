@@ -71,6 +71,7 @@ export class UsersService {
                 email: true,
                 firstName: true,
                 lastName: true,
+                passwordHash: true,
                 avatarKey: true,
                 isAdult: true,
                 isProfessional: true,

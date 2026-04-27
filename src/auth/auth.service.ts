@@ -18,6 +18,7 @@ import { RecoveryPasswordDto } from './dto/recovery-password.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
 import { VerifyRecoveryDto } from './dto/verify-recovery.dto';
 import { JwtPayload } from './interfaces';
+import { ChangePasswordRequestDto } from './dto/change-password-request.dto';
 
 @Injectable()
 export class AuthService {
@@ -239,5 +240,21 @@ export class AuthService {
                 manager
             );
         });
+    }
+
+    async changePassword(
+        userId: number,
+        { oldPassword, newPassword }: ChangePasswordRequestDto
+    ) {
+        const existingUser = await this.usersService.findById(userId);
+
+        if (!compareSync(oldPassword, existingUser.passwordHash)) {
+            throw new BadRequestException('Неверный старый пароль');
+        }
+
+        return await this.usersService.updatePassword(
+            existingUser.id,
+            hashSync(newPassword, genSaltSync(10))
+        );
     }
 }
