@@ -12,10 +12,7 @@ import { createUserDto } from '@shared/mappers/user.mapper';
 import { UsersService } from '@users/users.service';
 
 import { FilmingRequestDto } from './dto/filming-request.dto';
-import {
-    FilmingRequest,
-    FilmingRequestStatus
-} from './filming-requests.entity';
+import { FilmingRequest, FilmingRequestStatus } from './filming-request.entity';
 
 @Injectable()
 export class FilmingRequestsService {

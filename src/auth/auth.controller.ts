@@ -21,6 +21,7 @@ import { Token } from '@tokens/token.entity';
 import { AuthService } from './auth.service';
 import { Cookie, CurrentUser, Public, UserAgent } from './decorators';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { ChangePasswordRequestDto } from './dto/change-password-request.dto';
 import { CodeRequestDto as CodeDto } from './dto/code-request.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { RecoveryPasswordDto } from './dto/recovery-password.dto';
@@ -29,7 +30,6 @@ import { RegisterRequestDto } from './dto/register-request.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { VerifyRecoveryDto } from './dto/verify-recovery.dto';
 import { JwtPayload } from './interfaces';
-import { ChangePasswordRequestDto } from './dto/change-password-request.dto';
 
 const REFRESH_TOKEN = 'refresh-token';
 

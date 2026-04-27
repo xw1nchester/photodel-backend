@@ -18,6 +18,7 @@ import { EntityType } from '@shared/enums/entity-type.enums';
 import { SortOption } from '@shared/enums/sort-option.enum';
 import { createUserDto } from '@shared/mappers/user.mapper';
 import { TeamsService } from '@teams/teams.service';
+import { TrainingRequestStatus } from '@training-requests/training-request.entity';
 
 import { TrainingRequestDto } from './dto/training-request.dto';
 import { Training } from './training.entity';
@@ -62,6 +63,14 @@ export class TrainingsService {
             return createUserDto(user, avatarUrl);
         });
 
+        const participants = training.requests.map(({ senderUser }) => {
+            const avatarUrl = senderUser
+                ? this.filesService.getUrl(senderUser.avatarKey)
+                : null;
+
+            return createUserDto(senderUser, avatarUrl);
+        });
+
         return {
             id: training.id,
             photos,
@@ -78,6 +87,11 @@ export class TrainingsService {
             isPublished: training.isPublished,
             team,
             organizers,
+            availableSpots: Math.max(
+                training.maxParticipants - participants.length,
+                0
+            ),
+            participants,
             createdAt: training.createdAt,
             updatedAt: training.updatedAt,
             user,
@@ -140,6 +154,13 @@ export class TrainingsService {
                 'organizerProfileProCategories'
             )
             .leftJoinAndSelect('training.organizers', 'organizer')
+            .leftJoinAndSelect(
+                'training.requests',
+                'requests',
+                'requests.status = :status',
+                { status: TrainingRequestStatus.ACCEPTED }
+            )
+            .leftJoinAndSelect('requests.senderUser', 'participants')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')

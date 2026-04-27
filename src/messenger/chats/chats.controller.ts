@@ -121,9 +121,7 @@ export class ChatsController {
         return await this.messagesService.findChatMessages(id, user.id);
     }
 
-    // TODO: как вариант, присоединить к запросу me,
-    // а также добавить туда кол-во запросов на съемку, обучение итд
-    // либо сделать отдельный stats запрос
+    // TODO: remove
     @Get('unread/count')
     @ApiBearerAuth()
     @ApiOkResponse({ type: UnreadCountResponseDto })
@@ -134,8 +132,10 @@ export class ChatsController {
     @Delete(':id')
     @ApiBearerAuth()
     @ApiOkResponse({ type: UnreadCountResponseDto })
-    async remove(@Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: JwtPayload) {
+    async remove(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: JwtPayload
+    ) {
         return await this.chatsService.remove(id, user.id);
     }
 

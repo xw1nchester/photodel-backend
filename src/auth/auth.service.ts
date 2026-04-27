@@ -13,12 +13,12 @@ import { MailService } from '@mail/mail.service';
 import { TokensService } from '@tokens/tokens.service';
 import { UsersService } from '@users/users.service';
 
+import { ChangePasswordRequestDto } from './dto/change-password-request.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { RecoveryPasswordDto } from './dto/recovery-password.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
 import { VerifyRecoveryDto } from './dto/verify-recovery.dto';
 import { JwtPayload } from './interfaces';
-import { ChangePasswordRequestDto } from './dto/change-password-request.dto';
 
 @Injectable()
 export class AuthService {

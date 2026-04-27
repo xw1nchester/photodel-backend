@@ -223,7 +223,7 @@ export class MessagesService {
 
         const messages = this.transformRawData(entities, raw);
 
-        const data = messages.map(msg => this.createDto(msg));
+        const data = messages.map(msg => this.createDto(msg)).reverse();
 
         return { data };
     }

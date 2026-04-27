@@ -13,10 +13,12 @@ import { FilmingRequestsModule } from './filming-requests/filming-requests.modul
 import { LikesModule } from './likes/likes.module';
 import { ChatsModule } from './messenger/chats/chats.module';
 import { MessagesModule } from './messenger/messages/messages.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PhotoSessionsModule } from './photo-sessions/photo-sessions.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { RolesModule } from './roles/roles.module';
 import { TeamsModule } from './teams/teams.module';
+import { TrainingRequestsModule } from './training-requests/training-requests.module';
 import { TrainingsModule } from './trainings/trainings.module';
 
 @Module({
@@ -36,7 +38,9 @@ import { TrainingsModule } from './trainings/trainings.module';
         FilmingRequestsModule,
         ChatsModule,
         MessagesModule,
-        TrainingsModule
+        TrainingsModule,
+        TrainingRequestsModule,
+        NotificationsModule
     ],
     controllers: [AppController],
     providers: [

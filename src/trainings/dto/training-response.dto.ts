@@ -51,10 +51,16 @@ export class TrainingResponseDto {
     isPublished: boolean;
 
     @ApiProperty({ type: [UserShortResponseDto] })
-    team: number[];
+    team: UserShortResponseDto[];
 
     @ApiProperty({ type: [UserShortResponseDto] })
-    organizers: number[];
+    organizers: UserShortResponseDto[];
+
+    @ApiProperty({ example: 5 })
+    availableSpots: number;
+
+    @ApiProperty({ type: [UserShortResponseDto] })
+    participants: UserShortResponseDto[];
 
     @ApiProperty({ example: '2026-02-28T17:00:00.000Z' })
     createdAt: string;

@@ -6,12 +6,14 @@ import {
     JoinTable,
     ManyToMany,
     ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from 'typeorm';
 
 import { File } from '@files/file.entity';
 import { Location } from '@locations/entities/location.entity';
+import { TrainingRequest } from '@training-requests/training-request.entity';
 import { User } from '@users/entities/user.entity';
 
 @Entity('trainings')
@@ -112,6 +114,9 @@ export class Training {
     @ManyToOne(() => File, { nullable: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'preview_file_id' })
     previewFile: File;
+
+    @OneToMany(() => TrainingRequest, tr => tr.training)
+    requests: TrainingRequest[];
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;

@@ -71,6 +71,10 @@
             "@messenger/*": ["src/messenger/*"],
             "@trainings": ["src/trainings"],
             "@trainings/*": ["src/trainings/*"],
+            "@training-requests": ["src/training-requests"],
+            "@training-requests/*": ["src/training-requests/*"],
+            "@notifications": ["src/notifications"],
+            "@notifications/*": ["src/notifications/*"],
         }
     }
 }

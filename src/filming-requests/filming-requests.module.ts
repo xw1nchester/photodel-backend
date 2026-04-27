@@ -4,8 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { LocationsModule } from '@locations/locations.module';
 import { UsersModule } from '@users/users.module';
 
+import { FilmingRequest } from './filming-request.entity';
 import { FilmingRequestsController } from './filming-requests.controller';
-import { FilmingRequest } from './filming-requests.entity';
 import { FilmingRequestsService } from './filming-requests.service';
 
 @Module({
