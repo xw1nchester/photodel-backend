@@ -16,6 +16,7 @@ export class NotificationsService {
                 FROM chats_members cm
                 JOIN chats c ON c.id = cm.chat_id
                 WHERE cm.user_id = $1
+                AND cm.deleted_at IS NULL
                 AND (cm.last_read_message_id IS NULL OR cm.last_read_message_id < c.latest_message_id)
                 ) AS "unreadChatsCount"
             `,

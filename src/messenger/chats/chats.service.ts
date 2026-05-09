@@ -250,6 +250,7 @@ export class ChatsService {
             .createQueryBuilder('cm')
             .innerJoin('cm.chat', 'c')
             .where('cm.userId = :userId', { userId })
+            .andWhere('cm.deletedAt IS NULL')
             .andWhere(
                 `(cm.lastReadMessageId IS NULL OR cm.lastReadMessageId < c.latestMessageId)`
             )
