@@ -7,6 +7,6 @@ export default class RoleSeeder implements Seeder {
     public async run(dataSource: DataSource): Promise<void> {
         const repo = dataSource.getRepository(Role);
 
-        await repo.upsert([{ name: 'ADMIN' }, { name: 'MODERATOR' }], ['name']);
+        await repo.upsert([{ name: 'admin' }, { name: 'moderator' }], ['name']);
     }
 }

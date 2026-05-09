@@ -62,6 +62,9 @@ export class ProfileResponseDto {
     @ApiProperty({ example: false })
     isPro: boolean;
 
+    @ApiProperty({ example: false })
+    isBlocked: boolean;
+
     @ApiProperty({ type: FavoritesResponseDto })
     favorites: FavoritesResponseDto;
 

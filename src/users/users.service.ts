@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     forwardRef,
     Inject,
     Injectable,
@@ -77,6 +78,7 @@ export class UsersService {
                 isProfessional: true,
                 isVerified: true,
                 isPro: true,
+                isBlocked: true,
                 createdAt: true,
                 roles: {
                     id: true,
@@ -153,6 +155,7 @@ export class UsersService {
             isProfessional: user.isProfessional,
             isVerified: user.isVerified,
             isPro: user.isPro,
+            isBlocked: user.isBlocked,
             createdAt: user.createdAt,
             roles: user.roles.map(r => r.name),
             location: this.locationsService.createDto(location)
@@ -375,6 +378,7 @@ export class UsersService {
             avatarKey: avatar,
             isProfessional,
             isPro,
+            isBlocked,
             createdAt
         } = profile.user;
 
@@ -405,6 +409,7 @@ export class UsersService {
             avatar: avatar ? this.s3Service.getUrl(avatar) : null,
             isProfessional,
             isPro,
+            isBlocked,
             createdAt,
             location,
             activeTemporaryLocation,
@@ -796,8 +801,18 @@ export class UsersService {
         return users.map(u => this.createUserBasicDto(u));
     }
 
-    async findProfessionals(
-        {
+    async findAll({
+        query,
+        requesterUserId,
+        professionalsOnly = true,
+        excludeBlocked = true
+    }: {
+        query: UserQueryDto;
+        requesterUserId?: number;
+        professionalsOnly?: boolean;
+        excludeBlocked?: boolean;
+    }) {
+        const {
             page,
             limit,
             latitude,
@@ -808,16 +823,12 @@ export class UsersService {
             search,
             proCategoryId,
             specializationId
-        }: UserQueryDto,
-        requesterUserId?: number
-    ) {
+        } = query;
+
         const today = new Date().toISOString().slice(0, 10);
 
         const qb = this.usersRepository
             .createQueryBuilder('user')
-            .where('user.isProfessional = :isProfessional', {
-                isProfessional: true
-            })
             .leftJoinAndSelect('user.profile', 'profile')
             .leftJoinAndSelect('profile.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')
@@ -895,6 +906,18 @@ export class UsersService {
                         .andWhere('like.userId = :requesterUserId');
                 }, 'likeId')
                 .setParameter('requesterUserId', requesterUserId);
+        }
+
+        if (professionalsOnly) {
+            qb.andWhere('user.isProfessional = :isProfessional', {
+                isProfessional: true
+            });
+        }
+
+        if (excludeBlocked) {
+            qb.andWhere('user.isBlocked = :isBlocked', {
+                isBlocked: false
+            });
         }
 
         // если есть активная временная локация — используем её,
@@ -1076,5 +1099,23 @@ export class UsersService {
         }
 
         return users;
+    }
+
+    async setBlockedStatus(
+        userId: number,
+        adminId: number,
+        isBlocked: boolean
+    ) {
+        if (userId == adminId) {
+            throw new BadRequestException(
+                'Нельзя изменить статус блокировки собственного аккаунта'
+            );
+        }
+
+        const user = await this.findById(userId);
+
+        user.isBlocked = isBlocked;
+
+        return await this.usersRepository.save(user);
     }
 }

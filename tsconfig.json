@@ -75,6 +75,8 @@
             "@training-requests/*": ["src/training-requests/*"],
             "@notifications": ["src/notifications"],
             "@notifications/*": ["src/notifications/*"],
+            "@admin": ["src/admin"],
+            "@admin/*": ["src/admin/*"],
         }
     }
 }

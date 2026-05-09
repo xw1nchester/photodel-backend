@@ -37,6 +37,9 @@ export class UserMeResponseDto {
     // подписка
     @ApiProperty({ example: false })
     isPro: boolean;
+    
+    @ApiProperty({ example: false })
+    isBlocked: boolean;
 
     @ApiProperty({ example: '2026-02-15T15:31:31.992Z' })
     createdAt: string;

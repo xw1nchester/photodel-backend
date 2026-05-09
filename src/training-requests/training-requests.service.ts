@@ -11,7 +11,7 @@ import { createUserDto } from '@shared/mappers/user.mapper';
 import { TrainingsService } from '@trainings/trainings.service';
 import { UsersService } from '@users/users.service';
 
-import { TrainingRequestDto } from './dto/training-request.dto';
+import { TrainingUserRequestDto } from './dto/training-request.dto';
 import {
     TrainingRequest,
     TrainingRequestStatus
@@ -43,7 +43,7 @@ export class TrainingRequestsService {
         return existingRequest;
     }
 
-    async sendRequest(senderUserId: number, dto: TrainingRequestDto) {
+    async sendRequest(senderUserId: number, dto: TrainingUserRequestDto) {
         return await this.dataSource.transaction(async manager => {
             const repo = manager.getRepository(TrainingRequest);
 

@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { CurrentUser } from '@auth/decorators';
 import { JwtPayload } from '@auth/interfaces';
 
-import { TrainingRequestDto } from './dto/training-request.dto';
+import { TrainingUserRequestDto } from './dto/training-request.dto';
 import { TrainingRequestWrapperResponseDto } from './dto/training-response.dto';
 import { TrainingRequestsService } from './training-requests.service';
 
@@ -27,7 +27,7 @@ export class TrainingRequestsController {
     @ApiBearerAuth()
     async sendRequest(
         @CurrentUser() user: JwtPayload,
-        @Body() dto: TrainingRequestDto
+        @Body() dto: TrainingUserRequestDto
     ) {
         await this.trainingRequestsService.sendRequest(user.id, dto);
     }

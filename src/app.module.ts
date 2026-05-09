@@ -20,6 +20,7 @@ import { RolesModule } from './roles/roles.module';
 import { TeamsModule } from './teams/teams.module';
 import { TrainingRequestsModule } from './training-requests/training-requests.module';
 import { TrainingsModule } from './trainings/trainings.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
     imports: [
@@ -40,7 +41,8 @@ import { TrainingsModule } from './trainings/trainings.module';
         MessagesModule,
         TrainingsModule,
         TrainingRequestsModule,
-        NotificationsModule
+        NotificationsModule,
+        AdminModule
     ],
     controllers: [AppController],
     providers: [

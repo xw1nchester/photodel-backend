@@ -147,7 +147,10 @@ export class UsersController {
         @Query() query: UserQueryDto,
         @CurrentUser() user: JwtPayload
     ) {
-        return await this.usersService.findProfessionals(query, user?.id);
+        return await this.usersService.findAll({
+            query,
+            requesterUserId: user?.id
+        });
     }
 
     @Public()

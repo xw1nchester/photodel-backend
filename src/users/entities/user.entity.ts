@@ -48,6 +48,9 @@ export class User {
     @Column({ name: 'is_pro', default: false })
     isPro: boolean;
 
+    @Column({ name: 'is_blocked', default: false })
+    isBlocked: boolean;
+
     @Column({ name: 'avatar_key', nullable: true })
     avatarKey: string;
 
