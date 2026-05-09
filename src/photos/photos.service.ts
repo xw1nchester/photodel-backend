@@ -13,7 +13,6 @@ import { Like } from '@likes/like.entity';
 import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
 import { Review } from '@reviews/review.entity';
-import { S3Service } from '@s3/s3.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
@@ -22,6 +21,8 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
+import { FilesService } from '@files/files.service';
+import { createUserDto } from '@shared/mappers/user.mapper';
 
 @Injectable()
 export class PhotosService {
@@ -33,29 +34,23 @@ export class PhotosService {
         @Inject(forwardRef(() => AlbumsService))
         private readonly albumService: AlbumsService,
         private readonly locationsService: LocationsService,
-        private readonly s3Service: S3Service
+        private readonly filesService: FilesService
     ) {}
 
     createDto(photo: Photo) {
         const albums =
             photo.albums?.map(a => this.albumService.createDto(a)) ?? [];
 
-        // чтобы модуль фото не зависел от модуля юзеров
-        const user = {
-            id: photo.user.id,
-            firstName: photo.user.firstName,
-            lastName: photo.user.lastName,
-            avatarKey: photo.user.avatarKey,
-            avatarUrl: photo.user.avatarKey
-                ? this.s3Service.getUrl(photo.user.avatarKey)
-                : null,
-            isPro: photo.user.isPro
-        };
+        const avatarUrl = photo.user.avatarKey
+            ? this.filesService.getUrl(photo.user.avatarKey)
+            : null;
+
+        const user = createUserDto(photo.user, avatarUrl);
 
         return {
             id: photo.id,
             imageKey: photo.imageKey,
-            imageUrl: this.s3Service.getUrl(photo.imageKey),
+            imageUrl: this.filesService.getUrl(photo.imageKey),
             name: photo.name,
             description: photo.description,
             location: this.locationsService.createDto(photo.location),
@@ -198,6 +193,7 @@ export class PhotosService {
                 { albumIsPublished: true }
             )
             .leftJoinAndSelect('photo.user', 'user')
+            .where('user.isBlocked = false')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')

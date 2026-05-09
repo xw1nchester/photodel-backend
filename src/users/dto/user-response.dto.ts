@@ -77,4 +77,7 @@ export class UserShortResponseDto {
 
     @ApiProperty({ example: false })
     isPro: boolean;
+
+    @ApiProperty({ example: false })
+    isBlocked: boolean;
 }

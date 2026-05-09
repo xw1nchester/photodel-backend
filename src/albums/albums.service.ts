@@ -87,6 +87,8 @@ export class AlbumsService {
         const query = this.albumRepository
             .createQueryBuilder('album')
             .where('album.userId = :targetUserId', { targetUserId })
+            .innerJoin('album.user', 'user')
+            .andWhere('user.isBlocked = false')
             .loadRelationCountAndMap(
                 'album.photosCount',
                 'album.photos',
@@ -105,6 +107,8 @@ export class AlbumsService {
                 isPublished: true
             });
         }
+
+        console.log(query.getSql(), query.getParameters());
 
         const result = await query.getRawAndEntities();
 

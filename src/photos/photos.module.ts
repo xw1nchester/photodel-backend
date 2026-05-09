@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AlbumsModule } from '@albums/albums.module';
 import { LocationsModule } from '@locations/locations.module';
-import { S3Module } from '@s3/s3.module';
 import { SpecializationsModule } from '@specializations/specializations.module';
 
 import { Photo } from './photo.entity';
@@ -15,8 +14,7 @@ import { PhotosService } from './photos.service';
         TypeOrmModule.forFeature([Photo]),
         SpecializationsModule,
         forwardRef(() => AlbumsModule),
-        LocationsModule,
-        S3Module
+        LocationsModule
     ],
     controllers: [PhotosController],
     providers: [PhotosService],

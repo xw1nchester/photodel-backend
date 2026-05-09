@@ -16,6 +16,7 @@ import { SpecializationsService } from '@specializations/specializations.service
 
 import { FilmingLocationRequestDto } from './dto/filming-location-request.dto';
 import { FilmingLocation } from './filming-location.entity';
+import { createUserDto } from '@shared/mappers/user.mapper';
 
 @Injectable()
 export class FilmingLocationsService {
@@ -33,16 +34,11 @@ export class FilmingLocationsService {
             this.filesService.createBasicDto(f)
         );
 
-        const user = {
-            id: filmingLocation.user.id,
-            firstName: filmingLocation.user.firstName,
-            lastName: filmingLocation.user.lastName,
-            avatarKey: filmingLocation.user.avatarKey,
-            avatarUrl: filmingLocation.user.avatarKey
-                ? this.filesService.getUrl(filmingLocation.user.avatarKey)
-                : null,
-            isPro: filmingLocation.user.isPro
-        };
+        const avatarUrl = filmingLocation.user.avatarKey
+            ? this.filesService.getUrl(filmingLocation.user.avatarKey)
+            : null;
+
+        const user = createUserDto(filmingLocation.user, avatarUrl);
 
         return {
             id: filmingLocation.id,
@@ -236,16 +232,11 @@ export class FilmingLocationsService {
     }
 
     createBasicDto(filmingLocation: FilmingLocation) {
-        const user = {
-            id: filmingLocation.user.id,
-            firstName: filmingLocation.user.firstName,
-            lastName: filmingLocation.user.lastName,
-            avatarKey: filmingLocation.user.avatarKey,
-            avatarUrl: filmingLocation.user.avatarKey
-                ? this.filesService.getUrl(filmingLocation.user.avatarKey)
-                : null,
-            isPro: filmingLocation.user.isPro
-        };
+        const avatarUrl = filmingLocation.user.avatarKey
+            ? this.filesService.getUrl(filmingLocation.user.avatarKey)
+            : null;
+
+        const user = createUserDto(filmingLocation.user, avatarUrl);
 
         return {
             id: filmingLocation.id,
@@ -297,6 +288,7 @@ export class FilmingLocationsService {
             .leftJoinAndSelect('filmingLocation.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('filmingLocation.user', 'user')
+            .where('user.isBlocked = false')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')

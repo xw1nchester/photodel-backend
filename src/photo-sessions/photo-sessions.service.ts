@@ -21,6 +21,7 @@ import { TeamsService } from '@teams/teams.service';
 
 import { PhotoSessionRequestDto } from './dto/photo-session-request.dto';
 import { PhotoSession } from './photo-session.entity';
+import { createUserDto } from '@shared/mappers/user.mapper';
 
 @Injectable()
 export class PhotoSessionsService {
@@ -39,16 +40,11 @@ export class PhotoSessionsService {
             this.filesService.createBasicDto(f)
         );
 
-        const user = {
-            id: photoSession.user.id,
-            firstName: photoSession.user.firstName,
-            lastName: photoSession.user.lastName,
-            avatarKey: photoSession.user.avatarKey,
-            avatarUrl: photoSession.user.avatarKey
-                ? this.filesService.getUrl(photoSession.user.avatarKey)
-                : null,
-            isPro: photoSession.user.isPro
-        };
+        const avatarUrl = photoSession.user.avatarKey
+            ? this.filesService.getUrl(photoSession.user.avatarKey)
+            : null;
+
+        const user = createUserDto(photoSession.user, avatarUrl);
 
         const team = photoSession.team.map(user => ({
             id: user.id,
@@ -299,6 +295,7 @@ export class PhotoSessionsService {
             .leftJoinAndSelect('photoSession.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('photoSession.user', 'user')
+            .where('user.isBlocked = false')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')

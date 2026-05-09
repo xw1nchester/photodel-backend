@@ -20,6 +20,7 @@ import { UsersService } from '@users/users.service';
 
 import { ReviewRequestDto } from './dto/review-request.dto';
 import { Review } from './review.entity';
+import { createUserDto } from '@shared/mappers/user.mapper';
 
 @Injectable()
 export class ReviewsService {
@@ -56,16 +57,11 @@ export class ReviewsService {
             url: this.filesService.getUrl(f.key)
         }));
 
-        const user = {
-            id: review.user.id,
-            firstName: review.user.firstName,
-            lastName: review.user.lastName,
-            avatarKey: review.user.avatarKey,
-            avatarUrl: review.user.avatarKey
-                ? this.filesService.getUrl(review.user.avatarKey)
-                : null,
-            isPro: review.user.isPro
-        };
+        const avatarUrl = review.user.avatarKey
+            ? this.filesService.getUrl(review.user.avatarKey)
+            : null;
+
+        const user = createUserDto(review.user, avatarUrl);
 
         let entity = null;
 
@@ -234,6 +230,7 @@ export class ReviewsService {
             .createQueryBuilder('review')
             .where('review.entityType = :entityType', { entityType })
             .leftJoinAndSelect('review.user', 'user')
+            .andWhere('user.isBlocked = false')
             .leftJoinAndSelect('review.files', 'files')
             .orderBy('review.createdAt', 'DESC')
             .take(limit)

@@ -337,6 +337,7 @@ export class TrainingsService {
             .leftJoinAndSelect('training.location', 'location')
             .leftJoinAndSelect('location.place', 'locationPlace')
             .leftJoinAndSelect('training.user', 'user')
+            .where('user.isBlocked = false')
             .addSelect(subQuery => {
                 return subQuery
                     .select('COUNT(*)')

@@ -1,5 +1,6 @@
 import {
     BadRequestException,
+    ForbiddenException,
     Injectable,
     Logger,
     UnauthorizedException
@@ -109,6 +110,10 @@ export class AuthService {
             );
         }
 
+        if (existingUser.isBlocked) {
+            throw new ForbiddenException('Аккаунт заблокирован');
+        }
+
         const tokens = await this.generateTokens(
             { id: existingUser.id, roles: existingUser.roles.map(r => r.name) },
             userAgent
@@ -131,9 +136,13 @@ export class AuthService {
             throw new UnauthorizedException();
         }
 
-        const { id, roles } = await this.usersService.findById(
+        const { id, roles, isBlocked } = await this.usersService.findById(
             tokenData.user.id
         );
+
+        if (isBlocked) {
+            throw new ForbiddenException('Аккаунт заблокирован');
+        }
 
         return this.generateTokens(
             { id, roles: roles.map(r => r.name) },

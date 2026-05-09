@@ -7,6 +7,7 @@ export const createUserDto = (user: User, avatarUrl: string) => {
         lastName: user.lastName,
         avatarKey: user.avatarKey,
         avatarUrl,
-        isPro: user.isPro
+        isPro: user.isPro,
+        isBlocked: user.isBlocked
     };
 };
