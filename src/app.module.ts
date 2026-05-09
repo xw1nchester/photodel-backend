@@ -6,6 +6,7 @@ import { AuthModule } from '@auth/auth.module';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { DatabaseModule } from '@database/database.module';
 
+import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
 import { FavoritesModule } from './favorites/favorites.module';
 import { FilesModule } from './files/files.module';
@@ -20,7 +21,6 @@ import { RolesModule } from './roles/roles.module';
 import { TeamsModule } from './teams/teams.module';
 import { TrainingRequestsModule } from './training-requests/training-requests.module';
 import { TrainingsModule } from './trainings/trainings.module';
-import { AdminModule } from './admin/admin.module';
 
 @Module({
     imports: [

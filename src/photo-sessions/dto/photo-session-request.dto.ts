@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
     ArrayMinSize,
     IsArray,
@@ -47,6 +47,7 @@ export class PhotoSessionRequestDto {
 
     @ApiProperty({ example: 1 })
     @IsNumber()
+    @Transform(({ value }) => Number(value))
     specializationId: number;
 
     @ApiProperty({ example: true })

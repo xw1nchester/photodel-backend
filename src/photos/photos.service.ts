@@ -9,6 +9,7 @@ import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { AlbumsService } from '@albums/albums.service';
 import { Favorite } from '@favorites/favorite.entity';
+import { FilesService } from '@files/files.service';
 import { Like } from '@likes/like.entity';
 import { Location } from '@locations/entities/location.entity';
 import { LocationsService } from '@locations/locations.service';
@@ -17,12 +18,11 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { SortOption } from '@shared/enums/sort-option.enum';
+import { createUserDto } from '@shared/mappers/user.mapper';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './photo.entity';
-import { FilesService } from '@files/files.service';
-import { createUserDto } from '@shared/mappers/user.mapper';
 
 @Injectable()
 export class PhotosService {

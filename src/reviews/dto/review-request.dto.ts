@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
     IsArray,
     IsNumber,
@@ -23,6 +24,7 @@ export class ReviewRequestDto extends EntityActionRequestDto {
         nullable: true
     })
     @IsNumber()
+    @Transform(({ value }) => Number(value))
     @Min(1)
     @Max(5)
     @IsOptional()

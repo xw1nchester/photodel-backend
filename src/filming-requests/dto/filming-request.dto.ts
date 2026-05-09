@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
     IsBoolean,
     IsISO8601,
@@ -16,6 +16,7 @@ import { LocationRequestDto } from '@locations/dto/location-request.dto';
 export class FilmingRequestDto {
     @ApiProperty({ example: 1 })
     @IsNumber()
+    @Transform(({ value }) => Number(value))
     userId: number;
 
     @ApiProperty({
@@ -27,6 +28,7 @@ export class FilmingRequestDto {
 
     @ApiProperty({ example: 1 })
     @IsNumber()
+    @Transform(({ value }) => Number(value))
     @Min(1)
     durationHours: number;
 
@@ -43,6 +45,7 @@ export class FilmingRequestDto {
 
     @ApiProperty({ example: 1 })
     @IsNumber()
+    @Transform(({ value }) => Number(value))
     @Min(1)
     peoplesCount: number;
 

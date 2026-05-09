@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
-import { Social } from '@socials/social.entity';
+import { Social } from '@socials/entities/social.entity';
 
 import { Profile } from './profile.entity';
 
@@ -18,7 +18,7 @@ export class ProfileSocial {
     @JoinColumn({ name: 'profile_id' })
     profile: Profile;
 
-    @ManyToOne(() => Social, social => social.profiles, { onDelete: 'CASCADE' })
+    @ManyToOne(() => Social, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'social_id' })
     social: Social;
 

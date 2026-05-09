@@ -16,12 +16,12 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { SortOption } from '@shared/enums/sort-option.enum';
+import { createUserDto } from '@shared/mappers/user.mapper';
 import { SpecializationsService } from '@specializations/specializations.service';
 import { TeamsService } from '@teams/teams.service';
 
 import { PhotoSessionRequestDto } from './dto/photo-session-request.dto';
 import { PhotoSession } from './photo-session.entity';
-import { createUserDto } from '@shared/mappers/user.mapper';
 
 @Injectable()
 export class PhotoSessionsService {

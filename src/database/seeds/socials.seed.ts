@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 
-import { Social } from '@socials/social.entity';
+import { Social } from '@socials/entities/social.entity';
 
 export default class SocialSeeder implements Seeder {
     public async run(dataSource: DataSource): Promise<void> {

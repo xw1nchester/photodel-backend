@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
     ArrayMinSize,
     IsArray,
@@ -64,6 +64,7 @@ export class TrainingRequestDto {
 
     @ApiProperty({ example: 10, required: false })
     @IsNumber()
+    @Transform(({ value }) => Number(value))
     @Min(1)
     @IsOptional()
     maxParticipants: number;

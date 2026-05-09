@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
     IsArray,
     IsBoolean,
@@ -53,6 +53,7 @@ export class PhotoRequestDto {
 
     @ApiProperty({ example: 400, nullable: true })
     @IsNumber()
+    @Transform(({ value }) => Number(value))
     @IsOptional()
     iso?: number;
 

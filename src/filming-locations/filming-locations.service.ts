@@ -12,11 +12,11 @@ import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
 import { SortOption } from '@shared/enums/sort-option.enum';
+import { createUserDto } from '@shared/mappers/user.mapper';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { FilmingLocationRequestDto } from './dto/filming-location-request.dto';
 import { FilmingLocation } from './filming-location.entity';
-import { createUserDto } from '@shared/mappers/user.mapper';
 
 @Injectable()
 export class FilmingLocationsService {

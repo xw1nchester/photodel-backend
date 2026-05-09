@@ -14,13 +14,13 @@ import { PhotosService } from '@photos/photos.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { EntityType } from '@shared/enums/entity-type.enums';
+import { createUserDto } from '@shared/mappers/user.mapper';
 import { TrainingsService } from '@trainings/trainings.service';
 import { User } from '@users/entities/user.entity';
 import { UsersService } from '@users/users.service';
 
 import { ReviewRequestDto } from './dto/review-request.dto';
 import { Review } from './review.entity';
-import { createUserDto } from '@shared/mappers/user.mapper';
 
 @Injectable()
 export class ReviewsService {

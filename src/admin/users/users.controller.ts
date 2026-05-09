@@ -1,7 +1,3 @@
-import { CurrentUser, Role } from '@auth/decorators';
-import { RoleEnum } from '@auth/enums/role.enum';
-import { RoleGuard } from '@auth/guards/role.guard';
-import { JwtPayload } from '@auth/interfaces';
 import {
     Controller,
     Get,
@@ -21,6 +17,11 @@ import {
     ApiTags,
     getSchemaPath
 } from '@nestjs/swagger';
+
+import { CurrentUser, Role } from '@auth/decorators';
+import { RoleEnum } from '@auth/enums/role.enum';
+import { RoleGuard } from '@auth/guards/role.guard';
+import { JwtPayload } from '@auth/interfaces';
 import { PaginationResponseDto } from '@shared/dto/pagination-response.dto';
 import { ProfileBasicResponseDto } from '@users/dto/profile-response.dto';
 import { UserQueryDto } from '@users/dto/user-query.dto';
