@@ -603,6 +603,7 @@ export class UsersService {
                 ? this.s3Service.getUrl(user.avatarKey)
                 : null,
             isPro: user.isPro,
+            isBlocked: user.isBlocked,
             proCategories: user.profile.proCategories,
             specializations: user.profile.specializations,
             location: this.locationsService.createDto(user.profile.location),

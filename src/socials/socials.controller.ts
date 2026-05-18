@@ -3,7 +3,10 @@ import { ApiOkResponse } from '@nestjs/swagger';
 
 import { Public } from '@auth/decorators';
 
-import { SocialsWrapperResponseDto } from './dto/socials-response.dto';
+import {
+    SiteSocialsWrapperResponseDto,
+    SocialsWrapperResponseDto
+} from './dto/socials-response.dto';
 import { SocialsService } from './socials.service';
 
 @Controller()
@@ -19,7 +22,7 @@ export class SocialsController {
 
     @Public()
     @Get('site-socials')
-    @ApiOkResponse({ type: SocialsWrapperResponseDto })
+    @ApiOkResponse({ type: SiteSocialsWrapperResponseDto })
     async findSiteSocials() {
         return await this.socialsService.findSiteSocials();
     }

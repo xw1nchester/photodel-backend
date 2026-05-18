@@ -156,6 +156,9 @@ export class ProfileBasicResponseDto {
     @ApiProperty({ example: false })
     isPro: boolean;
 
+    @ApiProperty({ example: false })
+    isBlocked: boolean;
+
     @ApiProperty({ type: [ProCategoryDto] })
     proCategories: ProCategoryDto[];
 
