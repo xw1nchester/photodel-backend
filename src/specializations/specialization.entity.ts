@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 
 import { FilmingLocation } from '@filming-locations/filming-location.entity';
-import { Photo } from '@photos/photo.entity';
+import { Photo } from '@photos/entities/photo.entity';
 import { ProCategory } from '@pro-categories/pro-category.entity';
 import { Profile } from '@users/entities/profile.entity';
 

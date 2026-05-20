@@ -9,7 +9,7 @@ import {
     UpdateDateColumn
 } from 'typeorm';
 
-import { Photo } from '@photos/photo.entity';
+import { Photo } from '@photos/entities/photo.entity';
 import { User } from '@users/entities/user.entity';
 
 @Entity('albums')

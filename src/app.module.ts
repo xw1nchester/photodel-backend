@@ -21,12 +21,14 @@ import { RolesModule } from './roles/roles.module';
 import { TeamsModule } from './teams/teams.module';
 import { TrainingRequestsModule } from './training-requests/training-requests.module';
 import { TrainingsModule } from './trainings/trainings.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true
         }),
+        ScheduleModule.forRoot(),
         DatabaseModule,
         AuthModule,
         RolesModule,

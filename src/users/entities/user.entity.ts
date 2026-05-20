@@ -13,7 +13,7 @@ import { Album } from '@albums/album.entity';
 import { Code } from '@codes/code.entity';
 import { File } from '@files/file.entity';
 import { FilmingLocation } from '@filming-locations/filming-location.entity';
-import { Photo } from '@photos/photo.entity';
+import { Photo } from '@photos/entities/photo.entity';
 import { Role } from '@roles/role.entity';
 import { Token } from '@tokens/token.entity';
 

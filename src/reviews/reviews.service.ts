@@ -9,7 +9,7 @@ import { Brackets, DataSource, EntityManager, Repository } from 'typeorm';
 import { FilesService } from '@files/files.service';
 import { FilmingLocationsService } from '@filming-locations/filming-locations.service';
 import { PhotoSessionsService } from '@photo-sessions/photo-sessions.service';
-import { Photo } from '@photos/photo.entity';
+import { Photo } from '@photos/entities/photo.entity';
 import { PhotosService } from '@photos/photos.service';
 import { PaginationQueryDto } from '@shared/dto/pagination-query.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';

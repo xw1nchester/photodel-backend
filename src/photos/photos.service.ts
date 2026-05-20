@@ -2,6 +2,7 @@ import {
     forwardRef,
     Inject,
     Injectable,
+    Logger,
     NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,13 +23,19 @@ import { createUserDto } from '@shared/mappers/user.mapper';
 import { SpecializationsService } from '@specializations/specializations.service';
 
 import { PhotoRequestDto } from './dto/photo-request.dto';
-import { Photo } from './photo.entity';
+import { Photo } from './entities/photo.entity';
+import { Cron } from '@nestjs/schedule';
+import { DailyBestPhoto } from './entities/daily-best-photo.entity';
 
 @Injectable()
 export class PhotosService {
+    private logger = new Logger(PhotosService.name);
+
     constructor(
         @InjectRepository(Photo)
         private readonly photoRepository: Repository<Photo>,
+        @InjectRepository(DailyBestPhoto)
+        private readonly dailyBestPhotoRepository: Repository<DailyBestPhoto>,
         private readonly dataSource: DataSource,
         private readonly specializationsService: SpecializationsService,
         @Inject(forwardRef(() => AlbumsService))
@@ -661,6 +668,71 @@ export class PhotosService {
         });
     }
 
+    @Cron('* * * * *', {
+        timeZone: 'Europe/Moscow'
+    })
+    async selectPhotoOfTheDay() {
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
+        const dateStr = date.toLocaleDateString();
+
+        this.logger.log(
+            `Checking existing daily best photo for date: ${dateStr}`
+        );
+
+        const existing = await this.dailyBestPhotoRepository.findOne({
+            where: {
+                date: date
+            }
+        });
+
+        if (existing) {
+            this.logger.log(
+                `Daily best photo already exists for date: ${dateStr}`
+            );
+            return;
+        }
+
+        const query = this.photoRepository
+            .createQueryBuilder('photo')
+            .where('photo.isPublished = :isPublished', {
+                isPublished: true
+            })
+            .leftJoin(
+                Like,
+                'like',
+                `
+                    like.entityId = photo.id
+                    AND like.entityType = :entityType
+                    AND like.createdAt >= NOW() - INTERVAL '1 day'
+                `,
+                {
+                    entityType: EntityType.PHOTO
+                }
+            )
+            .addSelect('COUNT(like.id)', 'likes_count')
+            .groupBy('photo.id')
+            .orderBy('likes_count', 'DESC')
+            .addOrderBy('photo.createdAt', 'DESC')
+            .limit(1);
+
+        console.log(query.getSql(), query.getParameters());
+
+        const photo = await query.getOne();
+
+        if (!photo) {
+            this.logger.warn(`No liked photos found for date: ${dateStr}`);
+            return;
+        }
+
+        await this.dailyBestPhotoRepository.save({
+            date,
+            photo
+        });
+
+        this.logger.log(`Best photo found: photoId=${photo.id}`);
+    }
+
     // TODO: завести таблицу (photo_daily_stats), в которую сохранять статистику лучших фото по дням
     async getPhotoOfTheDay() {
         // убрал незначащие join/подзапросы, т.к. критически важна производительность
@@ -687,6 +759,7 @@ export class PhotosService {
             .addGroupBy('locationPlace.id')
             .addGroupBy('user.id')
             .orderBy('likes_count', 'DESC')
+            .addOrderBy('photo.createdAt', 'DESC')
             .limit(1);
 
         const { entities, raw } = await query.getRawAndEntities();
