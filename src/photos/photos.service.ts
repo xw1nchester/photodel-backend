@@ -26,6 +26,8 @@ import { PhotoRequestDto } from './dto/photo-request.dto';
 import { Photo } from './entities/photo.entity';
 import { Cron } from '@nestjs/schedule';
 import { DailyBestPhoto } from './entities/daily-best-photo.entity';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class PhotosService {
@@ -41,7 +43,9 @@ export class PhotosService {
         @Inject(forwardRef(() => AlbumsService))
         private readonly albumService: AlbumsService,
         private readonly locationsService: LocationsService,
-        private readonly filesService: FilesService
+        private readonly filesService: FilesService,
+        @Inject(CACHE_MANAGER)
+        private cacheManager: Cache
     ) {}
 
     createDto(photo: Photo) {
@@ -443,7 +447,7 @@ export class PhotosService {
         manager
     }: {
         id: number;
-        requesterUserId: number;
+        requesterUserId?: number;
         manager?: EntityManager;
     }) {
         const repo = manager
@@ -668,104 +672,103 @@ export class PhotosService {
         });
     }
 
-    @Cron('* * * * *', {
+    @Cron('0 0 * * *', {
         timeZone: 'Europe/Moscow'
     })
-    async selectPhotoOfTheDay() {
-        const date = new Date();
-        date.setHours(0, 0, 0, 0);
-        const dateStr = date.toLocaleDateString();
+    async determinePhotoOfTheDay() {
+        const now = new Date();
+
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toLocaleDateString();
 
         this.logger.log(
-            `Checking existing daily best photo for date: ${dateStr}`
+            `Checking existing daily best photo for date: ${todayStr}`
         );
 
         const existing = await this.dailyBestPhotoRepository.findOne({
             where: {
-                date: date
+                date: today
             }
         });
 
         if (existing) {
             this.logger.log(
-                `Daily best photo already exists for date: ${dateStr}`
+                `Daily best photo already exists for date: ${todayStr}`
             );
-            return;
+            return existing.photoId;
         }
 
         const query = this.photoRepository
             .createQueryBuilder('photo')
-            .where('photo.isPublished = :isPublished', {
-                isPublished: true
-            })
+            .where('photo.isPublished = :isPublished', { isPublished: true })
             .leftJoin(
                 Like,
                 'like',
                 `
                     like.entityId = photo.id
-                    AND like.entityType = :entityType
-                    AND like.createdAt >= NOW() - INTERVAL '1 day'
+                    AND like.entityType = :type
+                    AND like.createdAt >= :start
+                    AND like.createdAt < :end
                 `,
                 {
-                    entityType: EntityType.PHOTO
+                    type: 'photo',
+                    start: yesterday,
+                    end: today
                 }
             )
-            .addSelect('COUNT(like.id)', 'likes_count')
+            .addSelect('COUNT(like.id)', 'likes_сount')
             .groupBy('photo.id')
-            .orderBy('likes_count', 'DESC')
+            .orderBy('likes_сount', 'DESC')
             .addOrderBy('photo.createdAt', 'DESC')
             .limit(1);
-
-        console.log(query.getSql(), query.getParameters());
 
         const photo = await query.getOne();
 
         if (!photo) {
-            this.logger.warn(`No liked photos found for date: ${dateStr}`);
-            return;
+            this.logger.warn(
+                `Could not determine best photo for date ${todayStr}`
+            );
+            return null;
         }
 
         await this.dailyBestPhotoRepository.save({
-            date,
+            date: today,
             photo
         });
 
         this.logger.log(`Best photo found: photoId=${photo.id}`);
+
+        return photo.id;
     }
 
-    // TODO: завести таблицу (photo_daily_stats), в которую сохранять статистику лучших фото по дням
     async getPhotoOfTheDay() {
-        // убрал незначащие join/подзапросы, т.к. критически важна производительность
-        // ушел от подзапроса в пользу leftJoin
-        const query = this.photoRepository
-            .createQueryBuilder('photo')
-            .where('photo.isPublished = :isPublished', { isPublished: true })
-            .leftJoinAndSelect('photo.location', 'location')
-            .leftJoinAndSelect('location.place', 'locationPlace')
-            .leftJoinAndSelect('photo.user', 'user')
-            .leftJoin(
-                Like,
-                'like',
-                `
-                like.entityId = photo.id
-                AND like.entityType = :entityType
-                AND like.createdAt >= NOW() - INTERVAL '1 day'
-                `,
-                { entityType: EntityType.PHOTO }
-            )
-            .addSelect('COUNT(like.id)', 'likes_count')
-            .groupBy('photo.id')
-            .addGroupBy('location.id')
-            .addGroupBy('locationPlace.id')
-            .addGroupBy('user.id')
-            .orderBy('likes_count', 'DESC')
-            .addOrderBy('photo.createdAt', 'DESC')
-            .limit(1);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toLocaleDateString();
 
-        const { entities, raw } = await query.getRawAndEntities();
+        const cacheKey = `photo_of_the_day:${todayStr}`;
 
-        const photo = this.transformPhotosRawData(entities, raw)[0];
+        const cached = await this.cacheManager.get(cacheKey);
 
-        return { photo: photo ? this.createDto(photo) : null };
+        if (cached) {
+            return cached;
+        }
+
+        const id = await this.determinePhotoOfTheDay();
+
+        if (!id) {
+            return null;
+        }
+
+        const photo = await this.getDtoById({ id });
+
+        await this.cacheManager.set(cacheKey, photo);
+
+        return photo;
     }
 }

@@ -22,12 +22,14 @@ import { TeamsModule } from './teams/teams.module';
 import { TrainingRequestsModule } from './training-requests/training-requests.module';
 import { TrainingsModule } from './trainings/trainings.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true
         }),
+        CacheModule.register({ isGlobal: true }),
         ScheduleModule.forRoot(),
         DatabaseModule,
         AuthModule,
