@@ -135,7 +135,7 @@ export class UsersService {
         let location = user.profile.location;
 
         const activeTemporaryLocation = this.getActiveTemporaryLocation(
-            user.profile.temporaryLocations
+            user.profile.temporaryLocations ?? []
         );
 
         if (activeTemporaryLocation) {
