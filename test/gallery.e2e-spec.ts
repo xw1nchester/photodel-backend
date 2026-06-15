@@ -178,10 +178,10 @@ describe('Albums & Photos (e2e)', () => {
         });
     });
 
-    describe('Albums - GET /albums/my (Get User Albums)', () => {
-        it('should return paginated list of user albums', async () => {
+    describe('Albums - GET /albums (Get User Personal Albums)', () => {
+        it('should return paginated list of user personal albums', async () => {
             const res = await request(app.getHttpServer())
-                .get('/albums/my')
+                .get('/albums')
                 .set('Authorization', `Bearer ${accessToken}`)
                 .query({ page: 1, limit: 10 })
                 .expect(200);
@@ -252,364 +252,356 @@ describe('Albums & Photos (e2e)', () => {
             expect(res.body.album.description).toBe('Updated description');
             expect(res.body.album.isPublished).toBe(true);
         });
+    });
 
-        describe('Albums - DELETE /albums/:id (Delete)', () => {
-            let albumId: number;
+    describe('Albums - DELETE /albums/:id (Delete)', () => {
+        let albumId: number;
 
-            it('should delete album', async () => {
-                // Create album first
-                const createRes = await request(app.getHttpServer())
-                    .post('/albums')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        title: 'To Delete',
-                        isPublished: true,
-                        photoIds: []
-                    })
-                    .expect(201);
+        it('should delete album', async () => {
+            // Create album first
+            const createRes = await request(app.getHttpServer())
+                .post('/albums')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    title: 'To Delete',
+                    isPublished: true,
+                    photoIds: []
+                })
+                .expect(201);
 
-                albumId = createRes.body.album.id;
+            albumId = createRes.body.album.id;
 
-                await request(app.getHttpServer())
-                    .delete(`/albums/${albumId}`)
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .expect(200);
+            await request(app.getHttpServer())
+                .delete(`/albums/${albumId}`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(200);
 
-                // Verify album is deleted
-                await request(app.getHttpServer())
-                    .get(`/albums/${albumId}`)
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .expect(404);
-            });
+            // Verify album is deleted
+            await request(app.getHttpServer())
+                .get(`/albums/${albumId}`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(404);
+        });
+    });
+
+    describe('Albums - POST /albums/bulk-delete (Bulk Delete)', () => {
+        it('should bulk delete albums', async () => {
+            // Create multiple albums
+            const album1 = await request(app.getHttpServer())
+                .post('/albums')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({ title: 'Album 1', isPublished: true, photoIds: [] })
+                .expect(201);
+
+            const album2 = await request(app.getHttpServer())
+                .post('/albums')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({ title: 'Album 2', isPublished: true, photoIds: [] })
+                .expect(201);
+
+            const ids = [album1.body.album.id, album2.body.album.id];
+
+            await request(app.getHttpServer())
+                .post('/albums/bulk-delete')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({ ids })
+                .expect(204);
+        });
+    });
+
+    describe('Photos - POST /photos (Create)', () => {
+        it('should create a new photo with valid data', async () => {
+            const createPhotoDto = {
+                image: 'test-image-key.jpg',
+                name: 'My Photo',
+                description: 'Beautiful sunset',
+                location: {
+                    latitude: 55.7558,
+                    longitude: 37.6173,
+                    address: 'Russia, Moscow, Tverskaya Street 1'
+                },
+                camera: 'Canon EOS 5D Mark IV',
+                aperture: 'f/2.8',
+                focalLength: '50mm',
+                shutterSpeed: '1/200s',
+                iso: 400,
+                flash: 'On',
+                isForSale: false,
+                isPublished: true,
+                specializationIds: [],
+                albumIds: []
+            };
+
+            const res = await request(app.getHttpServer())
+                .post('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send(createPhotoDto)
+                .expect(201);
+
+            expect(res.body.photo).toHaveProperty('id');
+            expect(res.body.photo.imageKey).toBe(createPhotoDto.image);
+            expect(res.body.photo).toHaveProperty('imageUrl');
+            expect(res.body.photo.name).toBe(createPhotoDto.name);
+            expect(res.body.photo.description).toBe(createPhotoDto.description);
+            expect(res.body.photo).toHaveProperty('location');
+            expect(res.body.photo.camera).toBe(createPhotoDto.camera);
+            expect(res.body.photo.aperture).toBe(createPhotoDto.aperture);
+            expect(res.body.photo.focalLength).toBe(createPhotoDto.focalLength);
+            expect(res.body.photo.shutterSpeed).toBe(
+                createPhotoDto.shutterSpeed
+            );
+            expect(res.body.photo.iso).toBe(createPhotoDto.iso);
+            expect(res.body.photo.flash).toBe(createPhotoDto.flash);
+            expect(res.body.photo.isForSale).toBe(createPhotoDto.isForSale);
+            expect(res.body.photo.isPublished).toBe(createPhotoDto.isPublished);
+            expect(res.body.photo).toHaveProperty('specializations');
+            expect(Array.isArray(res.body.photo.specializations)).toBe(true);
+            expect(res.body.photo).toHaveProperty('albums');
+            expect(Array.isArray(res.body.photo.albums)).toBe(true);
+            expect(res.body.photo).toHaveProperty('createdAt');
+            expect(res.body.photo).toHaveProperty('updatedAt');
+            expect(res.body.photo).toHaveProperty('user');
         });
 
-        describe('Albums - POST /albums/bulk-delete (Bulk Delete)', () => {
-            it('should bulk delete albums', async () => {
-                // Create multiple albums
-                const album1 = await request(app.getHttpServer())
-                    .post('/albums')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({ title: 'Album 1', isPublished: true, photoIds: [] })
-                    .expect(201);
+        it('should create a new photo with albums', async () => {
+            // First create some albums to link to the photo
+            const album1 = await request(app.getHttpServer())
+                .post('/albums')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    title: 'Album 1 for Photo',
+                    isPublished: true,
+                    photoIds: []
+                })
+                .expect(201);
 
-                const album2 = await request(app.getHttpServer())
-                    .post('/albums')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({ title: 'Album 2', isPublished: true, photoIds: [] })
-                    .expect(201);
+            const album2 = await request(app.getHttpServer())
+                .post('/albums')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    title: 'Album 2 for Photo',
+                    isPublished: true,
+                    photoIds: []
+                })
+                .expect(201);
 
-                const ids = [album1.body.album.id, album2.body.album.id];
+            const albumIds = [album1.body.album.id, album2.body.album.id];
 
-                await request(app.getHttpServer())
-                    .post('/albums/bulk-delete')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({ ids })
-                    .expect(204);
-            });
+            // Then create photo with those album IDs
+            const createPhotoDto = {
+                image: 'photo-with-albums.jpg',
+                name: 'Photo in Albums',
+                description: 'Photo linked to albums',
+                isForSale: false,
+                isPublished: true,
+                specializationIds: [],
+                albumIds
+            };
+
+            const res = await request(app.getHttpServer())
+                .post('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send(createPhotoDto)
+                .expect(201);
+
+            expect(res.body.photo.albums.length).toBe(albumIds.length);
         });
+    });
 
-        describe('Photos - POST /photos (Create)', () => {
-            it('should create a new photo with valid data', async () => {
-                const createPhotoDto = {
-                    image: 'test-image-key.jpg',
-                    name: 'My Photo',
-                    description: 'Beautiful sunset',
-                    location: {
-                        latitude: 55.7558,
-                        longitude: 37.6173,
-                        address: 'Russia, Moscow, Tverskaya Street 1'
-                    },
-                    camera: 'Canon EOS 5D Mark IV',
-                    aperture: 'f/2.8',
-                    focalLength: '50mm',
-                    shutterSpeed: '1/200s',
-                    iso: 400,
-                    flash: 'On',
+    describe('Photos - GET /photos (Get User Personal Photos)', () => {
+        it('should return paginated list of user personal photos', async () => {
+            const res = await request(app.getHttpServer())
+                .get('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .query({ page: 1, limit: 10, my: true })
+                .expect(200);
+
+            expect(res.body).toHaveProperty('data');
+            expect(Array.isArray(res.body.data)).toBe(true);
+            expect(res.body).toHaveProperty('total');
+            expect(res.body).toHaveProperty('page');
+            expect(res.body).toHaveProperty('isLast');
+        });
+    });
+
+    describe('Photos - GET /photos/:id (Get User Public Photo by ID)', () => {
+        let photoId: number;
+
+        it('should get user public photo by id', async () => {
+            // Create photo first
+            const createRes = await request(app.getHttpServer())
+                .post('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    image: 'test-key.jpg',
+                    name: 'Test Photo',
                     isForSale: false,
                     isPublished: true,
                     specializationIds: [],
                     albumIds: []
-                };
+                })
+                .expect(201);
 
-                const res = await request(app.getHttpServer())
-                    .post('/photos')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send(createPhotoDto)
-                    .expect(201);
+            photoId = createRes.body.photo.id;
 
-                expect(res.body.photo).toHaveProperty('id');
-                expect(res.body.photo.imageKey).toBe(createPhotoDto.image);
-                expect(res.body.photo).toHaveProperty('imageUrl');
-                expect(res.body.photo.name).toBe(createPhotoDto.name);
-                expect(res.body.photo.description).toBe(
-                    createPhotoDto.description
-                );
-                expect(res.body.photo).toHaveProperty('location');
-                expect(res.body.photo.camera).toBe(createPhotoDto.camera);
-                expect(res.body.photo.aperture).toBe(createPhotoDto.aperture);
-                expect(res.body.photo.focalLength).toBe(
-                    createPhotoDto.focalLength
-                );
-                expect(res.body.photo.shutterSpeed).toBe(
-                    createPhotoDto.shutterSpeed
-                );
-                expect(res.body.photo.iso).toBe(createPhotoDto.iso);
-                expect(res.body.photo.flash).toBe(createPhotoDto.flash);
-                expect(res.body.photo.isForSale).toBe(createPhotoDto.isForSale);
-                expect(res.body.photo.isPublished).toBe(
-                    createPhotoDto.isPublished
-                );
-                expect(res.body.photo).toHaveProperty('specializations');
-                expect(Array.isArray(res.body.photo.specializations)).toBe(
-                    true
-                );
-                expect(res.body.photo).toHaveProperty('albums');
-                expect(Array.isArray(res.body.photo.albums)).toBe(true);
-                expect(res.body.photo).toHaveProperty('createdAt');
-                expect(res.body.photo).toHaveProperty('updatedAt');
-                expect(res.body.photo).toHaveProperty('user');
-            });
+            const res = await request(app.getHttpServer())
+                .get(`/photos/${photoId}`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(200);
 
-            it('should create a new photo with albums', async () => {
-                // First create some albums to link to the photo
-                const album1 = await request(app.getHttpServer())
-                    .post('/albums')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        title: 'Album 1 for Photo',
-                        isPublished: true,
-                        photoIds: []
-                    })
-                    .expect(201);
+            expect(res.body.photo.id).toBe(photoId);
+            expect(res.body.photo.name).toBe('Test Photo');
+        });
+    });
 
-                const album2 = await request(app.getHttpServer())
-                    .post('/albums')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        title: 'Album 2 for Photo',
-                        isPublished: true,
-                        photoIds: []
-                    })
-                    .expect(201);
+    describe('Photos - GET /photos/:id (Public - Get Public Photo)', () => {
+        let publicPhotoId: number;
 
-                const albumIds = [album1.body.album.id, album2.body.album.id];
-
-                // Then create photo with those album IDs
-                const createPhotoDto = {
-                    image: 'photo-with-albums.jpg',
-                    name: 'Photo in Albums',
-                    description: 'Photo linked to albums',
+        it('should get published photo without auth', async () => {
+            // Create a published photo
+            const createRes = await request(app.getHttpServer())
+                .post('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    image: 'public-photo.jpg',
+                    name: 'Public Photo',
                     isForSale: false,
                     isPublished: true,
                     specializationIds: [],
-                    albumIds
-                };
+                    albumIds: []
+                })
+                .expect(201);
 
-                const res = await request(app.getHttpServer())
-                    .post('/photos')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send(createPhotoDto)
-                    .expect(201);
+            publicPhotoId = createRes.body.photo.id;
 
-                expect(res.body.photo.albums.length).toBe(albumIds.length);
-            });
+            // Access without token (public endpoint)
+            const res = await request(app.getHttpServer())
+                .get(`/photos/${publicPhotoId}`)
+                .expect(200);
+
+            expect(res.body.photo.id).toBe(publicPhotoId);
+            expect(res.body.photo.isPublished).toBe(true);
         });
 
-        describe('Photos - GET /photos/my (Get User Photos)', () => {
-            it('should return paginated list of user photos', async () => {
-                const res = await request(app.getHttpServer())
-                    .get('/photos/my')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .query({ page: 1, limit: 10 })
-                    .expect(200);
+        it('should NOT get unpublished photo without auth', async () => {
+            // Create an unpublished photo
+            const createRes = await request(app.getHttpServer())
+                .post('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    image: 'private-photo.jpg',
+                    name: 'Private Photo',
+                    isForSale: false,
+                    isPublished: false,
+                    specializationIds: [],
+                    albumIds: []
+                })
+                .expect(201);
 
-                expect(res.body).toHaveProperty('data');
-                expect(Array.isArray(res.body.data)).toBe(true);
-                expect(res.body).toHaveProperty('total');
-                expect(res.body).toHaveProperty('page');
-                expect(res.body).toHaveProperty('isLast');
-            });
+            const privatePhotoId = createRes.body.photo.id;
+
+            // Try to access without token (should fail - returns 404)
+            await request(app.getHttpServer())
+                .get(`/photos/${privatePhotoId}`)
+                .expect(404);
         });
 
-        describe('Photos - GET /photos/my/:id (Get User Photo by ID)', () => {
-            let photoId: number;
+        it('should get unpublished photo WITH auth (owner)', async () => {
+            // Create an unpublished photo
+            const createRes = await request(app.getHttpServer())
+                .post('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    image: 'private-photo.jpg',
+                    name: 'Private Photo',
+                    isForSale: false,
+                    isPublished: false,
+                    specializationIds: [],
+                    albumIds: []
+                })
+                .expect(201);
 
-            it('should get user photo by id', async () => {
-                // Create photo first
-                const createRes = await request(app.getHttpServer())
-                    .post('/photos')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        image: 'test-key.jpg',
-                        name: 'Test Photo',
-                        isForSale: false,
-                        isPublished: true,
-                        specializationIds: [],
-                        albumIds: []
-                    })
-                    .expect(201);
+            const privatePhotoId = createRes.body.photo.id;
 
-                photoId = createRes.body.photo.id;
+            // Access WITH token (should work - owner can see own photos)
+            const res = await request(app.getHttpServer())
+                .get(`/photos/${privatePhotoId}`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(200);
 
-                const res = await request(app.getHttpServer())
-                    .get(`/photos/my/${photoId}`)
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .expect(200);
-
-                expect(res.body.photo.id).toBe(photoId);
-                expect(res.body.photo.name).toBe('Test Photo');
-            });
+            expect(res.body.photo.id).toBe(privatePhotoId);
         });
+    });
 
-        describe('Photos - GET /photos/:id (Public - Get Public Photo)', () => {
-            let publicPhotoId: number;
+    describe('Photos - PATCH /photos/:id (Update)', () => {
+        let photoId: number;
 
-            it('should get published photo without auth', async () => {
-                // Create a published photo
-                const createRes = await request(app.getHttpServer())
-                    .post('/photos')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        image: 'public-photo.jpg',
-                        name: 'Public Photo',
-                        isForSale: false,
-                        isPublished: true,
-                        specializationIds: [],
-                        albumIds: []
-                    })
-                    .expect(201);
+        it('should update photo', async () => {
+            // Create photo first
+            const createRes = await request(app.getHttpServer())
+                .post('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    image: 'original.jpg',
+                    name: 'Original Name',
+                    isForSale: false,
+                    isPublished: false,
+                    specializationIds: [],
+                    albumIds: []
+                })
+                .expect(201);
 
-                publicPhotoId = createRes.body.photo.id;
+            photoId = createRes.body.photo.id;
 
-                // Access without token (public endpoint)
-                const res = await request(app.getHttpServer())
-                    .get(`/photos/${publicPhotoId}`)
-                    .expect(200);
+            const res = await request(app.getHttpServer())
+                .patch(`/photos/${photoId}`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    image: 'updated.jpg',
+                    name: 'Updated Name',
+                    isForSale: true,
+                    isPublished: true,
+                    specializationIds: [],
+                    albumIds: []
+                })
+                .expect(200);
 
-                expect(res.body.photo.id).toBe(publicPhotoId);
-                expect(res.body.photo.isPublished).toBe(true);
-            });
-
-            it('should NOT get unpublished photo without auth', async () => {
-                // Create an unpublished photo
-                const createRes = await request(app.getHttpServer())
-                    .post('/photos')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        image: 'private-photo.jpg',
-                        name: 'Private Photo',
-                        isForSale: false,
-                        isPublished: false,
-                        specializationIds: [],
-                        albumIds: []
-                    })
-                    .expect(201);
-
-                const privatePhotoId = createRes.body.photo.id;
-
-                // Try to access without token (should fail - returns 404)
-                await request(app.getHttpServer())
-                    .get(`/photos/${privatePhotoId}`)
-                    .expect(404);
-            });
-
-            it('should get unpublished photo WITH auth (owner)', async () => {
-                // Create an unpublished photo
-                const createRes = await request(app.getHttpServer())
-                    .post('/photos')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        image: 'private-photo.jpg',
-                        name: 'Private Photo',
-                        isForSale: false,
-                        isPublished: false,
-                        specializationIds: [],
-                        albumIds: []
-                    })
-                    .expect(201);
-
-                const privatePhotoId = createRes.body.photo.id;
-
-                // Access WITH token (should work - owner can see own photos)
-                const res = await request(app.getHttpServer())
-                    .get(`/photos/my/${privatePhotoId}`)
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .expect(200);
-
-                expect(res.body.photo.id).toBe(privatePhotoId);
-            });
+            expect(res.body.photo.name).toBe('Updated Name');
+            expect(res.body.photo.isForSale).toBe(true);
+            expect(res.body.photo.isPublished).toBe(true);
         });
+    });
 
-        describe('Photos - PATCH /photos/:id (Update)', () => {
-            let photoId: number;
+    describe('Photos - DELETE /photos/:id (Delete)', () => {
+        let photoId: number;
 
-            it('should update photo', async () => {
-                // Create photo first
-                const createRes = await request(app.getHttpServer())
-                    .post('/photos')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        image: 'original.jpg',
-                        name: 'Original Name',
-                        isForSale: false,
-                        isPublished: false,
-                        specializationIds: [],
-                        albumIds: []
-                    })
-                    .expect(201);
+        it('should delete photo', async () => {
+            // Create photo first
+            const createRes = await request(app.getHttpServer())
+                .post('/photos')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({
+                    image: 'to-delete.jpg',
+                    name: 'To Delete',
+                    isForSale: false,
+                    isPublished: true,
+                    specializationIds: [],
+                    albumIds: []
+                })
+                .expect(201);
 
-                photoId = createRes.body.photo.id;
+            photoId = createRes.body.photo.id;
 
-                const res = await request(app.getHttpServer())
-                    .patch(`/photos/${photoId}`)
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        image: 'updated.jpg',
-                        name: 'Updated Name',
-                        isForSale: true,
-                        isPublished: true,
-                        specializationIds: [],
-                        albumIds: []
-                    })
-                    .expect(200);
+            await request(app.getHttpServer())
+                .delete(`/photos/${photoId}`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(200);
 
-                expect(res.body.photo.name).toBe('Updated Name');
-                expect(res.body.photo.isForSale).toBe(true);
-                expect(res.body.photo.isPublished).toBe(true);
-            });
-        });
-
-        describe('Photos - DELETE /photos/:id (Delete)', () => {
-            let photoId: number;
-
-            it('should delete photo', async () => {
-                // Create photo first
-                const createRes = await request(app.getHttpServer())
-                    .post('/photos')
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .send({
-                        image: 'to-delete.jpg',
-                        name: 'To Delete',
-                        isForSale: false,
-                        isPublished: true,
-                        specializationIds: [],
-                        albumIds: []
-                    })
-                    .expect(201);
-
-                photoId = createRes.body.photo.id;
-
-                await request(app.getHttpServer())
-                    .delete(`/photos/${photoId}`)
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .expect(200);
-
-                // Verify photo is deleted
-                await request(app.getHttpServer())
-                    .get(`/photos/my/${photoId}`)
-                    .set('Authorization', `Bearer ${accessToken}`)
-                    .expect(404);
-            });
+            // Verify photo is deleted
+            await request(app.getHttpServer())
+                .get(`/photos/${photoId}`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(404);
         });
     });
 

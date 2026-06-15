@@ -18,6 +18,8 @@ import { MailService } from '@mail/mail.service';
 import { S3Service } from '@s3/s3.service';
 
 import { AppModule } from '../src/app.module';
+import { User } from '@users/entities/user.entity';
+import { Token } from '@tokens/token.entity';
 
 const extractAndValidateRefreshCookie = (res: request.Response) => {
     const raw = res.headers['set-cookie'];
@@ -112,9 +114,53 @@ describe('Auth & Users (e2e)', () => {
                 .send(testUser)
                 .expect(201);
 
-            expect(res.body).toHaveProperty('accessToken');
-            expect(res.body.user.email).toBe(testUser.email);
+            expect(mockMailService.sendVerificationCode).toHaveBeenCalledTimes(
+                1
+            );
+
+            expect(mockMailService.sendVerificationCode).toHaveBeenCalledWith(
+                testUser.email,
+                expect.any(String)
+            );
+
+            expect(res.body).toEqual({
+                user: expect.objectContaining({
+                    email: testUser.email,
+                    firstName: testUser.firstName,
+                    lastName: testUser.lastName
+                }),
+                accessToken: expect.any(String)
+            });
+
             extractAndValidateRefreshCookie(res);
+
+            const user = await dataSource.getRepository(User).findOne({
+                where: { email: testUser.email }
+            });
+
+            expect(user).toBeDefined();
+            expect(user!.passwordHash).not.toBe(testUser.password);
+
+            const token = await dataSource.getRepository(Token).findOne({
+                where: {
+                    user: {
+                        id: user!.id
+                    }
+                }
+            });
+
+            expect(token).toBeDefined();
+
+            const code = await dataSource.getRepository(Code).findOne({
+                where: {
+                    user: {
+                        id: user!.id
+                    },
+                    type: CodeType.VERIFICATION
+                }
+            });
+
+            expect(code).toBeDefined();
         });
 
         it('should not register user with already existing email', async () => {
@@ -278,7 +324,7 @@ describe('Auth & Users (e2e)', () => {
                 .post('/auth/verify-email')
                 .set('Authorization', `Bearer ${accessToken}`)
                 .send({ code: code.code })
-                .expect(201);
+                .expect(200);
         });
 
         it('should not verify email when user is already verified', async () => {

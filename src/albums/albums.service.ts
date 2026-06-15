@@ -108,8 +108,6 @@ export class AlbumsService {
             });
         }
 
-        console.log(query.getSql(), query.getParameters());
-
         const result = await query.getRawAndEntities();
 
         const total = await query.getCount();

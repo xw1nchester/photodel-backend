@@ -1,12 +1,12 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
-  "testEnvironment": "node",
-  "testRegex": ".e2e-spec.ts$",
-  "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
-  },
-  "moduleNameMapper": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": ".",
+    "testEnvironment": "node",
+    "testRegex": ".e2e-spec.ts$",
+    "transform": {
+        "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
         "^@database/(.*)$": "<rootDir>/../src/database/$1",
         "^@database$": "<rootDir>/../src/database",
         "^@utils/(.*)$": "<rootDir>/../src/utils/$1",
@@ -42,6 +42,28 @@
         "^@shared/(.*)$": "<rootDir>/../src/shared/$1",
         "^@shared$": "<rootDir>/../src/shared",
         "^@favorites/(.*)$": "<rootDir>/../src/favorites/$1",
-        "^@favorites$": "<rootDir>/../src/favorites"
+        "^@favorites$": "<rootDir>/../src/favorites",
+        "^@filming-locations/(.*)$": "<rootDir>/../src/filming-locations/$1",
+        "^@filming-locations$": "<rootDir>/../src/filming-locations",
+        "^@likes/(.*)$": "<rootDir>/../src/likes/$1",
+        "^@likes$": "<rootDir>/../src/likes",
+        "^@reviews/(.*)$": "<rootDir>/../src/reviews/$1",
+        "^@reviews$": "<rootDir>/../src/reviews",
+        "^@photo-sessions/(.*)$": "<rootDir>/../src/photo-sessions/$1",
+        "^@photo-sessions$": "<rootDir>/../src/photo-sessions",
+        "^@teams/(.*)$": "<rootDir>/../src/teams/$1",
+        "^@teams$": "<rootDir>/../src/teams",
+        "^@filming-requests/(.*)$": "<rootDir>/../src/filming-requests/$1",
+        "^@filming-requests$": "<rootDir>/../src/filming-requests",
+        "^@messenger/(.*)$": "<rootDir>/../src/messenger/$1",
+        "^@messenger$": "<rootDir>/../src/messenger",
+        "^@trainings/(.*)$": "<rootDir>/../src/trainings/$1",
+        "^@trainings$": "<rootDir>/../src/trainings",
+        "^@training-requests/(.*)$": "<rootDir>/../src/training-requests/$1",
+        "^@training-requests$": "<rootDir>/../src/training-requests",
+        "^@notifications/(.*)$": "<rootDir>/../src/notifications/$1",
+        "^@notifications$": "<rootDir>/../src/notifications",
+        "^@admin/(.*)$": "<rootDir>/../src/admin/$1",
+        "^@admin$": "<rootDir>/../src/admin"
     }
 }
