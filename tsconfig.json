@@ -5,6 +5,7 @@
         "removeComments": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
+        "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "target": "ES2021",
         "sourceMap": true,
@@ -76,7 +77,7 @@
             "@notifications": ["src/notifications"],
             "@notifications/*": ["src/notifications/*"],
             "@admin": ["src/admin"],
-            "@admin/*": ["src/admin/*"],
+            "@admin/*": ["src/admin/*"]
         },
         "types": ["jest"]
     }

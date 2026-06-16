@@ -9,7 +9,7 @@ import {
     PostgreSqlContainer
 } from '@testcontainers/postgresql';
 import fastifyCookie from 'fastify-cookie';
-import * as request from 'supertest';
+import request from 'supertest';
 import { DataSource } from 'typeorm';
 
 import { MailService } from '@mail/mail.service';
@@ -81,21 +81,19 @@ describe('Albums & Photos (e2e)', () => {
         await app.close();
     });
 
-    const testUser = {
-        email: 'test.user@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        isAdult: true,
-        isProfessional: false,
-        password: 'StrongPass123!'
-    };
-
     describe('User setup', () => {
         it('should register a new user with valid data and return access token', async () => {
             const res = await request(app.getHttpServer())
                 .post('/auth/register')
                 .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-                .send(testUser)
+                .send({
+                    email: 'test.user@example.com',
+                    firstName: 'Test',
+                    lastName: 'User',
+                    isAdult: true,
+                    isProfessional: false,
+                    password: 'StrongPass123!'
+                })
                 .expect(201);
 
             accessToken = res.body.accessToken;

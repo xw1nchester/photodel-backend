@@ -148,6 +148,7 @@ export class AuthController {
 
     @Public()
     @Post('verify-recovery')
+    @HttpCode(HttpStatus.OK)
     @ApiOkResponse({ type: CodeDto })
     async verifyRecoveryCode(@Body() dto: VerifyRecoveryDto) {
         return await this.authService.verifyRecoveryCode(dto);

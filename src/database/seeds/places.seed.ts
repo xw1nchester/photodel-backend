@@ -4,7 +4,7 @@ import { Seeder } from 'typeorm-extension';
 
 import { Place } from '@locations/entities/place.entity';
 
-import * as placesData from './places.json';
+import placesData from './places.json';
 
 export default class PlaceSeeder implements Seeder {
     public async run(dataSource: DataSource): Promise<void> {

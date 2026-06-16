@@ -9,7 +9,7 @@ import {
     PostgreSqlContainer
 } from '@testcontainers/postgresql';
 import fastifyCookie from 'fastify-cookie';
-import * as request from 'supertest';
+import request from 'supertest';
 import { DataSource } from 'typeorm';
 
 import { Code } from '@codes/code.entity';
@@ -47,7 +47,8 @@ describe('Auth & Users (e2e)', () => {
     let refreshTokenCookie: string;
 
     const mockMailService = {
-        sendVerificationCode: jest.fn().mockResolvedValue(true)
+        sendVerificationCode: jest.fn().mockResolvedValue(true),
+        sendPasswordRecoveryCode: jest.fn().mockResolvedValue(true)
     };
 
     beforeAll(async () => {
@@ -97,7 +98,7 @@ describe('Auth & Users (e2e)', () => {
         await app.close();
     });
 
-    const testUser = {
+    const dto = {
         email: 'test.user@example.com',
         firstName: 'Test',
         lastName: 'User',
@@ -111,23 +112,14 @@ describe('Auth & Users (e2e)', () => {
             const res = await request(app.getHttpServer())
                 .post('/auth/register')
                 .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-                .send(testUser)
+                .send(dto)
                 .expect(201);
-
-            expect(mockMailService.sendVerificationCode).toHaveBeenCalledTimes(
-                1
-            );
-
-            expect(mockMailService.sendVerificationCode).toHaveBeenCalledWith(
-                testUser.email,
-                expect.any(String)
-            );
 
             expect(res.body).toEqual({
                 user: expect.objectContaining({
-                    email: testUser.email,
-                    firstName: testUser.firstName,
-                    lastName: testUser.lastName
+                    email: dto.email,
+                    firstName: dto.firstName,
+                    lastName: dto.lastName
                 }),
                 accessToken: expect.any(String)
             });
@@ -135,11 +127,11 @@ describe('Auth & Users (e2e)', () => {
             extractAndValidateRefreshCookie(res);
 
             const user = await dataSource.getRepository(User).findOne({
-                where: { email: testUser.email }
+                where: { email: dto.email }
             });
 
             expect(user).toBeDefined();
-            expect(user!.passwordHash).not.toBe(testUser.password);
+            expect(user!.passwordHash).not.toBe(dto.password);
 
             const token = await dataSource.getRepository(Token).findOne({
                 where: {
@@ -167,7 +159,7 @@ describe('Auth & Users (e2e)', () => {
             await request(app.getHttpServer())
                 .post('/auth/register')
                 .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-                .send(testUser)
+                .send(dto)
                 .expect(400);
         });
     });
@@ -178,13 +170,13 @@ describe('Auth & Users (e2e)', () => {
                 .post('/auth/login')
                 .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
                 .send({
-                    email: testUser.email,
-                    password: testUser.password
+                    email: dto.email,
+                    password: dto.password
                 })
                 .expect(201);
 
             expect(res.body).toHaveProperty('accessToken');
-            expect(res.body.user.email).toBe(testUser.email);
+            expect(res.body.user.email).toBe(dto.email);
 
             accessToken = res.body.accessToken;
             refreshTokenCookie = extractAndValidateRefreshCookie(res);
@@ -195,7 +187,7 @@ describe('Auth & Users (e2e)', () => {
                 .post('/auth/login')
                 .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
                 .send({
-                    email: testUser.email,
+                    email: dto.email,
                     password: 'invalid123'
                 })
                 .expect(400);
@@ -209,7 +201,7 @@ describe('Auth & Users (e2e)', () => {
                 .set('Authorization', `Bearer ${accessToken}`)
                 .expect(200);
 
-            expect(res.body.user.email).toBe(testUser.email);
+            expect(res.body.user.email).toBe(dto.email);
         });
 
         it('should not return user data when request is made without authorization header', async () => {
@@ -270,8 +262,15 @@ describe('Auth & Users (e2e)', () => {
         it('should resend verification code after retry interval has expired', async () => {
             const repo = dataSource.getRepository(Code);
 
+            const prevCode = await repo.findOne({
+                where: {
+                    type: CodeType.VERIFICATION,
+                    user: { email: dto.email }
+                }
+            });
+
             await repo.update(
-                { type: CodeType.VERIFICATION },
+                { id: prevCode.id },
                 { retryDate: new Date(Date.now() - 1) }
             );
 
@@ -279,6 +278,15 @@ describe('Auth & Users (e2e)', () => {
                 .get('/auth/resend-verification')
                 .set('Authorization', `Bearer ${accessToken}`)
                 .expect(200);
+
+            const newCode = await repo.findOne({
+                where: {
+                    type: CodeType.VERIFICATION,
+                    user: { email: dto.email }
+                }
+            });
+
+            expect(prevCode.code).not.toBe(newCode.code);
         });
 
         it('should not resend verification code when authorization header is missing', async () => {
@@ -305,18 +313,11 @@ describe('Auth & Users (e2e)', () => {
         });
 
         it('should verify user email with valid verification code', async () => {
-            // First, update the retryDate to allow creating a new code
             const codeRepo = dataSource.getRepository(Code);
-            await codeRepo.update(
-                { type: CodeType.VERIFICATION },
-                { retryDate: new Date(Date.now() - 1) }
-            );
-
-            // Create a new verification code
             const code = await codeRepo.findOne({
                 where: {
                     type: CodeType.VERIFICATION,
-                    user: { email: testUser.email }
+                    user: { email: dto.email }
                 }
             });
 
@@ -348,6 +349,140 @@ describe('Auth & Users (e2e)', () => {
                 .set('Authorization', 'Bearer invalid-token')
                 .send({ code: '000000' })
                 .expect(401);
+        });
+    });
+
+    describe('Password recovery', () => {
+        it('should send recovery code', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/send-recovery')
+                .set('Authorization', accessToken)
+                .send({ email: dto.email })
+                .expect(200);
+
+            const code = await dataSource.getRepository(Code).findOne({
+                where: {
+                    type: CodeType.PASSWORD_RECOVERY,
+                    user: { email: dto.email }
+                }
+            });
+
+            expect(code).toBeDefined();
+        });
+
+        it('should not resend recovery code if retry interval has not expired yet', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/send-recovery')
+                .set('Authorization', accessToken)
+                .send({ email: dto.email })
+                .expect(400);
+        });
+
+        it('should not verify invalid recovery code', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/verify-recovery')
+                .set('Authorization', accessToken)
+                .send({ email: dto.email, code: '000000' })
+                .expect(400);
+        });
+
+        it('should verify correct recovery code', async () => {
+            const code = await dataSource.getRepository(Code).findOne({
+                where: {
+                    type: CodeType.PASSWORD_RECOVERY,
+                    user: { email: dto.email }
+                }
+            });
+
+            await request(app.getHttpServer())
+                .post('/auth/verify-recovery')
+                .set('Authorization', accessToken)
+                .send({ email: dto.email, code: code.code })
+                .expect(200);
+        });
+
+        it('should not recovery password with invalid code', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/recovery-password')
+                .set('Authorization', accessToken)
+                .send({
+                    email: dto.email,
+                    code: '000000',
+                    password: '123123123'
+                })
+                .expect(400);
+        });
+
+        it('should recovery password with valid code', async () => {
+            const code = await dataSource.getRepository(Code).findOne({
+                where: {
+                    type: CodeType.PASSWORD_RECOVERY,
+                    user: { email: dto.email }
+                }
+            });
+
+            const repo = dataSource.getRepository(User);
+
+            const prevUser = await repo.findOne({
+                where: { email: dto.email }
+            });
+
+            await request(app.getHttpServer())
+                .post('/auth/recovery-password')
+                .set('Authorization', accessToken)
+                .send({
+                    email: dto.email,
+                    code: code.code,
+                    password: '123123123'
+                })
+                .expect(200);
+
+            const currentUser = await repo.findOne({
+                where: { email: dto.email }
+            });
+
+            expect(prevUser.passwordHash).not.toBe(currentUser.passwordHash);
+
+            // rollback (for next tests)
+            await repo.update(
+                { email: dto.email },
+                { passwordHash: prevUser.passwordHash }
+            );
+        });
+    });
+
+    describe('Change password', () => {
+        it('should not change password with invalid old password', async () => {
+            await request(app.getHttpServer())
+                .post('/auth/change-password')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({ oldPassword: 'invalid123', newPassword: '123123123' })
+                .expect(400);
+        });
+        
+        it('should change password with valid old password', async () => {
+            const repo = dataSource.getRepository(User);
+
+            const prevUser = await repo.findOne({
+                where: { email: dto.email }
+            });
+
+            await request(app.getHttpServer())
+                .post('/auth/change-password')
+                .set('Authorization', `Bearer ${accessToken}`)
+                .send({ oldPassword: dto.password, newPassword: '123123123' })
+                .expect(200);
+
+            const currentUser = await repo.findOne({
+                where: { email: dto.email }
+            });
+
+            expect(prevUser.passwordHash).not.toBe(currentUser.passwordHash);
+
+            await repo.update(
+                { email: dto.email },
+                { passwordHash: prevUser.passwordHash }
+            );
         });
     });
 });

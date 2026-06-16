@@ -3,7 +3,7 @@ import {
     NestFastifyApplication
 } from '@nestjs/platform-fastify';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
+import request from 'supertest';
 
 import { S3Service } from '@s3/s3.service';
 
