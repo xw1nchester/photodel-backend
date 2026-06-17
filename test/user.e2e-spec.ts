@@ -16,8 +16,12 @@ import { MailService } from '@mail/mail.service';
 import { S3Service } from '@s3/s3.service';
 
 import { AppModule } from '../src/app.module';
-import { runSeeders } from 'typeorm-extension';
 import { Profile } from '@users/entities/profile.entity';
+import { User } from '@users/entities/user.entity';
+import { Place } from '@locations/entities/place.entity';
+import { ProCategory } from '@pro-categories/pro-category.entity';
+import { Specialization } from '@specializations/specialization.entity';
+import { Social } from '@socials/entities/social.entity';
 
 const getTemporaryLocationDates = () => {
     const today = new Date();
@@ -43,11 +47,6 @@ describe('Users & Profiles (e2e)', () => {
     let app: NestFastifyApplication;
     let container: StartedPostgreSqlContainer;
     let dataSource: DataSource;
-    let accessToken: string;
-    let userId: number;
-    let proCategoryIds: number[];
-    let specializationIds: number[];
-    let socialIds: number[];
 
     const mockMailService = {
         sendVerificationCode: jest.fn().mockResolvedValue(true)
@@ -55,6 +54,78 @@ describe('Users & Profiles (e2e)', () => {
 
     const mockS3Service = {
         getUrl: (key: string) => `http://localhost:9000/${key}`
+    };
+
+    const seedData = async () => {
+        await dataSource.getRepository(Place).save([
+            {
+                country: 'Россия',
+                city: 'Москва',
+                coordinates: {
+                    type: 'Point',
+                    coordinates: [37.62, 55.75]
+                }
+            },
+            {
+                country: 'Россия',
+                city: 'Санкт-Петербург',
+                coordinates: {
+                    type: 'Point',
+                    coordinates: [30.31, 59.94]
+                }
+            },
+            {
+                country: 'Россия',
+                city: 'Екатеринбург',
+                coordinates: {
+                    type: 'Point',
+                    coordinates: [60.61, 56.85]
+                }
+            },
+            {
+                country: 'Россия',
+                city: 'Новосибирск',
+                coordinates: {
+                    type: 'Point',
+                    coordinates: [82.93, 55.04]
+                }
+            },
+            {
+                country: 'Россия',
+                city: 'Калининград',
+                coordinates: {
+                    type: 'Point',
+                    coordinates: [20.51, 54.71]
+                }
+            }
+        ]);
+
+        await dataSource
+            .getRepository(ProCategory)
+            .save([
+                { name: 'Фотографы' },
+                { name: 'Визажисты' },
+                { name: 'Модели' },
+                { name: 'Фотостудии' }
+            ]);
+
+        await dataSource
+            .getRepository(Specialization)
+            .save([
+                { name: 'Животные' },
+                { name: 'Архитектура' },
+                { name: 'Репортаж' },
+                { name: 'Дети' }
+            ]);
+
+        await dataSource
+            .getRepository(Social)
+            .save([
+                { name: 'Телефон' },
+                { name: 'Сайт' },
+                { name: 'Email' },
+                { name: 'Facebook' }
+            ]);
     };
 
     beforeAll(async () => {
@@ -83,7 +154,7 @@ describe('Users & Profiles (e2e)', () => {
 
         dataSource = app.get(DataSource);
         await dataSource.runMigrations();
-        await runSeeders(dataSource);
+        await seedData();
 
         app.useGlobalPipes(
             new ValidationPipe({
@@ -105,118 +176,132 @@ describe('Users & Profiles (e2e)', () => {
         await app.close();
     });
 
-    describe('Setup', () => {
-        it('should register a new user with valid data and return access token', async () => {
-            const res = await request(app.getHttpServer())
-                .post('/auth/register')
-                .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-                .send({
-                    email: 'test.user@example.com',
-                    firstName: 'Test',
-                    lastName: 'User',
-                    isAdult: true,
-                    isProfessional: true,
-                    password: 'StrongPass123!'
-                })
-                .expect(201);
-
-            accessToken = res.body.accessToken;
-            userId = res.body.user.id;
-        });
-
-        it('should return current user data when valid access token is provided', async () => {
-            const res = await request(app.getHttpServer())
-                .get('/users/me')
-                .set('Authorization', `Bearer ${accessToken}`)
-                .expect(200);
-
-            expect(res.body.user).toBeDefined();
-        });
-
-        it('should return additional data for profile filling', async () => {
-            const proCategoriesRes = await request(app.getHttpServer())
-                .get('/pro-categories')
-                .expect(200);
-
-            expect(proCategoriesRes.body).toHaveProperty('proCategories');
-            expect(Array.isArray(proCategoriesRes.body.proCategories)).toBe(
-                true
-            );
-
-            const specializationsRes = await request(app.getHttpServer())
-                .get('/specializations')
-                .expect(200);
-
-            expect(specializationsRes.body).toHaveProperty('specializations');
-            expect(Array.isArray(specializationsRes.body.specializations)).toBe(
-                true
-            );
-
-            const socialsRes = await request(app.getHttpServer())
-                .get('/socials')
-                .expect(200);
-
-            expect(socialsRes.body).toHaveProperty('socials');
-            expect(Array.isArray(socialsRes.body.socials)).toBe(true);
-
-            proCategoryIds = proCategoriesRes.body.proCategories.map(
-                item => item.id
-            );
-            specializationIds = specializationsRes.body.specializations.map(
-                item => item.id
-            );
-            socialIds = socialsRes.body.socials.map(item => item.id);
-        });
+    beforeEach(async () => {
+        await dataSource.getRepository(User).deleteAll();
     });
+
+    const fetchAdditionalData = async () => {
+        const proCategoriesRes = await request(app.getHttpServer())
+            .get('/pro-categories')
+            .expect(200);
+
+        expect(proCategoriesRes.body).toHaveProperty('proCategories');
+        expect(Array.isArray(proCategoriesRes.body.proCategories)).toBe(true);
+
+        const specializationsRes = await request(app.getHttpServer())
+            .get('/specializations')
+            .expect(200);
+
+        expect(specializationsRes.body).toHaveProperty('specializations');
+        expect(Array.isArray(specializationsRes.body.specializations)).toBe(
+            true
+        );
+
+        const socialsRes = await request(app.getHttpServer())
+            .get('/socials')
+            .expect(200);
+
+        expect(socialsRes.body).toHaveProperty('socials');
+        expect(Array.isArray(socialsRes.body.socials)).toBe(true);
+
+        const proCategoryIds = proCategoriesRes.body.proCategories.map(
+            item => item.id
+        );
+        const specializationIds = specializationsRes.body.specializations.map(
+            item => item.id
+        );
+        const socialIds = socialsRes.body.socials.map(item => item.id);
+
+        return { proCategoryIds, specializationIds, socialIds };
+    };
+
+    const registerUser = async (): Promise<string> => {
+        const registerResponse = await request(app.getHttpServer())
+            .post('/auth/register')
+            .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
+            .send({
+                email: 'test.user@example.com',
+                firstName: 'Test',
+                lastName: 'User',
+                isAdult: true,
+                isProfessional: true,
+                password: 'StrongPass123!'
+            })
+            .expect(201);
+
+        expect(registerResponse.body).toEqual(
+            expect.objectContaining({
+                user: expect.any(Object),
+                accessToken: expect.any(String)
+            })
+        );
+
+        return registerResponse.body.accessToken;
+    };
+
+    const fillProfile = async (accessToken: string) => {
+        const { proCategoryIds, specializationIds, socialIds } =
+            await fetchAdditionalData();
+
+        const firstHalf = (arr: any[]) =>
+            arr.slice(0, Math.ceil(arr.length / 2));
+
+        const { startDate, endDate } = getTemporaryLocationDates();
+
+        const profileResponse = await request(app.getHttpServer())
+            .patch('/users/profile')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({
+                status: 'Свободен',
+                price: 'от 5000р',
+                conditions: 'Только на условиях предоплаты',
+                equipment: 'Canon EOS R5, объективы 24-70, 70-200',
+                geography: ['Москва', 'Санкт-Петербург', 'Екатеринбург'],
+                languages: ['Русский', 'Английский'],
+                about: 'Профессиональный фотограф с 10-летним опытом. Специализируюсь на свадебной и портретной съёмке.',
+                location: {
+                    latitude: 54.702656,
+                    longitude: 20.515619,
+                    address: 'Рыбная деревня'
+                },
+                proCategoryIds: firstHalf(proCategoryIds),
+                specializationIds: firstHalf(specializationIds),
+                socials: firstHalf(socialIds).map((id, i) => ({
+                    id,
+                    value: `Social ${i} value`
+                })),
+                temporaryLocations: [
+                    {
+                        startDate,
+                        endDate,
+                        location: {
+                            latitude: 56.829029,
+                            longitude: 60.599397,
+                            address: 'Гринвич'
+                        },
+                        comment: 'Командировка'
+                    }
+                ]
+            })
+            .expect(200);
+
+        return profileResponse;
+    };
 
     describe('Profile', () => {
         it('should initialize profile', async () => {
-            const firstHalf = (arr: any[]) =>
-                arr.slice(0, Math.ceil(arr.length / 2));
+            const accessToken = await registerUser();
+            const profileResponse = await fillProfile(accessToken);
 
-            const { startDate, endDate } = getTemporaryLocationDates();
-
-            const res = await request(app.getHttpServer())
-                .patch('/users/profile')
-                .set('Authorization', `Bearer ${accessToken}`)
-                .send({
-                    status: 'Свободен',
-                    price: 'от 5000р',
-                    conditions: 'Только на условиях предоплаты',
-                    equipment: 'Canon EOS R5, объективы 24-70, 70-200',
-                    geography: ['Москва', 'Санкт-Петербург', 'Екатеринбург'],
-                    languages: ['Русский', 'Английский'],
-                    about: 'Профессиональный фотограф с 10-летним опытом. Специализируюсь на свадебной и портретной съёмке.',
-                    location: {
-                        latitude: 54.702656,
-                        longitude: 20.515619,
-                        address: 'Рыбная деревня'
-                    },
-                    proCategoryIds: firstHalf(proCategoryIds),
-                    specializationIds: firstHalf(specializationIds),
-                    socials: firstHalf(socialIds).map((id, i) => ({
-                        id,
-                        value: `Social ${i} value`
-                    })),
-                    temporaryLocations: [
-                        {
-                            startDate,
-                            endDate,
-                            location: {
-                                latitude: 56.829029,
-                                longitude: 60.599397,
-                                address: 'Гринвич'
-                            },
-                            comment: 'Командировка'
-                        }
-                    ]
+            expect(profileResponse.body.profile).toBeDefined();
+            expect(profileResponse.body.profile).toEqual(
+                expect.objectContaining({
+                    id: expect.any(Number)
                 })
-                .expect(200);
-
-            expect(res.body).toHaveProperty('profile');
+            );
 
             const profile = await dataSource.getRepository(Profile).findOne({
-                where: { user: { id: userId } },
+                where: { user: { id: profileResponse.body.profile.id } },
                 relations: {
                     user: true,
                     location: {
@@ -239,6 +324,9 @@ describe('Users & Profiles (e2e)', () => {
         });
 
         it('should return own profile', async () => {
+            const accessToken = await registerUser();
+            await fillProfile(accessToken);
+
             const res = await request(app.getHttpServer())
                 .get('/users/profile')
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -264,8 +352,11 @@ describe('Users & Profiles (e2e)', () => {
         });
 
         it('should return user profile', async () => {
+            const accessToken = await registerUser();
+            const profileResponse = await fillProfile(accessToken);
+
             const res = await request(app.getHttpServer())
-                .get(`/users/${userId}/profile`)
+                .get(`/users/${profileResponse.body.profile.id}/profile`)
                 .query({ latitude: 57.135959, longitude: 65.565027 })
                 .expect(200);
 

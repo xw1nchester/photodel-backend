@@ -47,14 +47,20 @@ export class Profile {
     @JoinColumn({ name: 'location_id' })
     location: Location;
 
-    @OneToOne(() => User, user => user.profile)
+    @OneToOne(() => User, user => user.profile, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     user: User;
 
-    @ManyToMany(() => ProCategory, proCategory => proCategory.profiles)
+    @ManyToMany(() => ProCategory, proCategory => proCategory.profiles, {
+        onDelete: 'CASCADE'
+    })
     proCategories: ProCategory[];
 
-    @ManyToMany(() => Specialization, specialization => specialization.profiles)
+    @ManyToMany(
+        () => Specialization,
+        specialization => specialization.profiles,
+        { onDelete: 'CASCADE' }
+    )
     specializations: Specialization[];
 
     @OneToMany(() => ProfileSocial, profileSocial => profileSocial.profile, {
