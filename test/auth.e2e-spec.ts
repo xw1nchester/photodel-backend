@@ -20,6 +20,7 @@ import { S3Service } from '@s3/s3.service';
 import { AppModule } from '../src/app.module';
 import { User } from '@users/entities/user.entity';
 import { Token } from '@tokens/token.entity';
+import { clearDatabase } from './utils/clear-db';
 
 const extractAndValidateRefreshCookie = (res: request.Response): string => {
     const raw = res.headers['set-cookie'];
@@ -97,7 +98,7 @@ describe('Auth & Users (e2e)', () => {
     });
 
     beforeEach(async () => {
-        await dataSource.getRepository(User).deleteAll();
+        await clearDatabase(dataSource);
     });
 
     const dto = {
@@ -128,7 +129,7 @@ describe('Auth & Users (e2e)', () => {
 
         return {
             accessToken: res.body.accessToken,
-            refreshToken: extractAndValidateRefreshCookie(res)
+            refreshCookie: extractAndValidateRefreshCookie(res)
         };
     };
 
@@ -233,12 +234,12 @@ describe('Auth & Users (e2e)', () => {
 
     describe('Refresh token', () => {
         it('should refresh access token with valid refresh cookie', async () => {
-            const { refreshToken } = await registerUser();
+            const { refreshCookie } = await registerUser();
 
             const res = await request(app.getHttpServer())
                 .get('/auth/refresh')
                 .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-                .set('Cookie', refreshToken)
+                .set('Cookie', refreshCookie)
                 .expect(200);
 
             expect(res.body).toHaveProperty('accessToken');
@@ -261,18 +262,18 @@ describe('Auth & Users (e2e)', () => {
         });
 
         it('should clear refresh cookie and invalidate session on logout', async () => {
-            const { refreshToken } = await registerUser();
+            const { refreshCookie } = await registerUser();
 
             const prevToken = await dataSource.getRepository(Token).findOne({
                 where: { user: { email: dto.email } }
             });
 
-            expect(prevToken).toBeDefined();
+            expect(prevToken).not.toBeNull();
 
             await request(app.getHttpServer())
                 .get('/auth/logout')
                 .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-                .set('Cookie', refreshToken)
+                .set('Cookie', refreshCookie)
 
                 .expect(200);
 
@@ -285,7 +286,7 @@ describe('Auth & Users (e2e)', () => {
             await request(app.getHttpServer())
                 .get('/auth/refresh')
                 .set('User-Agent', 'Mozilla/5.0 (TestAgent)')
-                .set('Cookie', refreshToken)
+                .set('Cookie', refreshCookie)
                 .expect(401);
         });
     });

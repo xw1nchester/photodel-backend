@@ -21,7 +21,7 @@ export class Message {
 
     // TODO: виджет
 
-    @Column({ name: 'sender_id' })
+    @Column({ name: 'sender_id', nullable: true })
     senderId: number;
 
     @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
