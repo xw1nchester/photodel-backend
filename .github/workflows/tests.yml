@@ -8,6 +8,10 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
 
+    env:
+      JWT_SECRET: secret
+      JWT_EXP: 5m
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
